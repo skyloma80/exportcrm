@@ -428,7 +428,6 @@ export function QuotationForm({ initialData, onSubmit, onCancel, isLoading, proj
                 value={formData.payment_terms}
                 onChange={(v) => setFormData(prev => ({ ...prev, payment_terms: v }))}
                 placeholder={t("quotations.paymentTerms")}
-                allowCustom={true}
               />
             </div>
 

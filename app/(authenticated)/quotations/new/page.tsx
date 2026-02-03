@@ -604,7 +604,6 @@ export default function NewQuotationPage() {
                   value={state.paymentTerms}
                   onChange={(v) => setState(prev => ({ ...prev, paymentTerms: v }))}
                   placeholder={t('quotations.placeholders.paymentTerms')}
-                  allowCustom={true}
                 />
               </div>
               <div className="space-y-2">

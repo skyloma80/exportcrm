@@ -360,7 +360,6 @@ export default function SupplierQuotationEntryPage() {
                   value={formData.paymentTerms || ""}
                   onChange={(value) => setFormData(prev => ({ ...prev, paymentTerms: value }))}
                   placeholder={t("common.selectOrInput")}
-                  allowCustom={true}
                 />
               </div>
               <div>
