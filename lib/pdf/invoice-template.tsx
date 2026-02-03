@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
      
     
     
-    paddingTop: 20,
+    paddingTop: 10,
   },
   officeBox: {
     width: '50%',
@@ -92,26 +92,26 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
   },
   officeLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#f97316', // Orange
     textTransform: 'capitalize',
     letterSpacing: 1,
     marginBottom: 6,
   },
   officeLabelBlack: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#f97316', // Orange (keeping consistent with layout image, using orange for titles)
     textTransform: 'capitalize',
     letterSpacing: 1,
     marginBottom: 6,
   },
   officeText: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#000000',
     lineHeight: 1.5,
   },
   officeContact: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#000000',
     marginTop: 4,
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   termsLabel: {
-    width: 120, // 增加宽度以容纳最长的标签
+    width: '26%', //  
     fontSize: 9,
     color: '#000000', // 黑色 label，与 value 一致
   },
@@ -323,7 +323,10 @@ const styles = StyleSheet.create({
   },
   // Footer Section - 签名区域（不可分页）
   footerSection: {
-    marginTop: 10
+    marginTop: 10,
+    paddingBottom :10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
 
 
   },
@@ -694,28 +697,28 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
             <Text style={styles.termsValue}>{data.terms?.price_term || data.order?.incoterm || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Country Of Origin:</Text>
-            <Text style={styles.termsValue}>{data.terms?.country_of_origin || '-'}</Text>
+            <Text style={styles.termsLabel}>Country of Origin:</Text>
+            <Text style={styles.termsValue}>{data.terms?.country_of_origin ? countryCodeToName(data.terms.country_of_origin) : '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Country Of Destination:</Text>
-            <Text style={styles.termsValue}>{data.terms?.country_of_destination || '-'}</Text>
+            <Text style={styles.termsLabel}>Country of Destination:</Text>
+            <Text style={styles.termsValue}>{data.terms?.country_of_destination ? countryCodeToName(data.terms.country_of_destination) : '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Port Of Loading:</Text>
+            <Text style={styles.termsLabel}>Port of Loading:</Text>
             <Text style={styles.termsValue}>{data.terms?.port_of_loading || data.order?.port_of_loading || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Port Of Discharge:</Text>
+            <Text style={styles.termsLabel}>Port of Discharge:</Text>
             <Text style={styles.termsValue}>{data.terms?.port_of_discharge || data.order?.port_of_destination || '-'}</Text>
           </View>
           
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Mode Of Shipment:</Text>
-            <Text style={styles.termsValue}>{data.terms?.mode_of_shipment || '-'}</Text>
+            <Text style={styles.termsLabel}>Mode of Shipment:</Text>
+            <Text style={styles.termsValue}>By {data.terms?.mode_of_shipment || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Time Of Delivery:</Text>
+            <Text style={styles.termsLabel}>Time of Delivery:</Text>
             <Text style={styles.termsValue}>{data.terms?.time_of_delivery ? formatDate(data.terms.time_of_delivery) : '-'}</Text>
           </View>
         </View>
