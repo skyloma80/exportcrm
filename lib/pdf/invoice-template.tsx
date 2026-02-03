@@ -510,9 +510,9 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
   ];
 
   // 判断税号标签
-  //const isSpain = data.customer?.country === 'ES';
+  const isSpain = data.customer?.country === 'ES';
   const isEuCustomer = data.customer?.country && euCountries.includes(data.customer.country);
-  const taxLabel =  isEuCustomer ? 'NIF' : 'Tax ID';
+  const taxLabel = isSpain ? 'NIF' : (isEuCustomer ? 'VAT Number' : 'Tax ID');
 
   return (
     <Document>
