@@ -1,0 +1,9 @@
+# PocketBase data directory
+pb_data/
+
+# PocketBase executable
+pocketbase
+pocketbase.exe
+
+# Backup files
+*.backup

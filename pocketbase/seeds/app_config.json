@@ -1,0 +1,105 @@
+[
+  {
+    "key": "document_branding",
+    "category": "branding",
+    "value": {
+      "company_name": "ALUSTARS INTERNATIONAL CO., LTD",
+      "company_name_cn": "重庆星铝国际贸易有限公司",
+      "website_url": "www.alustars.com",
+      "logo_path": "/logo-alustars-naranja.png",
+      "stamp_path": "/stamp-alustars.png",
+      "primary_office": {
+        "name": "Chongqing Alustars International Trading Co., Ltd",
+        "name_cn": "重庆星铝国际贸易有限公司",
+        "address": "Crystal Constellation 26-8, Liangjiang New Area, Chongqing, China",
+        "address_cn": "重庆市两江新区水晶星座26-8"
+      },
+      "secondary_office": {
+        "name": "ALUSTARS INTERNATIONAL CO., LTD",
+        "name_cn": "阿鲁斯达国际有限公司",
+        "address": "Valencia 264 Principal, 08007 Barcelona (Spain)",
+        "address_cn": "西班牙巴塞罗那 Valencia 264 Principal, 08007",
+        "phone": "(+34) 607630594",
+        "email": "c.feliu@alustars.com"
+      },
+      "default_signer": {
+        "name": "Carlos Feliu",
+        "name_cn": "Carlos Feliu",
+        "title": "VP of Business Development",
+        "title_cn": "业务发展副总裁"
+      }
+    }
+  },
+  {
+    "key": "ports_of_loading",
+    "category": "ports",
+    "value": [
+      { "code": "CNSHA", "name": "Shanghai", "name_cn": "上海" },
+      { "code": "CNNBO", "name": "Ningbo", "name_cn": "宁波" },
+      { "code": "CNSZX", "name": "Shenzhen", "name_cn": "深圳" },
+      { "code": "CNQIN", "name": "Qingdao", "name_cn": "青岛" },
+      { "code": "CNTAO", "name": "Tianjin", "name_cn": "天津" },
+      { "code": "CNXMN", "name": "Xiamen", "name_cn": "厦门" },
+      { "code": "CNGUA", "name": "Guangzhou", "name_cn": "广州" },
+      { "code": "CNDLC", "name": "Dalian", "name_cn": "大连" }
+    ]
+  },
+  {
+    "key": "ports_of_destination",
+    "category": "ports",
+    "value": [
+      { "code": "USNYC", "name": "New York", "name_cn": "纽约" },
+      { "code": "USLAX", "name": "Los Angeles", "name_cn": "洛杉矶" },
+      { "code": "USLGB", "name": "Long Beach", "name_cn": "长滩" },
+      { "code": "USSEA", "name": "Seattle", "name_cn": "西雅图" },
+      { "code": "USHOU", "name": "Houston", "name_cn": "休斯顿" },
+      { "code": "GBFXT", "name": "Felixstowe", "name_cn": "费利克斯托" },
+      { "code": "GBSOU", "name": "Southampton", "name_cn": "南安普顿" },
+      { "code": "GBLIV", "name": "Liverpool", "name_cn": "利物浦" },
+      { "code": "DEHAM", "name": "Hamburg", "name_cn": "汉堡" },
+      { "code": "DEBRE", "name": "Bremen", "name_cn": "不来梅" },
+      { "code": "NLRTM", "name": "Rotterdam", "name_cn": "鹿特丹" },
+      { "code": "BEANR", "name": "Antwerp", "name_cn": "安特卫普" },
+      { "code": "FRLEH", "name": "Le Havre", "name_cn": "勒阿弗尔" },
+      { "code": "ITGOA", "name": "Genoa", "name_cn": "热那亚" },
+      { "code": "ESBCN", "name": "Barcelona", "name_cn": "巴塞罗那" },
+      { "code": "ESVLC", "name": "Valencia", "name_cn": "瓦伦西亚" },
+      { "code": "JPYOK", "name": "Yokohama", "name_cn": "横滨" },
+      { "code": "JPTYO", "name": "Tokyo", "name_cn": "东京" },
+      { "code": "JPOSA", "name": "Osaka", "name_cn": "大阪" },
+      { "code": "KRPUS", "name": "Busan", "name_cn": "釜山" },
+      { "code": "SGSIN", "name": "Singapore", "name_cn": "新加坡" },
+      { "code": "MYPKG", "name": "Port Klang", "name_cn": "巴生港" },
+      { "code": "THBKK", "name": "Bangkok", "name_cn": "曼谷" },
+      { "code": "VNSGN", "name": "Ho Chi Minh", "name_cn": "胡志明市" },
+      { "code": "AEJEA", "name": "Jebel Ali", "name_cn": "杰贝阿里" },
+      { "code": "AUSYD", "name": "Sydney", "name_cn": "悉尼" },
+      { "code": "AUMEL", "name": "Melbourne", "name_cn": "墨尔本" }
+    ]
+  },
+  {
+    "key": "payment_terms",
+    "category": "payment",
+    "value": [
+      { "code": "TT30", "name": "30% deposit, 70% before shipment", "name_cn": "30%定金，70%发货前" },
+      { "code": "TT50", "name": "50% deposit, 50% before shipment", "name_cn": "50%定金，50%发货前" },
+      { "code": "TT100", "name": "100% before shipment", "name_cn": "100%发货前付清" },
+      { "code": "LC", "name": "Letter of Credit", "name_cn": "信用证" },
+      { "code": "OA30", "name": "Open Account 30 days", "name_cn": "月结30天" },
+      { "code": "OA60", "name": "Open Account 60 days", "name_cn": "月结60天" },
+      { "code": "OA90", "name": "Open Account 90 days", "name_cn": "月结90天" },
+      { "code": "DP", "name": "Documents against Payment", "name_cn": "付款交单" },
+      { "code": "DA", "name": "Documents against Acceptance", "name_cn": "承兑交单" }
+    ]
+  },
+  {
+    "key": "default_currency",
+    "category": "trade",
+    "value": "USD"
+  },
+  {
+    "key": "default_incoterm",
+    "category": "trade",
+    "value": "FOB"
+  }
+]

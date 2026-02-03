@@ -1,0 +1,12 @@
+[
+  {
+    "code": "PRJ-2025-0001",
+    "name": "MKT",
+    "customer_code": "CUS-2025-0001",
+    "customer_name": "Montesa Honda S.A.U.",
+    "stage": "inquiry",
+    "probability": 13,
+    "expected_close_date": "2025-12-31",
+    "description": "50655-MKTD000 – HOLDER, R STEP\n50665-MKTD000 – BRKT, R STEP\n50720-MKTD000 – ARM, R STEP\n50730-MKTD000 – ARM, L STEP\n50755-MKTD000 – HOLDER, L STEP\n50765-MKTD000 – BRKT, L STEP\n\nAnnual volume by reference: 3.500 units - Total: 21.000 units\nMOQ: 1.000 units by reference\nHomologation deadline: Marzo 2026"
+  }
+]

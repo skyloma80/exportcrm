@@ -1,0 +1,29 @@
+[
+  {
+    "customer_code": "CUS-2025-0003",
+    "name": "Lin Chunjie",
+    "position": "",
+    "email": "clin@venair.com",
+    "phone": "15601953758",
+    "wechat": "",
+    "is_primary": false
+  },
+  {
+    "customer_code": "CUS-2025-0001",
+    "name": "Carlos Grimaldos",
+    "position": "Purchase Head of department",
+    "email": "carlos.grimaldos@honda-eu.com",
+    "phone": "(34) 663838444",
+    "wechat": "",
+    "is_primary": false
+  },
+  {
+    "customer_code": "CUS-2025-0002",
+    "name": "Loli Guil",
+    "position": "Supply Chain Lead",
+    "email": "compras@guilera.com",
+    "phone": "(34)936681794",
+    "wechat": "",
+    "is_primary": false
+  }
+]

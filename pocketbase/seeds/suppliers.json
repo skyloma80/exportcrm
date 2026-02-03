@@ -1,0 +1,56 @@
+[
+  {
+    "code": "SUP-2025-0001",
+    "name": "Dongguan kingvow tool Co.,Ltd",
+    "country": "China",
+    "type": "manufacturer",
+    "rating": 5,
+    "address": "Block 1, No.88 Hengli Chongde Road, Hengli Town, Dongguan City, Guangdong Province, China",
+    "capabilities": ["progressive die"]
+  },
+  {
+    "code": "SUP-2025-0002",
+    "name": "GOLD STAR TOOL CO.,LTD",
+    "country": "China",
+    "type": "manufacturer",
+    "rating": 5,
+    "address": "No.1 Hongshun Road, Qishi Town, Dongguan City, Guangdong, 523506 China",
+    "capabilities": ["progressive die"]
+  },
+  {
+    "code": "SUP-2025-0003",
+    "name": "Huazhuo Precision Stamping Die Ltd",
+    "country": "China",
+    "type": "manufacturer",
+    "rating": 3,
+    "address": "No.79, Second District of DaKan, DaLang Town, DongGuan City, GuangDong, China",
+    "capabilities": ["progressive die"]
+  },
+  {
+    "code": "SUP-2025-0004",
+    "name": "Shenhui Technology Co.,Ltd",
+    "country": "China",
+    "type": "manufacturer",
+    "rating": 3,
+    "address": "No.108, Tianfulai industrial zone, 3rd Phase, Shunde, Foshan, Guangdong, China",
+    "capabilities": ["progressive die"]
+  },
+  {
+    "code": "SUP-2025-0005",
+    "name": "WHI Metal Tooling Co., Ltd",
+    "country": "China",
+    "type": "manufacturer",
+    "rating": 3,
+    "address": "东莞市企石镇东部快速路企石段3号3栋",
+    "capabilities": ["progressive die"]
+  },
+  {
+    "code": "SUP-2025-0006",
+    "name": "Nanjing Dongwei Metal Products Co.,Ltd",
+    "country": "China",
+    "type": "manufacturer",
+    "rating": 4,
+    "address": "靖江工业园区沿江公路988号",
+    "capabilities": ["progressive die"]
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "supplier_code": "SUP-2025-0003",
+    "name": "Robin Luo",
+    "position": "",
+    "email": "sales@hz-tooling.com",
+    "phone": "86 0769 85653133",
+    "wechat": "",
+    "is_primary": true
+  },
+  {
+    "supplier_code": "SUP-2025-0002",
+    "name": "Jessica Zhou",
+    "position": "Vice President",
+    "email": "jessica@goldstar-tool.com",
+    "phone": "+86-186-8062-9122",
+    "wechat": "",
+    "is_primary": false
+  },
+  {
+    "supplier_code": "SUP-2025-0004",
+    "name": "Jennie She",
+    "position": "",
+    "email": "jennie.she@shenhuicn.com",
+    "phone": "86-757-28808086",
+    "wechat": "",
+    "is_primary": true
+  },
+  {
+    "supplier_code": "SUP-2025-0005",
+    "name": "Sam Wang",
+    "position": "",
+    "email": "sam@whiautomold.com",
+    "phone": "18929371118",
+    "wechat": "",
+    "is_primary": true
+  },
+  {
+    "supplier_code": "SUP-2025-0001",
+    "name": "Michelle Hu",
+    "position": "",
+    "email": "michelle.hu@kingvow.com",
+    "phone": "86-15999764963",
+    "wechat": "",
+    "is_primary": false
+  },
+  {
+    "supplier_code": "SUP-2025-0006",
+    "name": "Chen Zhong",
+    "position": "",
+    "email": "chenzhong@njdongwei.com",
+    "phone": "15262225355",
+    "wechat": "",
+    "is_primary": true
+  }
+]

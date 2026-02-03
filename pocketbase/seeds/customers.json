@@ -1,0 +1,30 @@
+[
+  {
+    "code": "CUS-2025-0001",
+    "name": "Montesa Honda S.A.U.",
+    "country": "Spain",
+    "type": "direct",
+    "rating": 0,
+    "preferred_currency": "USD",
+    "website": "www.honda-montesa.es"
+  },
+  {
+    "code": "CUS-2025-0002",
+    "name": "Guilera S.A.",
+    "country": "Spain",
+    "type": "direct",
+    "rating": 5,
+    "preferred_currency": "USD",
+    "website": "www.guilera.com"
+  },
+  {
+    "code": "CUS-2025-0003",
+    "name": "Venair Ibérica, S.A.U.",
+    "country": "Spain",
+    "type": "direct",
+    "rating": 4,
+    "preferred_currency": "USD",
+    "address": "Cerdanya 26\n08226 TERRASSA\nSPAIN",
+    "website": "www.venair.com"
+  }
+]
