@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   termsLabel: {
-    width: 160, // 增加宽度以容纳最长的标签
+    width: 120, // 增加宽度以容纳最长的标签
     fontSize: 9,
     color: '#000000', // 黑色 label，与 value 一致
   },
@@ -496,6 +496,53 @@ const getPaymentTermName = (code: string): string => {
   return term ? term.name : code;
 };
 
+// 国家代码到名称的映射
+const countryCodeToName = (code: string): string => {
+  const countries: Record<string, string> = {
+    'CN': 'China',
+    'US': 'United States',
+    'GB': 'United Kingdom',
+    'DE': 'Germany',
+    'FR': 'France',
+    'JP': 'Japan',
+    'KR': 'South Korea',
+    'IN': 'India',
+    'CA': 'Canada',
+    'AU': 'Australia',
+    'IT': 'Italy',
+    'ES': 'Spain',
+    'BR': 'Brazil',
+    'MX': 'Mexico',
+    'ID': 'Indonesia',
+    'NL': 'Netherlands',
+    'SA': 'Saudi Arabia',
+    'TR': 'Turkey',
+    'CH': 'Switzerland',
+    'PL': 'Poland',
+    'BE': 'Belgium',
+    'SE': 'Sweden',
+    'IE': 'Ireland',
+    'AT': 'Austria',
+    'SG': 'Singapore',
+    'MY': 'Malaysia',
+    'TH': 'Thailand',
+    'VN': 'Vietnam',
+    'PH': 'Philippines',
+    'PK': 'Pakistan',
+    'BD': 'Bangladesh',
+    'NG': 'Nigeria',
+    'EG': 'Egypt',
+    'ZA': 'South Africa',
+    'AR': 'Argentina',
+    'CO': 'Colombia',
+    'CL': 'Chile',
+    'PE': 'Peru',
+    'NZ': 'New Zealand',
+    'AE': 'United Arab Emirates',
+  };
+  return countries[code] || code;
+};
+
 export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
   const branding = data.branding;
   const logoSrc = branding?.logoBase64 || branding?.logoPath;
@@ -525,7 +572,7 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
               <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
             )}
              {branding?.vat && (
-              <Text style={styles.documentCode}>VAT: {branding.vat}</Text>
+              <Text style={styles.documentCode}>Tax ID: {branding.vat}</Text>
             )}
             <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.alustars.com'}</Text>
            
@@ -637,38 +684,38 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
         <View style={styles.termsSection}>
           <Text style={styles.termsTitle}>Terms & Conditions</Text>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Payment Terms:</Text>
+            <Text style={styles.termsLabel}>Payment Term:</Text>
             <Text style={styles.termsValue}>
                 {data.terms?.payment ? getPaymentTermName(data.terms.payment) : '-'}
             </Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Price term:</Text>
+            <Text style={styles.termsLabel}>Price Term:</Text>
             <Text style={styles.termsValue}>{data.terms?.price_term || data.order?.incoterm || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Country of origin:</Text>
+            <Text style={styles.termsLabel}>Country Of Origin:</Text>
             <Text style={styles.termsValue}>{data.terms?.country_of_origin || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Country of destination:</Text>
+            <Text style={styles.termsLabel}>Country Of Destination:</Text>
             <Text style={styles.termsValue}>{data.terms?.country_of_destination || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Port of loading:</Text>
+            <Text style={styles.termsLabel}>Port Of Loading:</Text>
             <Text style={styles.termsValue}>{data.terms?.port_of_loading || data.order?.port_of_loading || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Port of discharge:</Text>
+            <Text style={styles.termsLabel}>Port Of Discharge:</Text>
             <Text style={styles.termsValue}>{data.terms?.port_of_discharge || data.order?.port_of_destination || '-'}</Text>
           </View>
           
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Mode of shipment:</Text>
+            <Text style={styles.termsLabel}>Mode Of Shipment:</Text>
             <Text style={styles.termsValue}>{data.terms?.mode_of_shipment || '-'}</Text>
           </View>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Time of Delivery:</Text>
+            <Text style={styles.termsLabel}>Time Of Delivery:</Text>
             <Text style={styles.termsValue}>{data.terms?.time_of_delivery ? formatDate(data.terms.time_of_delivery) : '-'}</Text>
           </View>
         </View>
