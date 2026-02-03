@@ -9,6 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { PAYMENT_TERMS } from '@/lib/constants/trade-constants';
 
 
 
@@ -25,8 +26,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 15,
-    paddingBottom: 15,
+    marginBottom: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
     width: 150,
     maxHeight: 40,
     objectFit: 'contain',
-    marginTop: 8,
+    marginTop: 0,
   },
   companyName: {
     fontSize: 12,
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
   websiteUrl: {
     fontSize: 12,
     color: '#f97316',
-    marginTop: 10,
+    marginTop: 4,
   },
   titleSection: {
     textAlign: 'left',
@@ -78,10 +79,10 @@ const styles = StyleSheet.create({
   // Offices Section - Added to match Quotation template
   officesSection: {
     flexDirection: 'row',
-    marginBottom: 25,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    paddingBottom: 20,
+     
+    
+    
+    paddingTop: 20,
   },
   officeBox: {
     width: '50%',
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
 
   // TO Section (Customer Info)
   toSection: {
-    marginBottom: 15,
+    marginBottom: 10,
   },
   toRow: {
     flexDirection: 'row',
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
   },
   // Remarks
   remarks: {
-    marginTop: 10,
+    marginTop: 6,
 
   },
   remarksTitle: {
@@ -489,6 +490,12 @@ const formatCurrencyWithCode = (amount: number, currency: string = 'USD') => {
   })}`;
 };
 
+// 根据代码获取付款条款名称
+const getPaymentTermName = (code: string): string => {
+  const term = PAYMENT_TERMS.find(t => t.code === code);
+  return term ? term.name : code;
+};
+
 export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
   const branding = data.branding;
   const logoSrc = branding?.logoBase64 || branding?.logoPath;
@@ -517,7 +524,11 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
             {branding?.primaryOffice?.name && (
               <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
             )}
+             {branding?.vat && (
+              <Text style={styles.documentCode}>VAT: {branding.vat}</Text>
+            )}
             <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.alustars.com'}</Text>
+           
           </View>
           <View style={styles.titleSection}>
             <Text style={styles.title}>PROFORMA INVOICE</Text>
@@ -533,31 +544,7 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
           </View>
         </View>
 
-        {/* Offices Section - Added to match Quotation template */}
-        {branding && (
-          <View style={styles.officesSection}>
-            <View style={styles.officeBox}>
-              <Text style={styles.officeLabelBlack}>China Office</Text>
-              <Text style={styles.officeText}>{branding.primaryOffice?.address}</Text>
-              {branding.primaryOffice?.phone && (
-                <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
-              )}
-              {branding.primaryOffice?.email && (
-                <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
-              )}
-            </View>
-            <View style={styles.officeBoxRight}>
-              <Text style={styles.officeLabel}>Spain Office</Text>
-              <Text style={styles.officeText}>{branding.secondaryOffice?.address}</Text>
-              {branding.secondaryOffice?.phone && (
-                <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
-              )}
-              {branding.secondaryOffice?.email && (
-                <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
-              )}
-            </View>
-          </View>
-        )}
+       
 
         {/* TO: Customer Info */}
         <View style={styles.toSection}>
@@ -650,9 +637,9 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
         <View style={styles.termsSection}>
           <Text style={styles.termsTitle}>Terms & Conditions</Text>
           <View style={styles.termsRow}>
-            <Text style={styles.termsLabel}>Payment:</Text>
+            <Text style={styles.termsLabel}>Payment Terms:</Text>
             <Text style={styles.termsValue}>
-              T/T {data.terms?.payment ? `(${data.terms.payment})` : ''}
+                {data.terms?.payment ? getPaymentTermName(data.terms.payment) : '-'}
             </Text>
           </View>
           <View style={styles.termsRow}>
@@ -725,6 +712,32 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
             </View>
           </View>
         </View>
+
+         {/* Offices Section - Added to match Quotation template */}
+        {branding && (
+          <View style={styles.officesSection} wrap={false}>
+            <View style={styles.officeBox}>
+              <Text style={styles.officeLabelBlack}>China Office</Text>
+              <Text style={styles.officeText}>{branding.primaryOffice?.address}</Text>
+              {branding.primaryOffice?.phone && (
+                <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
+              )}
+              {branding.primaryOffice?.email && (
+                <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
+              )}
+            </View>
+            <View style={styles.officeBoxRight}>
+              <Text style={styles.officeLabel}>Spain Office</Text>
+              <Text style={styles.officeText}>{branding.secondaryOffice?.address}</Text>
+              {branding.secondaryOffice?.phone && (
+                <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
+              )}
+              {branding.secondaryOffice?.email && (
+                <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
+              )}
+            </View>
+          </View>
+        )}
       </Page>
     </Document>
   );

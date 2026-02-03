@@ -36,6 +36,7 @@ export interface BrandingConfig {
   company_name: string;           // English name
   company_name_cn: string;        // Chinese name
   website_url: string;
+  vat?: string;                   // VAT Number
   
   // Images stored as base64 data URIs (for PDF generation)
   logo_base64: string;            // Company logo (base64 data URI)
@@ -70,6 +71,7 @@ export interface DocumentBranding {
   stampBase64: string;            // Stamp as base64 data URI
   signatureBase64: string;        // Signature as base64 data URI
   websiteUrl: string;
+  vat?: string;                   // VAT Number
   primaryOffice: {
     name: string;
     address: string;

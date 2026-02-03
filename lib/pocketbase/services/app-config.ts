@@ -33,17 +33,6 @@ export const DEFAULT_CONFIGS = {
     category: 'trade',
   },
 
-  // Payment
-  payment_terms: {
-    value: [
-      { code: 'TT30', name: '30% deposit, 70% before shipment', name_cn: '30%定金，70%发货前' },
-      { code: 'TT50', name: '50% deposit, 50% before shipment', name_cn: '50%定金，50%发货前' },
-      { code: 'LC', name: 'Letter of Credit', name_cn: '信用证' },
-      { code: 'OA30', name: 'Open Account 30 days', name_cn: '月结30天' },
-    ],
-    category: 'payment',
-  },
-
   // Ports
   ports_of_loading: {
     value: [

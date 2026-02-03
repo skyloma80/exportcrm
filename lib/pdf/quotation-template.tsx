@@ -9,6 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { PAYMENT_TERMS } from '@/lib/constants/trade-constants';
 
 const styles = StyleSheet.create({
   page: {
@@ -435,6 +436,12 @@ const formatCurrencyWithCode = (amount: number, currency: string = 'USD') => {
   })}`;
 };
 
+// 根据代码获取付款条款名称
+const getPaymentTermName = (code: string): string => {
+  const term = PAYMENT_TERMS.find(t => t.code === code);
+  return term ? term.name : code;
+};
+
 export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => {
  
   const branding = data.branding;
@@ -513,7 +520,7 @@ export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => 
           </View>
           <View style={styles.infoBoxLast}>
             <Text style={styles.infoLabel}>Payment Terms</Text>
-            <Text style={styles.infoValue}>{data.payment_terms || '-'}</Text>
+            <Text style={styles.infoValue}>{data.payment_terms ? getPaymentTermName(data.payment_terms) : '-'}</Text>
           </View>
         </View>
 

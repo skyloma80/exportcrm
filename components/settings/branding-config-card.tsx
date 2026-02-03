@@ -378,6 +378,14 @@ export function BrandingConfigCard() {
               placeholder="www.alustars.com"
             />
           </div>
+          <div className="space-y-2">
+            <Label>VAT</Label>
+            <Input
+              value={config.vat || ''}
+              onChange={(e) => setConfig({ ...config, vat: e.target.value })}
+              placeholder="ESB12345678"
+            />
+          </div>
         </div>
 
         {/* Primary Office */}

@@ -10,7 +10,7 @@ import { createServerPocketBase } from '@/lib/pocketbase/server';
 import { createStorage } from '@/lib/s3/storage';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { PackingListPDF, PackingListPDFData } from '@/lib/pdf/packing-list-template';
-import { CommercialInvoicePDF, CommercialInvoicePDFData } from '@/lib/pdf/commercial-invoice-template';
+// import { CommercialInvoicePDF, CommercialInvoicePDFData } from '@/lib/pdf/commercial-invoice-template';
 import { brandingService } from '@/lib/services/branding-service';
 import {
   getShipmentDocumentPath,

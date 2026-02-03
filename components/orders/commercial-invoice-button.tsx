@@ -19,7 +19,7 @@ import { FileDown, Download, HardDrive, Loader2, ChevronDown } from 'lucide-reac
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useToast } from '@/hooks/use-toast';
 import { usePdfGenerator } from '@/hooks/use-pdf-generator';
-import { CommercialInvoicePDF, type CommercialInvoicePDFData } from '@/lib/pdf/commercial-invoice-template';
+// import { CommercialInvoicePDF, type CommercialInvoicePDFData } from '@/lib/pdf/commercial-invoice-template';
 import { ensureFolderExists } from '@/lib/disk/ensure-folder';
 import { brandingService } from '@/lib/services/branding-service';
 import { getPocketBase } from '@/lib/pocketbase/auth';
@@ -62,7 +62,7 @@ export function CommercialInvoiceButton({ order }: CommercialInvoiceButtonProps)
   };
 
   // Build PDF data (Requirements: 3.2, 3.3, 3.4)
-  const preparePdfData = (): CommercialInvoicePDFData => {
+  const preparePdfData = (): any => { // CommercialInvoicePDFData
     // Extract bank info from order
     const bankInfo = order.bank_info as Record<string, string> | undefined;
     
@@ -130,7 +130,8 @@ export function CommercialInvoiceButton({ order }: CommercialInvoiceButtonProps)
       const data = preparePdfData();
       data.branding = brandingData || undefined;
       
-      const success = await downloadPdf(<CommercialInvoicePDF data={data} />, filename);
+      // const success = await downloadPdf(<CommercialInvoicePDF data={data} />, filename);
+      throw new Error('CommercialInvoicePDF is currently disabled');
       if (success) {
         toast({ title: t('pdf.downloadSuccess') });
       }
@@ -163,7 +164,8 @@ export function CommercialInvoiceButton({ order }: CommercialInvoiceButtonProps)
       // Ensure folder exists
       await ensureFolderExists(folder);
       
-      const result = await uploadPdfToDisk(<CommercialInvoicePDF data={data} />, filename, folder);
+      // const result = await uploadPdfToDisk(<CommercialInvoicePDF data={data} />, filename, folder);
+      throw new Error('CommercialInvoicePDF is currently disabled');
       
       if (result.success) {
         toast({ title: t('pdf.uploadSuccess'), description: `${t('pdf.folder')}: ${folder}` });

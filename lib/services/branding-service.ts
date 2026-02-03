@@ -106,6 +106,7 @@ class BrandingService {
       stampBase64,
       signatureBase64,
       websiteUrl: config.website_url,
+      vat: config.vat,
       primaryOffice: {
         name: isEnglish ? config.primary_office.name : config.primary_office.name_cn,
         address: isEnglish ? config.primary_office.address : config.primary_office.address_cn,
@@ -193,6 +194,7 @@ class BrandingService {
       company_name: fallback(config.company_name, DEFAULT_BRANDING_CONFIG.company_name),
       company_name_cn: fallback(config.company_name_cn, DEFAULT_BRANDING_CONFIG.company_name_cn),
       website_url: fallback(config.website_url, DEFAULT_BRANDING_CONFIG.website_url),
+      vat: config.vat,
       logo_base64: fallback(config.logo_base64, DEFAULT_BRANDING_CONFIG.logo_base64),
       stamp_base64: fallback(config.stamp_base64, DEFAULT_BRANDING_CONFIG.stamp_base64),
       signature_base64: fallback(config.signature_base64, DEFAULT_BRANDING_CONFIG.signature_base64),
