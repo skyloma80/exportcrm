@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   termsTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#1976D2',
     marginBottom: 8,
   },
   termsRow: {
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   headerCell: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#6b7280',
+    color: '#1976D2',
     textTransform: 'capitalize',
     letterSpacing: 0.5,
   },
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   bankTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#1976D2',
     marginBottom: 8,
   },
   bankTable: {
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   remarksTitle: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#1976D2',
     marginBottom: 8,
   },
   remarksText: {
