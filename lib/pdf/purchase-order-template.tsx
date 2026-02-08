@@ -9,6 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { chineseFontFamily, registerFonts } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { formatUnitPrice, formatAmount, formatAmountWithCode } from '@/lib/utils/currency-formatting';
  
 // 注册中文字体
 registerFonts();
@@ -331,7 +332,7 @@ const formatDateCN = (date: string) => {
 };
 
 const formatCurrency = (amount: number, currency: string) => {
-  return `${currency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatAmount(amount, currency);
 };
 
 const getMoldTypeLabel = (type: string) => {

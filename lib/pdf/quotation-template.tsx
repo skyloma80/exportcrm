@@ -9,6 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { formatUnitPrice, formatAmount, formatAmountWithCode } from '@/lib/utils/currency-formatting';
 import { PAYMENT_TERMS } from '@/lib/constants/trade-constants';
  
 const styles = StyleSheet.create({
@@ -581,10 +582,10 @@ export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => 
                 <Text style={styles.cell}>{item.unit || 'PCS'}</Text>
               </View>
               <View style={styles.colPrice}>
-                <Text style={styles.cell}>{formatCurrency(item.unit_price || 0, data.currency)}</Text>
+                <Text style={styles.cell}>{formatUnitPrice(item.unit_price || 0, data.currency)}</Text>
               </View>
               <View style={styles.colAmount}>
-                <Text style={styles.cell}>{formatCurrency(item.amount || 0, data.currency)}</Text>
+                <Text style={styles.cell}>{formatAmount(item.amount || 0, data.currency)}</Text>
               </View>
             </View>
           ))}
@@ -595,7 +596,7 @@ export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => 
           {/* Total Row - 移除底部横线，只保留顶部横线 */}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>{formatCurrencyWithCode(data.total_amount || 0, data.currency)}</Text>
+            <Text style={styles.totalValue}>{formatAmountWithCode(data.total_amount || 0, data.currency)}</Text>
           </View>
         </View>
 

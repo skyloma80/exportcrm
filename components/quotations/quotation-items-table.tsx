@@ -12,6 +12,7 @@
 
 import { useState } from 'react'
 import { useI18n } from '@/lib/i18n/use-i18n'
+import { formatUnitPrice, formatAmount, formatCostPrice } from '@/lib/utils/currency-formatting';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -206,11 +207,11 @@ export function QuotationItemsTable({
   }
 
   const formatCurrency = (value: number) => {
-    return `${currencySymbol} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return formatAmount(value, currency);
   }
 
   const formatCostCurrency = (value: number) => {
-    return `${costCurrencySymbol} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return formatCostPrice(value);
   }
 
   // 转换为统一的 ProductItemBase 格式

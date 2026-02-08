@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { useToast } from "@/hooks/use-toast"
+import { formatUnitPrice, formatAmount, formatCostPrice } from '@/lib/utils/currency-formatting';
 import { useTabState } from "@/hooks/use-tab-state"
 import { getPocketBase } from "@/lib/pocketbase/auth"
 import {
@@ -145,19 +146,11 @@ export default function QuotationDetailPage({ params }: PageProps) {
   }
 
   const formatCurrency = (amount: number, currency?: string) => {
-    return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-      style: 'currency',
-      currency: currency || quotation?.currency || 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount)
+    return formatAmount(amount, currency || quotation?.currency || 'USD');
   }
 
   const formatCostCurrency = (amount: number) => {
-    return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-      style: 'currency',
-      currency: 'CNY',
-      minimumFractionDigits: 2,
-    }).format(amount)
+    return formatCostPrice(amount);
   }
 
   const handleStatusChange = async (newStatus: QuotationStatus, rejectionReason?: string) => {
