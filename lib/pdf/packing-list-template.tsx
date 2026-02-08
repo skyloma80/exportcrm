@@ -9,7 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
-import { HeaderFooter } from './header-footer';
+ 
 
 const styles = StyleSheet.create({
   page: {

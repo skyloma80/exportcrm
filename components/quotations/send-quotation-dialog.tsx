@@ -95,15 +95,10 @@ export function SendQuotationDialog({
   // 计算有效期
   const getValidUntil = () => {
     if (!quotation.validity_days) return '-';
-    // 尝试从字符串中提取数字天数
-    const daysMatch = quotation.validity_days.toString().match(/\d+/);
-    if (daysMatch) {
-      const days = parseInt(daysMatch[0]);
-      const validDate = new Date(new Date(quotation.created).getTime() + days * 24 * 60 * 60 * 1000);
-      return formatDate(validDate.toISOString());
-    }
-    // 如果无法解析天数，则直接返回原始字符串
-    return quotation.validity_days.toString();
+    // 直接使用数字天数计算
+    const days = quotation.validity_days;
+    const validDate = new Date(new Date(quotation.created).getTime() + days * 24 * 60 * 60 * 1000);
+    return formatDate(validDate.toISOString());
   };
 
   // 初始化表单数据

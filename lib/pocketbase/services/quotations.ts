@@ -34,7 +34,7 @@ export interface Quotation extends RecordModel {
   port_of_loading?: string;
   port_of_destination?: string;
   payment_terms?: string;
-  validity_days: string;
+  validity_days: number;
   global_profit_margin?: number;
   currency: string;
   exchange_rate?: number;
@@ -104,7 +104,7 @@ export interface QuotationCreateInput {
   port_of_loading?: string;
   port_of_destination?: string;
   payment_terms?: string;
-  validity_days?: string;
+  validity_days?: number;
   global_profit_margin?: number;
   currency: string;
   exchange_rate?: number;
@@ -221,7 +221,7 @@ class QuotationService extends BaseCollectionService<Quotation> {
       code,
       version: latestVersion + 1,
       status: 'draft' as QuotationStatus,
-      validity_days: data.validity_days || '30 days',
+      validity_days: data.validity_days || 30,
       total_amount: 0.01,
     });
   }

@@ -10,8 +10,7 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
 import { PAYMENT_TERMS } from '@/lib/constants/trade-constants';
-import { HeaderFooter } from './header-footer';
-
+ 
 const styles = StyleSheet.create({
   page: {
     fontFamily: defaultFontFamily,

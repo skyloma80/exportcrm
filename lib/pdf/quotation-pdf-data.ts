@@ -12,7 +12,7 @@ interface QuotationInput {
   code: string;
   created?: string;
   valid_until?: string;
-  validity_days?: string;
+  validity_days?: number;
   currency?: string;
   incoterm?: string;
   delivery_port?: string;
@@ -84,13 +84,10 @@ export function prepareQuotationPdfData({
   const createdStr = quotation.created || new Date().toISOString();
   let validUntil = quotation.valid_until;
   if (!validUntil && quotation.validity_days) {
-    // 尝试从字符串中提取数字天数
-    const daysMatch = quotation.validity_days.toString().match(/\d+/);
-    if (daysMatch) {
-      const days = parseInt(daysMatch[0]);
-      const createdDate = new Date(createdStr);
-      validUntil = new Date(createdDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-    }
+    // 直接使用数字天数计算
+    const days = quotation.validity_days;
+    const createdDate = new Date(createdStr);
+    validUntil = new Date(createdDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
   }
 
   return {
