@@ -643,17 +643,16 @@ export default function EditQuotationPage({ params }: PageProps) {
               <div className="space-y-2">
                 <Label>{t('quotations.totalWeight')}</Label>
                 <Input
-                  type="text"
-                  inputMode="decimal"
+                  type="number"
+                  step="0.01"
+                  min="0"
                   value={state.totalWeight ?? ''}
                   onChange={(e) => {
                     const val = e.target.value
-                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                      setState(prev => ({
-                        ...prev,
-                        totalWeight: val === '' ? null : parseFloat(val) || null
-                      }))
-                    }
+                    setState(prev => ({
+                      ...prev,
+                      totalWeight: val === '' ? null : parseFloat(val) || null
+                    }))
                   }}
                   placeholder="0.00"
                 />
@@ -661,19 +660,18 @@ export default function EditQuotationPage({ params }: PageProps) {
               <div className="space-y-2">
                 <Label>{t('quotations.totalVolume')}</Label>
                 <Input
-                  type="text"
-                  inputMode="decimal"
+                  type="number"
+                  step="0.001"
+                  min="0"
                   value={state.totalVolume ?? ''}
                   onChange={(e) => {
                     const val = e.target.value
-                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                      setState(prev => ({
-                        ...prev,
-                        totalVolume: val === '' ? null : parseFloat(val) || null
-                      }))
-                    }
+                    setState(prev => ({
+                      ...prev,
+                      totalVolume: val === '' ? null : parseFloat(val) || null
+                    }))
                   }}
-                  placeholder="0.00"
+                  placeholder="0.000"
                 />
               </div>
               <div className="space-y-2">

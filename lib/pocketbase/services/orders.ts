@@ -77,7 +77,7 @@ export interface Order extends RecordModel {
   // Trade fields for PI
   country_of_origin?: string;
   country_of_destination?: string;
-  mode_of_shipment?: 'Sea' | 'Air' | 'Land' | 'Express';
+  mode_of_shipment?: string;
   // PI-related fields
   bank_info?: string | BankInfo;  // 新数据为 string，旧数据为 BankInfo 对象（向后兼容）
   shipping_marks?: string;
@@ -85,6 +85,8 @@ export interface Order extends RecordModel {
   remarks?: string;  // 备注（包含包装信息等）
   customer_po?: string;
   vendor_code?: string;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface OrderItem extends RecordModel {
@@ -133,6 +135,16 @@ export interface OrderWithExpand extends Order {
       name_cn?: string;
       preferred_currency?: string;
     };
+    created_by?: {
+      id: string;
+      name: string;
+      email: string;
+    };
+    updated_by?: {
+      id: string;
+      name: string;
+      email: string;
+    };
     quotation?: {
       id: string;
       code: string;
@@ -140,8 +152,10 @@ export interface OrderWithExpand extends Order {
     };
     order_items_via_order?: OrderItemWithExpand[];
     order_payments_via_order?: OrderPayment[];
+    shipments_via_order?: any[]; // Shipment records related to this order
+    order_purchase_orders_via_order?: any[]; // Purchase orders related to this order
   };
-}
+};
 
 export interface OrderItemWithExpand extends OrderItem {
   expand?: {
@@ -169,7 +183,7 @@ export interface OrderCreateInput {
   // Trade fields for PI
   country_of_origin?: string;
   country_of_destination?: string;
-  mode_of_shipment?: 'Sea' | 'Air' | 'Land' | 'Express';
+  mode_of_shipment?: string;
   // PI-related fields
   bank_info?: string | BankInfo;  // 新数据为 string，旧数据为 BankInfo 对象（向后兼容）
   shipping_marks?: string;
@@ -272,30 +286,55 @@ class OrderService extends BaseCollectionService<Order> {
   /**
    * Create order with auto-generated code
    */
-  async createOrder(data: OrderCreateInput): Promise<Order> {
+  async createOrder(data: OrderCreateInput, userId?: string, totalAmount?: number): Promise<Order> {
     const code = await this.generateCode();
 
     // Use 0.01 as default to avoid PocketBase validation error for required field
-    const order = await this.create({
+    const orderData: any = {
       ...data,
       code,
       status: 'draft' as OrderStatus,
-      total_amount: 0.01,
+      total_amount: totalAmount && totalAmount > 0 ? totalAmount : 0.01,
       paid_amount: 0,
       bank_info: data.bank_info || (await (async () => {
         const defaultBank = await bankAccountService.getDefault();
         return defaultBank?.content;
       })()),
-    });
+    };
+
+    // Add created_by if provided
+    if (userId) {
+      orderData.created_by = userId;
+    }
+
+    const order = await this.create(orderData);
 
     // Log activity
     try {
-      await activityLogService.logCreate('order', order.id, code);
+      await activityLogService.logCreate('order', order.id, code, userId);
     } catch (e) {
       console.error('Failed to log order creation:', e);
     }
 
     return order;
+  }
+
+  /**
+   * Override update method to track who updated the order
+   */
+  async update(id: string, data: Partial<Order>): Promise<Order> {
+    // Try to get user ID from the auth store
+    const userId = this.pb.authStore.model?.id;
+
+    // Add updated_by field if we have a user ID
+    if (userId) {
+      const updateData = {
+        ...data,
+        updated_by: userId
+      };
+      return await this.pb.collection(this.collectionName).update<Order>(id, updateData);
+    }
+    return await this.pb.collection(this.collectionName).update<Order>(id, data);
   }
 
   /**
@@ -321,6 +360,12 @@ class OrderService extends BaseCollectionService<Order> {
       payment_terms: quotation.payment_terms,
       currency: quotation.currency,
       exchange_rate: quotation.exchange_rate,
+      // Copy country fields from quotation if available (for PI generation)
+      country_of_origin: quotation.country_of_origin || 'CN',  // Default to China
+      country_of_destination: quotation.country_of_destination || '',
+      // Set default values for shipment and delivery (for PI generation)
+      mode_of_shipment: (quotation.port_of_loading && quotation.port_of_destination) ? 'Sea' : undefined,
+      estimated_shipping_date: quotation.delivery_time || undefined,
 
     });
 
@@ -423,6 +468,70 @@ class OrderService extends BaseCollectionService<Order> {
   }
 
   /**
+   * Delete order if it's in draft status and the current user is the creator
+   */
+  async deleteOrder(id: string): Promise<boolean> {
+    const order = await this.getOne(id);
+    if (!order) throw new Error('Order not found');
+
+    // First, delete all related records that would prevent order deletion
+    try {
+      // Delete related order items
+      const orderItems = await this.pb.collection('order_items').getFullList({
+        filter: `order = "${id}"`
+      });
+
+      for (const item of orderItems) {
+        await this.pb.collection('order_items').delete(item.id);
+      }
+
+      // Delete related order payments
+      const orderPayments = await this.pb.collection('order_payments').getFullList({
+        filter: `order = "${id}"`
+      });
+
+      for (const payment of orderPayments) {
+        await this.pb.collection('order_payments').delete(payment.id);
+      }
+
+      // Delete related purchase orders
+      const purchaseOrders = await this.pb.collection('purchase_orders').getFullList({
+        filter: `order = "${id}"`
+      });
+
+      for (const po of purchaseOrders) {
+        await this.pb.collection('purchase_orders').delete(po.id);
+      }
+    } catch (e) {
+      console.error('Failed to delete related records:', e);
+      throw new Error('Failed to delete related order records');
+    }
+
+    // Then delete the order itself
+    await this.delete(id);
+
+    // Log activity
+    try {
+      const pb = this.pb;
+      const userId = pb.authStore.model?.id;
+      await activityLogService.log({
+        action: 'delete',
+        entity_type: 'order',
+        entity_id: id,
+        entity_code: order.code,
+        user: userId,
+        user_name: pb.authStore.model?.name || pb.authStore.model?.email,
+        description: `Deleted order ${order.code}`,
+        description_cn: `删除了订单 ${order.code}`,
+      });
+    } catch (e) {
+      console.error('Failed to log order deletion:', e);
+    }
+
+    return true;
+  }
+
+  /**
    * Recalculate order total
    */
   async recalculateTotal(id: string): Promise<Order> {
@@ -474,7 +583,7 @@ class OrderService extends BaseCollectionService<Order> {
   /**
    * Copy order (create a new order based on existing one)
    */
-  async copyOrder(originalId: string): Promise<Order> {
+  async copyOrder(originalId: string, userId?: string): Promise<Order> {
     const original = await this.getWithDetails(originalId);
     if (!original) throw new Error('Original order not found');
 
@@ -488,7 +597,7 @@ class OrderService extends BaseCollectionService<Order> {
       payment_terms: original.payment_terms,
       currency: original.currency,
       exchange_rate: original.exchange_rate,
-    });
+    }, userId);
 
     // Copy items
     const items = original.expand?.order_items_via_order || [];

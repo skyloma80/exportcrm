@@ -241,16 +241,17 @@ export function QuotationItemsTable({
               {t('quotations.items.title') || 'Products'}
             </CardTitle>
           </div>
-          {!disabled && (
+          {/* 隐藏添加项目按钮，因为产品库中的产品没有成本价，无法计算利润 */}
+          {/* {!disabled && projectId && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => setDialogOpen(true)}
             >
               <Plus className="mr-2 h-4 w-4" />
-              {t('quotations.items.add') || 'Add Product'}
+              {t('quotations.items.add') || 'Import from Cost Table'}
             </Button>
-          )}
+          )} */}
         </div>
       </CardHeader>
       <CardContent>

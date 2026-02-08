@@ -223,7 +223,7 @@ export function QuotationItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -234,7 +234,7 @@ export function QuotationItemDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 flex flex-col space-y-4 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col space-y-4">
           <div className="relative flex-shrink-0">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -245,7 +245,8 @@ export function QuotationItemDialog({
             />
           </div>
 
-          <ScrollArea className="flex-1 min-h-[200px] border rounded-lg">
+          <div className="flex-1 min-h-0 border rounded-lg overflow-hidden">
+            <ScrollArea className="h-full w-full">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -338,6 +339,7 @@ export function QuotationItemDialog({
             )}
           </ScrollArea>
         </div>
+      </div>
 
         <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

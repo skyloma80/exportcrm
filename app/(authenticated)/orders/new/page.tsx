@@ -117,9 +117,10 @@ export default function NewOrderPage() {
       const totalAmount = quotationItems.reduce((sum, item) => sum + (item.amount || 0), 0)
       console.log('Calculated total amount:', totalAmount)
 
+      const currentUser = pb.authStore.model?.id
+
       // Prepare order data
       const orderData = {
-        code: orderCode,
         project: projectIdFromUrl,
         customer: data.customer,
         incoterm: data.incoterm,
@@ -135,16 +136,14 @@ export default function NewOrderPage() {
         remarks: data.remarks,
         customer_po: data.customer_po,
         vendor_code: data.vendor_code,
-        status: 'draft',
-        total_amount: totalAmount > 0 ? totalAmount : 0.01, // Use calculated total or minimum value
-        paid_amount: 0,
         quotation: fromQuotationId || undefined,
       }
 
       console.log('Creating order with data:', orderData)
 
-      // Create order
-      const order = await pb.collection("orders").create(orderData)
+      // Create order using service which will handle created_by
+      const { orderService } = await import('@/lib/pocketbase/services/orders')
+      const order = await orderService.createOrder(orderData, currentUser, totalAmount > 0 ? totalAmount : undefined)
 
       // Create order items if converting from quotation
       if (quotationItems.length > 0) {

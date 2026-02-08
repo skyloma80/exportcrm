@@ -73,8 +73,8 @@ export function FeedbackManagement() {
     } catch (error) {
       console.error("Failed to load feedbacks:", error);
       toast({
-        title: locale === "zh" ? "加载失败" : "Load Failed",
-        description: locale === "zh" ? "无法加载反馈列表" : "Failed to load feedback list",
+        title: t("common.error"),
+        description: t("feedback.errors.loadFailed"),
         variant: "destructive",
       });
     } finally {

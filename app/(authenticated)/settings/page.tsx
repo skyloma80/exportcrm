@@ -6,11 +6,10 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Building2 } from 'lucide-react';
+import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Building2, Ruler } from 'lucide-react';
 import { BrandingConfigCard } from '@/components/settings/branding-config-card';
 import { FeedbackManagement } from '@/components/settings/feedback-management';
 import Link from 'next/link';
-
 export default function SettingsPage() {
   const { t, locale } = useI18n();
   const { toast } = useToast();

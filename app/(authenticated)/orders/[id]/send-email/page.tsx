@@ -442,7 +442,7 @@ Best regards`
                 type="email"
                 value={formData.to}
                 onChange={(e) => setFormData({ ...formData, to: e.target.value })}
-                placeholder="customer@example.com"
+                 
               />
             </div>
 

@@ -955,10 +955,11 @@ export default function ProjectDetailPage() {
                 <CardTitle>{t("projects.orders.title")}</CardTitle>
                 <CardDescription>{t("projects.orders.description")}</CardDescription>
               </div>
-              <Button onClick={() => router.push(`/orders/new?project=${id}`)}>
+              {/* 隐藏新建订单按钮 */}
+              {/* <Button onClick={() => router.push(`/orders/new?project=${id}`)}>
                 <Plus className="mr-2 h-4 w-4" />
                 {locale === 'zh' ? '新建订单' : 'New Order'}
-              </Button>
+              </Button> */}
             </CardHeader>
             <CardContent>
               {orders.length === 0 ? (

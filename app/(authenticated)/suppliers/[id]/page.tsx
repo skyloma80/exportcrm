@@ -591,7 +591,7 @@ export default function SupplierDetailPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-center py-8">
-                {locale === 'zh' ? '供应商产品关联功能开发中，您可以通过询价管理查看该供应商的报价产品' : 'Supplier product association is under development. You can view quoted products through RFQ management.'}
+                {t('suppliers.productAssociationComingSoon')}
               </p>
             </CardContent>
           </Card>

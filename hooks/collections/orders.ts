@@ -341,7 +341,9 @@ export function useOrderMutations() {
 
     try {
       const { orderService } = await import('@/lib/pocketbase/services/orders');
-      const result = await orderService.copyOrder(id);
+      const pb = await import('@/lib/pocketbase/auth');
+      const currentUser = pb.getPocketBase().authStore.model?.id;
+      const result = await orderService.copyOrder(id, currentUser);
       return result;
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to copy order'));

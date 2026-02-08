@@ -130,22 +130,23 @@ export async function POST(
       }
     }
 
-    // Create order
-    const order = await pb.collection('orders').create({
-      code: orderCode,
+    // Create order using the service to properly handle created_by
+    const { orderService } = await import('@/lib/pocketbase/services/orders');
+
+    // For server-side API, we might not have user context, so pass undefined
+    // The service will try to get user from auth store, which will be empty in server context
+    const order = await orderService.createOrder({
       project: quotation.project,
       customer: quotation.customer,
       quotation: id,
-      status: 'draft',
       incoterm: quotation.incoterm,
       currency: quotation.currency,
       exchange_rate: exchangeRate,
       port_of_loading: quotation.port_of_loading,
       port_of_destination: quotation.port_of_destination,
       payment_terms: quotation.payment_terms,
-      total_amount: quotation.total_amount,
       remarks: quotation.remarks,
-    });
+    }, undefined, quotation.total_amount);
 
     // Create order items from quotation items
     for (const item of quotationItems) {

@@ -9,6 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { chineseFontFamily, registerFonts } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { HeaderFooter } from './header-footer';
 
 // 注册中文字体
 registerFonts();
@@ -361,7 +362,8 @@ export const PurchaseOrderPDF: React.FC<{ data: PurchaseOrderPDFData }> = ({ dat
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header: Logo + Title */}
+        
+        {/* Original Header: Logo + Title */}
         <View style={styles.headerSection}>
           <View style={styles.logoSection}>
             {logoSrc && <Image src={logoSrc} style={styles.logo} />}

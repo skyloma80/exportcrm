@@ -900,6 +900,9 @@
     "convertSuccess": "Conversion successful",
     "convertSuccessDesc": "The quotation has been converted to an order",
     "convertError": "Conversion failed",
+    "exchangeRateLoadError": "Failed to load exchange rates",
+    "exchangeRateLoadErrorDesc": "Unable to get exchange rate data, please check network connection",
+    "incoterm": "Incoterm",
     "columns": {
       "code": "Code",
       "project": "Project",
@@ -1309,6 +1312,10 @@
     "createSuccess": "Order created successfully",
     "createSuccessDesc": "The order has been created",
     "createError": "Failed to create order",
+    "deleteConfirmTitle": "Confirm Deletion",
+    "deleteConfirmMessage": "Are you sure you want to delete this order? This action cannot be undone.",
+    "deleteSuccess": "Order deleted successfully",
+    "deleteSuccessDesc": "The order has been deleted",
     "updateSuccess": "Order updated successfully",
     "updateSuccessDesc": "The order information has been updated",
     "updateError": "Failed to update order",
@@ -1318,6 +1325,11 @@
     "copySuccess": "Order copied successfully",
     "copySuccessDesc": "A new order has been created",
     "copyError": "Failed to copy order",
+    "edit": {
+      "saveSuccess": "Order saved successfully",
+      "saveSuccessDesc": "Order information has been updated",
+      "saveError": "Failed to save order"
+    },
     "columns": {
       "code": "Code",
       "project": "Project",
@@ -1340,6 +1352,30 @@
       "delivered": "Delivered",
       "completed": "Completed",
       "cancelled": "Cancelled"
+    },
+    "createdBy": "Created by",
+    "manualStatusUpdate": "Manually Update Order Progress",
+    "currentStatus": "Current Status",
+    "newStatus": "New Status",
+    "reasonForChange": "Reason for Change",
+    "reasonPlaceholder": "Enter reason for status change...",
+    "statusUpdateSuccess": "Status updated successfully",
+    "statusUpdateSuccessDesc": "The order status has been updated",
+    "statusUpdateError": "Failed to update status",
+    "statusUpdateErrorDesc": "Please try again",
+    "incoterm": {
+      "EXW": "Ex Works",
+      "FCA": "Free Carrier",
+      "CPT": "Carriage Paid To",
+      "CIP": "Carriage and Insurance Paid to",
+      "DAP": "Delivered At Place",
+      "DPU": "Delivered at Place Unloaded",
+      "DDU": "Delivered Duty Unpaid",
+      "DDP": "Delivered Duty Paid",
+      "FAS": "Free Alongside Ship",
+      "FOB": "Free On Board",
+      "CFR": "Cost and Freight",
+      "CIF": "Cost, Insurance and Freight"
     },
     "stats": {
       "total": "Total Orders",
@@ -1521,6 +1557,11 @@
       "sendEmailDesc": "Send PI document to customer via email",
       "viewDocuments": "View Documents",
       "viewDocumentsDesc": "Manage order-related documents",
+      "uploadCustomerPO": "Upload Customer PO",
+      "uploadCustomerPODesc": "Upload customer's purchase order file",
+      "customerPOUploadSuccess": "Customer PO Uploaded Successfully",
+      "customerPOUploadSuccessDesc": "Customer PO file has been uploaded to order directory",
+      "customerPOUploadError": "Failed to Upload Customer PO",
       "viewPurchaseOrders": "View PO to Supplier",
       "viewPurchaseOrdersDesc": "Manage supplier purchase orders for this order",
       "viewShipments": "View Shipments",
@@ -2283,7 +2324,8 @@
       "pending": "Pending",
       "approved": "Approved",
       "totalAmount": "Total Amount"
-    }
+    },
+    "approvedSuccess": "Payment approved successfully"
   },
   "tasks": {
     "title": "Tasks",
@@ -2508,6 +2550,7 @@
     "new": "New",
     "edit": "Edit",
     "delete": "Delete",
+    "update": "Update",
     "deleting": "Deleting...",
     "import": "Import",
     "export": "Export",

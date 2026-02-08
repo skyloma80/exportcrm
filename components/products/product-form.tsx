@@ -213,18 +213,18 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
               </div>
               <div className="space-y-1">
                 <Label>{t("products.columns.unit")} <span className="text-destructive">*</span></Label>
-                <Select value={formData.unit} onValueChange={(value) => handleChange("unit", value)}>
+                  <Select value={formData.unit} onValueChange={(value) => handleChange("unit", value)}>
                   <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
                     {QUANTITY_UNITS.map((unit) => (
-                      <SelectItem key={unit.code} value={unit.code}>
-                        {unit.code} - {locale === 'zh' ? unit.name_cn : unit.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        <SelectItem key={unit.code} value={unit.code}>
+                          {unit.code} - {locale === 'zh' ? unit.name_cn : unit.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 {errors.unit && <p className="text-sm text-destructive">{errors.unit}</p>}
               </div>
               <div className="space-y-1">

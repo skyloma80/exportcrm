@@ -160,7 +160,7 @@ class ProjectCostTableService extends BaseCollectionService<CostTable> {
     let nextSequence = 1;
     if (existingTables.items.length > 0) {
       const lastCode = existingTables.items[0].code;
-      const match = lastCode.match(/CT-\d{4}-(\d{5})/);
+      const match = lastCode.match(/CT-\d{4}-(\d{4})/);  // Fixed: expecting 4 digits instead of 5
       if (match) {
         nextSequence = parseInt(match[1], 10) + 1;
       }

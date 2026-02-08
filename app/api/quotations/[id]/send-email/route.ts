@@ -90,9 +90,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 计算有效期
-    const validUntil = quotation.validity_days 
-      ? new Date(new Date(quotation.created).getTime() + quotation.validity_days * 24 * 60 * 60 * 1000)
-      : null
+    let validUntil = null;
+    if (quotation.validity_days) {
+      // 尝试从字符串中提取数字天数
+      const daysMatch = quotation.validity_days.toString().match(/\d+/);
+      if (daysMatch) {
+        const days = parseInt(daysMatch[0]);
+        validUntil = new Date(new Date(quotation.created).getTime() + days * 24 * 60 * 60 * 1000);
+      }
+    }
 
     // 生成邮件内容
     const bodyContent = message || generateQuotationEmailContent({

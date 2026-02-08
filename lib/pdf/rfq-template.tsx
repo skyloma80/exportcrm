@@ -10,6 +10,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { registerFonts, chineseFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { HeaderFooter } from './header-footer';
 
 // Register Chinese fonts
 registerFonts();
@@ -299,7 +300,8 @@ export const RFQPDF: React.FC<{ data: RFQPDFData }> = ({ data }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header: Logo + Title */}
+        
+        {/* Original Header: Logo + Title */}
         <View style={styles.headerSection}>
           <View style={styles.logoSection}>
             {logoSrc && <Image src={logoSrc} style={styles.logo} />}

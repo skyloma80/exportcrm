@@ -62,6 +62,7 @@ export const INCOTERMS = [
   { code: 'CIP', name: 'Carriage and Insurance Paid to', name_cn: '运费保险费付至', description: '卖方支付运费和保险费至指定目的地' },
   { code: 'DAP', name: 'Delivered At Place', name_cn: '目的地交货', description: '卖方在指定目的地交货' },
   { code: 'DPU', name: 'Delivered at Place Unloaded', name_cn: '卸货地交货', description: '卖方在指定目的地卸货后交货' },
+  { code: 'DDU', name: 'Delivered Duty Unpaid', name_cn: '未完税交货', description: '卖方在指定目的地交货，买方负责清关和税费' },
   { code: 'DDP', name: 'Delivered Duty Paid', name_cn: '完税后交货', description: '卖方承担所有费用和风险至目的地' },
   { code: 'FAS', name: 'Free Alongside Ship', name_cn: '船边交货', description: '卖方在装运港船边交货（仅海运）' },
   { code: 'FOB', name: 'Free On Board', name_cn: '船上交货', description: '卖方在装运港船上交货（仅海运）' },
@@ -94,8 +95,11 @@ export type CurrencyCode = typeof CURRENCIES[number]['code']
 // ==================== 付款条款 ====================
 export const PAYMENT_TERMS = [
   { code: 'TT_ADVANCE', name: 'T/T in Advance', name_cn: '预付电汇', description: '发货前全额付款' },
-  { code: 'TT_30_70', name: '30% T/T Advance, 70% Before Shipment', name_cn: '30%预付，70%发货前', description: '30%定金，70%发货前付清' },
-  { code: 'TT_30_70_BL', name: '30% T/T Advance, 70% Against B/L', name_cn: '30%预付，70%见提单', description: '30%定金，70%见提单副本付款' },
+  { code: 'TT_30_70', name: 'T/T 30% advance, 70% before shipment', name_cn: '30%预付，70%发货前', description: '30%定金，70%发货前付清' },
+  { code: 'TT_30_70_BL', name: 'T/T 30% advance, 70% against B/L', name_cn: '30%预付，70%见提单', description: '30%定金，70%见提单副本付款' },
+  { code: 'TT100', name: 'T/T 100% before shipment', name_cn: '发货前付清', description: '发货前支付100%' },
+  { code: 'TT50', name: 'T/T 50% deposit, 50% before shipment', name_cn: '50%定金，50%发货前', description: '50%定金，50%发货前付清' },
+  { code: 'TT30', name: 'T/T 30% deposit, 70% before shipment', name_cn: '30%定金，70%发货前', description: '30%定金，70%发货前付清' },
   { code: 'LC_SIGHT', name: 'L/C at Sight', name_cn: '即期信用证', description: '即期不可撤销信用证' },
   { code: 'LC_30', name: 'L/C 30 Days', name_cn: '30天信用证', description: '30天远期信用证' },
   { code: 'LC_60', name: 'L/C 60 Days', name_cn: '60天信用证', description: '60天远期信用证' },
@@ -177,6 +181,77 @@ export interface PalletMaterial {
   textureType: 'wood' | 'plastic' | 'metal'
   requiresFumigation: boolean
 }
+
+// ==================== 单位 ====================
+export const UNITS = [
+  // 数量单位
+  { code: 'PCS', name: 'Pieces', name_cn: '件', category: 'quantity' },
+  { code: 'SETS', name: 'Sets', name_cn: '套', category: 'quantity' },
+  { code: 'PAIRS', name: 'Pairs', name_cn: '双', category: 'quantity' },
+  { code: 'DOZ', name: 'Dozens', name_cn: '打', category: 'quantity' },
+  { code: 'CTN', name: 'Cartons', name_cn: '箱', category: 'quantity' },
+  { code: 'PKG', name: 'Packages', name_cn: '包', category: 'quantity' },
+  { code: 'ROL', name: 'Rolls', name_cn: '卷', category: 'quantity' },
+  { code: 'EA', name: 'Each', name_cn: '个', category: 'quantity' },
+  { code: 'KIT', name: 'Kit', name_cn: '套件', category: 'quantity' },
+  { code: 'SET', name: 'Set', name_cn: '组', category: 'quantity' },
+  { code: 'BX', name: 'Box', name_cn: '盒', category: 'quantity' },
+  { code: 'BAG', name: 'Bag', name_cn: '袋', category: 'quantity' },
+  { code: 'BTL', name: 'Bottle', name_cn: '瓶', category: 'quantity' },
+  { code: 'CAN', name: 'Can', name_cn: '罐', category: 'quantity' },
+  { code: 'DRM', name: 'Drum', name_cn: '桶', category: 'quantity' },
+
+  // 重量单位
+  { code: 'KG', name: 'Kilograms', name_cn: '千克', category: 'weight' },
+  { code: 'G', name: 'Grams', name_cn: '克', category: 'weight' },
+  { code: 'MG', name: 'Milligrams', name_cn: '毫克', category: 'weight' },
+  { code: 'T', name: 'Metric Ton', name_cn: '公吨', category: 'weight' },
+  { code: 'LB', name: 'Pounds', name_cn: '磅', category: 'weight' },
+  { code: 'OZ', name: 'Ounces', name_cn: '盎司', category: 'weight' },
+  { code: 'TON', name: 'Ton', name_cn: '吨', category: 'weight' },
+  { code: 'CT', name: 'Carat', name_cn: '克拉', category: 'weight' },
+
+  // 长度单位
+  { code: 'M', name: 'Meters', name_cn: '米', category: 'length' },
+  { code: 'CM', name: 'Centimeters', name_cn: '厘米', category: 'length' },
+  { code: 'MM', name: 'Millimeters', name_cn: '毫米', category: 'length' },
+  { code: 'IN', name: 'Inches', name_cn: '英寸', category: 'length' },
+  { code: 'FT', name: 'Feet', name_cn: '英尺', category: 'length' },
+  { code: 'YD', name: 'Yards', name_cn: '码', category: 'length' },
+  { code: 'KM', name: 'Kilometers', name_cn: '公里', category: 'length' },
+
+  // 面积单位
+  { code: 'SQM', name: 'Square Meters', name_cn: '平方米', category: 'area' },
+  { code: 'SQCM', name: 'Square Centimeters', name_cn: '平方厘米', category: 'area' },
+  { code: 'SQMM', name: 'Square Millimeters', name_cn: '平方毫米', category: 'area' },
+  { code: 'SQFT', name: 'Square Feet', name_cn: '平方英尺', category: 'area' },
+  { code: 'SQIN', name: 'Square Inches', name_cn: '平方英寸', category: 'area' },
+  { code: 'ARE', name: 'Are', name_cn: '公亩', category: 'area' },
+  { code: 'HA', name: 'Hectare', name_cn: '公顷', category: 'area' },
+  { code: 'ACRE', name: 'Acre', name_cn: '英亩', category: 'area' },
+
+  // 体积单位
+  { code: 'CBM', name: 'Cubic Meters', name_cn: '立方米', category: 'volume' },
+  { code: 'L', name: 'Liters', name_cn: '升', category: 'volume' },
+  { code: 'ML', name: 'Milliliters', name_cn: '毫升', category: 'volume' },
+  { code: 'GL', name: 'Gallons', name_cn: '加仑', category: 'volume' },
+  { code: 'QT', name: 'Quarts', name_cn: '夸脱', category: 'volume' },
+  { code: 'PT', name: 'Pints', name_cn: '品脱', category: 'volume' },
+  { code: 'CUFT', name: 'Cubic Feet', name_cn: '立方英尺', category: 'volume' },
+  { code: 'CUI', name: 'Cubic Inches', name_cn: '立方英寸', category: 'volume' },
+  { code: 'M3', name: 'Cubic Meter', name_cn: '立方米', category: 'volume' },
+
+  // 时间单位
+  { code: 'HR', name: 'Hours', name_cn: '小时', category: 'time' },
+  { code: 'MIN', name: 'Minutes', name_cn: '分钟', category: 'time' },
+  { code: 'SEC', name: 'Seconds', name_cn: '秒', category: 'time' },
+  { code: 'DAY', name: 'Days', name_cn: '天', category: 'time' },
+  { code: 'WK', name: 'Weeks', name_cn: '周', category: 'time' },
+  { code: 'MON', name: 'Months', name_cn: '月', category: 'time' },
+  { code: 'YR', name: 'Years', name_cn: '年', category: 'time' },
+] as const
+
+export type UnitCode = typeof UNITS[number]['code']
 
 // ==================== Pallet Helper Functions ====================
 

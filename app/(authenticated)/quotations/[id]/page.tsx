@@ -174,22 +174,6 @@ export default function QuotationDetailPage({ params }: PageProps) {
       }
       await pb.collection("quotations").update(quotation.id, updates)
 
-      // 当报价单被标记为已接受时，自动创建订单
-      if (newStatus === 'accepted') {
-        try {
-          const response = await fetch(`/api/quotations/${quotation.id}/convert-to-order`, {
-            method: 'POST',
-          })
-          if (response.ok) {
-            const result = await response.json()
-            console.log('Order created automatically:', result.order)
-          }
-        } catch (err) {
-          console.error('Error creating order:', err)
-          // 不中断流程，订单创建失败不影响报价单状态更新
-        }
-      }
-
       toast({
         title: t("quotations.updateSuccess"),
         description: t("quotations.updateSuccessDesc"),
@@ -385,17 +369,19 @@ export default function QuotationDetailPage({ params }: PageProps) {
                   <Send className="mr-2 h-4 w-4" />
                   {t("quotations.actions.resend")}
                 </Button>
-                <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => setShowStatusDialog('accept')}>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  {t("quotations.actions.accept")}
-                </Button>
                 <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setShowStatusDialog('reject')}>
                   <XCircle className="mr-2 h-4 w-4" />
                   {t("quotations.actions.reject")}
                 </Button>
               </>
             )}
-            {(quotation.status === 'sent' || quotation.status === 'accepted') && !existingOrder && (
+            {quotation.status === 'sent' && !existingOrder && (
+              <Button onClick={() => router.push(`/orders/new?project=${projectIdFromUrl}&fromQuotation=${quotation.id}`)}>
+                <CheckCircle className="mr-2 h-4 w-4" />
+                {t("quotations.actions.createOrder") || "转订单"}
+              </Button>
+            )}
+            {(quotation.status === 'accepted' || existingOrder) && (
               <Button onClick={() => router.push(`/orders/new?project=${projectIdFromUrl}&fromQuotation=${quotation.id}`)}>
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {t("quotations.actions.createOrder") || "转订单"}
@@ -576,23 +562,11 @@ export default function QuotationDetailPage({ params }: PageProps) {
                 <CardTitle>{t("quotations.items.title")}</CardTitle>
                 <CardDescription>{t("quotations.items.description")}</CardDescription>
               </div>
-              {quotation.status === 'draft' && (
-                <Button onClick={() => setShowAddItemDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t("quotations.items.add")}
-                </Button>
-              )}
             </CardHeader>
             <CardContent>
               {items.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">{t("quotations.items.empty")}</p>
-                  {quotation.status === 'draft' && (
-                    <Button variant="outline" onClick={() => setShowAddItemDialog(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      {t("quotations.items.add")}
-                    </Button>
-                  )}
                 </div>
               ) : (
                 <Table>
@@ -604,7 +578,6 @@ export default function QuotationDetailPage({ params }: PageProps) {
                       <TableHead className="text-right">{t("quotations.items.profitMargin")} (%)</TableHead>
                       <TableHead className="text-right">{t("quotations.items.unitPrice")} ({quotation.currency})</TableHead>
                       <TableHead className="text-right">{t("quotations.items.amount")}</TableHead>
-                      {quotation.status === 'draft' && <TableHead className="w-[50px]"></TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -625,26 +598,13 @@ export default function QuotationDetailPage({ params }: PageProps) {
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(item.amount)}</TableCell>
-                        {quotation.status === 'draft' && (
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteItem(item.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        )}
                       </TableRow>
                     ))}
                     <TableRow className="bg-muted/50">
-                      <TableCell colSpan={quotation.status === 'draft' ? 6 : 5} className="text-right font-medium">
+                      <TableCell colSpan={5} className="text-right font-medium">
                         {t("quotations.costs.itemsSubtotal")}
                       </TableCell>
                       <TableCell className="text-right font-bold">{formatCurrency(itemsSubtotal)}</TableCell>
-                      {quotation.status === 'draft' && <TableCell></TableCell>}
                     </TableRow>
                   </TableBody>
                 </Table>

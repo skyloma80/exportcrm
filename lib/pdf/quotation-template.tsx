@@ -10,13 +10,14 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
 import { PAYMENT_TERMS } from '@/lib/constants/trade-constants';
+import { HeaderFooter } from './header-footer';
 
 const styles = StyleSheet.create({
   page: {
     fontFamily: defaultFontFamily,
     fontSize: 10,
     padding: 40,
-    
+
     backgroundColor: '#ffffff',
     color: '#000000',
   },
@@ -316,8 +317,8 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   stampSection: {
-    width: '40%',
-    alignItems: 'flex-end',
+    width: '50%',
+    alignItems: 'flex-start',
   },
   stampLabel: {
     fontSize: 9,
@@ -460,14 +461,15 @@ export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header: Logo + Title */}
+        
+        {/* Original Header: Logo + Title */}
         <View style={styles.headerSection}>
           <View style={styles.logoSection}>
             {validLogoSrc && <Image src={validLogoSrc} style={styles.logo} />}
             {branding?.primaryOffice?.name && (
               <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
             )}
-           
+
             <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.example.com'}</Text>
           </View>
           <View style={styles.titleSection}>
@@ -650,6 +652,32 @@ export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => 
             </View>
           </View>
         </View>
+
+        {/* Offices Section - Added to match Quotation template, pushed to bottom of page */}
+        {branding && (
+          <View style={styles.officesSection} wrap={false}>
+            <View style={styles.officeBox}>
+              <Text style={styles.officeLabelBlack}>China Office</Text>
+              <Text style={styles.officeText}>{branding.primaryOffice?.address}</Text>
+              {branding.primaryOffice?.phone && (
+                <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
+              )}
+              {branding.primaryOffice?.email && (
+                <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
+              )}
+            </View>
+            <View style={styles.officeBoxRight}>
+              <Text style={styles.officeLabel}>Spain Office</Text>
+              <Text style={styles.officeText}>{branding.secondaryOffice?.address}</Text>
+              {branding.secondaryOffice?.phone && (
+                <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
+              )}
+              {branding.secondaryOffice?.email && (
+                <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Website Footer removed - already shown in header */}
       </Page>

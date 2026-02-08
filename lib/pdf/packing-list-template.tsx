@@ -9,6 +9,7 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
+import { HeaderFooter } from './header-footer';
 
 const styles = StyleSheet.create({
   page: {
@@ -253,14 +254,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   stampSection: {
-    width: '40%',
-    alignItems: 'flex-end',
+    width: '50%',
+    alignItems: 'flex-start',
   },
   stampLabel: {
     fontSize: 9,
     color: '#000000',
-    marginTop: -15,
-    textAlign: 'right',
+    marginTop: -20,
+    textAlign: 'left',
   },
   stamp: {
     width: 70,
@@ -358,7 +359,8 @@ export const PackingListPDF: React.FC<{ data: PackingListPDFData }> = ({ data })
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header: Logo + Title */}
+        
+        {/* Original Header: Logo + Title */}
         <View style={styles.headerSection}>
           <View style={styles.logoSection}>
             {logoSrc && <Image src={logoSrc} style={styles.logo} />}
@@ -524,7 +526,7 @@ export const PackingListPDF: React.FC<{ data: PackingListPDFData }> = ({ data })
         )}
 
         {/* Footer: Signature + Stamp */}
-        <View style={styles.footerSection} wrap={false}>
+        <View style={styles.footerSection}>
           <View style={styles.signatureRow}>
             <View style={styles.signatureLeft}>
               <Text style={styles.signatureLabel}>Prepared by:</Text>

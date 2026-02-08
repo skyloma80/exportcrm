@@ -15,7 +15,7 @@ export interface QuotationFormData {
   portOfDestination: string
   currency: string
   exchangeRate: number
-  validityDays: number
+  validityDays: string
   paymentTerms: string
   items: QuotationItemData[]
   costBreakdown: Record<string, number>
@@ -88,12 +88,12 @@ export function validateQuotationForm(data: Partial<QuotationFormData>): Validat
     })
   }
 
-  // 有效期必须大于0
-  if (!data.validityDays || data.validityDays <= 0) {
+  // 有效期不能为空
+  if (!data.validityDays || typeof data.validityDays === 'string' && data.validityDays.trim() === '') {
     errors.push({
       field: 'validityDays',
-      message: 'Validity days must be greater than 0',
-      messageKey: 'quotations.validation.validityDaysInvalid',
+      message: 'Validity period is required',
+      messageKey: 'quotations.validation.validityDaysRequired',
     })
   }
 

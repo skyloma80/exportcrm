@@ -25,6 +25,7 @@ import {
   Truck,
   ShoppingCart,
   DollarSign,
+  RefreshCw,
 } from "lucide-react"
 import type { OrderWithExpand, OrderStatus } from "@/lib/pocketbase/services/orders"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
@@ -65,6 +66,10 @@ export default function OrderManagementPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [generatingPI, setGeneratingPI] = useState(false)
+  const [showManualStatusDialog, setShowManualStatusDialog] = useState(false)
+  const [newStatus, setNewStatus] = useState<OrderStatus>('draft')
+  const [statusChangeReason, setStatusChangeReason] = useState('')
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
 
   // Set breadcrumb
   useEffect(() => {
@@ -89,7 +94,7 @@ export default function OrderManagementPage({ params }: PageProps) {
     try {
       const pb = getPocketBase()
       const result = await pb.collection("orders").getOne<OrderWithExpand>(id, {
-        expand: "project,customer,order_items_via_order,order_items_via_order.product",
+        expand: "project,customer,created_by,order_items_via_order,order_items_via_order.product,shipments_via_order,order_purchase_orders_via_order,order_payments_via_order",
       })
       setOrder(result)
     } catch (err: any) {
@@ -117,6 +122,44 @@ export default function OrderManagementPage({ params }: PageProps) {
     return locale === 'zh' && item.name_cn ? item.name_cn : item.name
   }
 
+  const handleManualStatusUpdate = async () => {
+    if (!order) return;
+
+    try {
+      const { orderService } = await import('@/lib/pocketbase/services/orders');
+
+      // Update status directly using the service
+      const updatedOrder = await orderService.update(order.id, {
+        status: newStatus,
+        // Optionally, we could add a field to track manual status changes
+        // This would require adding a field to the schema
+      });
+
+      // Reload the order to reflect changes with all related data
+      const pb = getPocketBase();
+      const updatedOrderWithExpand = await pb.collection("orders").getOne<OrderWithExpand>(order.id, {
+        expand: "project,customer,created_by,order_items_via_order,order_items_via_order.product,shipments_via_order,order_purchase_orders_via_order,order_payments_via_order",
+      });
+      setOrder(updatedOrderWithExpand);
+
+      toast({
+        title: t('orders.statusUpdateSuccess'),
+        description: t('orders.statusUpdateSuccessDesc'),
+      });
+
+      setShowManualStatusDialog(false);
+      setNewStatus(order.status); // Reset to current status
+      setStatusChangeReason(''); // Clear reason
+    } catch (error: any) {
+      console.error('Manual status update error:', error);
+      toast({
+        title: t('orders.statusUpdateError'),
+        description: error.message || t('orders.statusUpdateErrorDesc'),
+        variant: 'destructive',
+      });
+    }
+  }
+
   const formatCurrency = (amount: number, currency?: string) => {
     return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       style: 'currency',
@@ -134,6 +177,51 @@ export default function OrderManagementPage({ params }: PageProps) {
     } catch {
       return '-'
     }
+  }
+
+  const canDeleteOrder = (): boolean => {
+    if (!order) return false; // If order hasn't loaded yet, don't show button
+    if (order.status !== 'draft') {
+      console.log('Order status is not draft:', order.status);
+      return false;
+    }
+    if (!order.expand?.created_by) {
+      console.log('Order has no created_by info');
+      return false;
+    }
+
+    // Check if current user is the creator
+    const pb = getPocketBase();
+    const isCreator = pb.authStore.model?.id === order.expand.created_by.id;
+    if (!isCreator) {
+      console.log('Current user is not the creator');
+      return false;
+    }
+
+    // Check if order has any related records that would prevent deletion
+    // Check for shipments associated with this order
+    const hasShipments = order.expand?.shipments_via_order && Array.isArray(order.expand.shipments_via_order) && order.expand.shipments_via_order.length > 0;
+    if (hasShipments) {
+      console.log('Order has shipments, cannot delete');
+      return false;
+    }
+
+    // Check for purchase orders associated with this order
+    const hasPurchaseOrders = order.expand?.order_purchase_orders_via_order && Array.isArray(order.expand.order_purchase_orders_via_order) && order.expand.order_purchase_orders_via_order.length > 0;
+    if (hasPurchaseOrders) {
+      console.log('Order has purchase orders, cannot delete');
+      return false;
+    }
+
+    // Check for payments associated with this order
+    const hasPayments = order.expand?.order_payments_via_order && Array.isArray(order.expand.order_payments_via_order) && order.expand.order_payments_via_order.length > 0;
+    if (hasPayments) {
+      console.log('Order has payments, cannot delete');
+      return false;
+    }
+
+    console.log('All conditions met, can delete order');
+    return true;
   }
 
   const handleGeneratePI = async () => {
@@ -268,12 +356,13 @@ export default function OrderManagementPage({ params }: PageProps) {
         terms: {
           payment: order.payment_terms,
           price_term: order.incoterm,
-          country_of_origin: order.country_of_origin,
-          country_of_destination: order.country_of_destination,
+          // 提供合理的默认值，确保PI中始终有值显示
+          country_of_origin: order.country_of_origin || 'CN',  // 默认为中国
+          country_of_destination: order.country_of_destination || (customer as any)?.country || '',  // 优先使用客户国家，然后是空字符串
           port_of_discharge: order.port_of_destination,
-          mode_of_shipment: order.mode_of_shipment,
+          mode_of_shipment: order.mode_of_shipment || (order.port_of_loading && order.port_of_destination ? 'Sea' : ''),
           port_of_loading: order.port_of_loading,
-          time_of_delivery: order.estimated_shipping_date,
+          time_of_delivery: order.estimated_shipping_date || '',
         },
         branding: branding || undefined,
       }
@@ -352,14 +441,154 @@ export default function OrderManagementPage({ params }: PageProps) {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold">{order.code}</h1>
-              <Badge variant={getStatusVariant(order.status)}>
-                {t(`orders.status.${order.status}`)}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={getStatusVariant(order.status)}>
+                  {t(`orders.status.${order.status}`)}
+                </Badge>
+                {/* Manual status update button for admin/creator - placed next to status badge */}
+                {(() => {
+                  const pb = getPocketBase();
+                  return (pb.authStore.model?.role === 'admin' || pb.authStore.model?.id === order.expand?.created_by?.id) ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowManualStatusDialog(true)}
+                      className="border border-blue-500 hover:bg-blue-50"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      {t('orders.manualStatusUpdate')}
+                    </Button>
+                  ) : null;
+                })()}
+              </div>
             </div>
             <p className="text-muted-foreground mt-1">
               {getDisplayName(order.expand?.project)} • {getDisplayName(order.expand?.customer)}
             </p>
+            {order.expand?.created_by && (
+              <p className="text-sm text-muted-foreground">
+                {t('orders.createdBy')} {order.expand.created_by.name || order.expand.created_by.email}
+              </p>
+            )}
           </div>
+          {/* Delete button for draft orders by creator */}
+          {canDeleteOrder() && (
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowDeleteConfirmation(true);
+              }}
+            >
+              {t('common.delete')}
+            </Button>
+          )}
+
+
+          {/* Delete Confirmation Dialog */}
+          {showDeleteConfirmation && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg w-96">
+                <h3 className="text-lg font-semibold mb-2">{t('orders.deleteConfirmTitle')}</h3>
+                <p className="text-gray-600 mb-6">{t('orders.deleteConfirmMessage')}</p>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteConfirmation(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      try {
+                        const { orderService } = await import('@/lib/pocketbase/services/orders');
+                        await orderService.deleteOrder(order.id);
+                        toast({
+                          title: t('orders.deleteSuccess') || t('orders.createSuccess'),
+                          description: t('orders.deleteSuccessDesc') || t('orders.createSuccessDesc'),
+                        });
+                        router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=orders`);
+                      } catch (error: any) {
+                        toast({
+                          title: t('orders.deleteError'),
+                          description: error.message || t('orders.deleteError'),
+                          variant: 'destructive',
+                        });
+                      } finally {
+                        setShowDeleteConfirmation(false);
+                      }
+                    }}
+                  >
+                    {t('common.delete')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manual Status Update Dialog */}
+          {showManualStatusDialog && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg w-96">
+                <h3 className="text-lg font-semibold mb-4">{t('orders.manualStatusUpdate')}</h3>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    {t('orders.currentStatus')}
+                  </label>
+                  <p className="p-2 bg-gray-100 rounded">{t(`orders.status.${order.status}`)}</p>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    {t('orders.newStatus')}
+                  </label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value as OrderStatus)}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="draft">{t('orders.status.draft')}</option>
+                    <option value="confirmed">{t('orders.status.confirmed')}</option>
+                    <option value="in_production">{t('orders.status.in_production')}</option>
+                    <option value="ready_to_ship">{t('orders.status.ready_to_ship')}</option>
+                    <option value="shipped">{t('orders.status.shipped')}</option>
+                    <option value="delivered">{t('orders.status.delivered')}</option>
+                    <option value="completed">{t('orders.status.completed')}</option>
+                    <option value="cancelled">{t('orders.status.cancelled')}</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    {t('orders.reasonForChange')}
+                  </label>
+                  <input
+                    type="text"
+                    value={statusChangeReason}
+                    onChange={(e) => setStatusChangeReason(e.target.value)}
+                    className="w-full p-2 border rounded"
+                    placeholder={t('orders.reasonPlaceholder')}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowManualStatusDialog(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button
+                    onClick={handleManualStatusUpdate}
+                  >
+                    {t('common.update')}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -399,6 +628,78 @@ export default function OrderManagementPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Upload Customer PO */}
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex flex-col items-start gap-2"
+              onClick={async () => {
+                // Create hidden file input
+                const fileInput = document.createElement('input')
+                fileInput.type = 'file'
+                fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png'
+                fileInput.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (!file) return
+
+                  try {
+                    const customer = order.expand?.customer
+                    const project = order.expand?.project
+                    if (!customer || !project) {
+                      toast({
+                        title: t('common.error'),
+                        description: 'Missing customer or project information',
+                        variant: 'destructive',
+                      })
+                      return
+                    }
+
+                    // Build folder path: Customers/{客户名}/{项目名}/orders/{订单号}/CustomerPO/
+                    const folderPath = `Customers/${customer.name}/${project.name}/orders/${order.code}/CustomerPO`
+                    
+                    // Create form data
+                    const formData = new FormData()
+                    formData.append('file', file)
+                    formData.append('path', `${folderPath}/${file.name}`)
+
+                    // Upload file
+                    const response = await fetch('/api/disk/upload', {
+                      method: 'POST',
+                      body: formData,
+                    })
+
+                    if (!response.ok) {
+                      const error = await response.json()
+                      throw new Error(error.error || 'Upload failed')
+                    }
+
+                    toast({
+                      title: t('orders.management.customerPOUploadSuccess'),
+                      description: t('orders.management.customerPOUploadSuccessDesc'),
+                    })
+
+                    // Navigate to the CustomerPO directory
+                    await navigateToDisk(folderPath, router)
+                  } catch (error: any) {
+                    console.error('Upload customer PO error:', error)
+                    toast({
+                      title: t('orders.management.customerPOUploadError'),
+                      description: error.message,
+                      variant: 'destructive',
+                    })
+                  }
+                }
+                fileInput.click()
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <FolderOpen className="h-5 w-5" />
+                <span className="font-semibold">{t('orders.management.uploadCustomerPO')}</span>
+              </div>
+              <span className="text-sm text-muted-foreground text-left">
+                {t('orders.management.uploadCustomerPODesc')}
+              </span>
+            </Button>
+
             {/* Edit Order */}
             <Button
               variant="outline"

@@ -66,6 +66,15 @@ export const INCOTERMS: Record<string, Incoterm> = {
     group: 'D',
     applicableTo: 'any',
   },
+  DDU: {
+    code: 'DDU',
+    name: 'Delivered Duty Unpaid',
+    name_cn: '未完税交货',
+    description: 'Seller delivers goods to named place, buyer pays duties',
+    description_cn: '卖方在指定目的地交货，买方支付关税',
+    group: 'D',
+    applicableTo: 'any',
+  },
   DPU: {
     code: 'DPU',
     name: 'Delivered at Place Unloaded',

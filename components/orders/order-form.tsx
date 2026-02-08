@@ -92,7 +92,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
     expected_delivery_date: string
     country_of_origin: string
     country_of_destination: string
-    mode_of_shipment: 'Sea' | 'Air' | 'Land' | 'Express' | ''
+    mode_of_shipment: string
     bank_info: string  // 改为纯文本
     shipping_marks: string
     estimated_shipping_date: string
@@ -215,13 +215,16 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
     }
   }, [isWithinProject, contextProject, contextCustomer, initialData?.project])
 
-  // 自动计算运输方式：有港口则为海运，否则为空
+  // 自动计算运输方式：仅在用户未选择时，有港口则为海运，否则为空
   useEffect(() => {
-    const autoMode: 'Sea' | '' = (formData.port_of_loading || formData.port_of_destination) ? "Sea" : ""
-    if (formData.mode_of_shipment !== autoMode) {
-      setFormData(prev => ({ ...prev, mode_of_shipment: autoMode }))
+    // 只有当用户尚未选择运输方式时才自动设置
+    if (!formData.mode_of_shipment) {
+      const autoMode: 'Sea' | '' = (formData.port_of_loading || formData.port_of_destination) ? "Sea" : ""
+      if (autoMode) {
+        setFormData(prev => ({ ...prev, mode_of_shipment: autoMode }))
+      }
     }
-  }, [formData.port_of_loading, formData.port_of_destination])
+  }, [formData.port_of_loading, formData.port_of_destination, formData.mode_of_shipment])
 
   const loadQuotations = async (projectIdToLoad: string) => {
     try {
@@ -298,7 +301,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
       expected_delivery_date: formData.expected_delivery_date || undefined,
       country_of_origin: formData.country_of_origin || undefined,
       country_of_destination: formData.country_of_destination || undefined,
-      mode_of_shipment: formData.mode_of_shipment || undefined as 'Sea' | 'Air' | 'Land' | 'Express' | undefined,
+      mode_of_shipment: formData.mode_of_shipment || undefined,
       bank_info: formData.bank_info,
       shipping_marks: formData.shipping_marks || undefined,
       estimated_shipping_date: formData.estimated_shipping_date || undefined,
@@ -547,7 +550,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
             </div>
           </div>
 
-          {/* 第五行：交付日期、装运日期 */}
+          {/* 第五行：交付日期 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("orders.columns.expectedDelivery")}</Label>
@@ -558,6 +561,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
               />
             </div>
 
+            {/* 预计装运日期 */}
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '预计装运日期' : 'Est. Shipping Date'}</Label>
               <Input
@@ -565,6 +569,60 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                 value={formData.estimated_shipping_date}
                 onChange={(e) => setFormData(prev => ({ ...prev, estimated_shipping_date: e.target.value }))}
               />
+            </div>
+          </div>
+
+          {/* 第六行：运输方式 - 放在最后 */}
+          <div className="space-y-2">
+            <Label>{locale === 'zh' ? '运输方式' : 'Mode of Shipment'}</Label>
+            <div className="space-y-2">
+              <Input
+                value={formData.mode_of_shipment}
+                onChange={(e) => setFormData(prev => ({ ...prev, mode_of_shipment: e.target.value }))}
+                 
+              />
+              <div className="flex flex-wrap gap-2 mt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Sea' }))}
+                >
+                    Sea
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (FedEx)' }))}
+                >
+                   Air (FedEx)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (DHL)' }))}
+                >
+                   Air (DHL)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Land' }))}
+                >
+                  Land
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Express (UPS)' }))}
+                >
+                   Express (UPS)
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

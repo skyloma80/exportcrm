@@ -32,7 +32,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Save, Ship, ClipboardList, Coins } from 'lucide-react'
+import { ArrowLeft, Save, Ship, ClipboardList, Coins, AlertCircle, Table } from 'lucide-react'
 
 // 组件导入
 import { PortSelect } from '@/components/ui/port-select'
@@ -242,10 +242,10 @@ export default function NewQuotationPage() {
         const updatedItems = recalculateItemsWithExchangeRate(state.items, rate)
         setState(prev => ({ ...prev, exchangeRate: rate, items: updatedItems }))
       } catch (err) {
-        console.error('❌ 加载汇率失败:', err)
+        console.error('❌ Failed to load exchange rates:', err)
         toast({
-          title: '汇率加载失败',
-          description: '无法获取汇率数据，请检查网络连接',
+          title: t('quotations.exchangeRateLoadError'),
+          description: t('quotations.exchangeRateLoadErrorDesc'),
           variant: 'destructive',
         })
       } finally {
@@ -362,13 +362,13 @@ export default function NewQuotationPage() {
             totalVolume += itemVolume
             console.log('  📐 体积:', { dims, volumePerCarton, cartons, itemVolume, totalVolume })
           } else {
-            console.log('  ⚠️ 尺寸格式错误，需要3个数字')
+            console.log('  ⚠️ Dimension format error, need 3 numbers')
           }
         } else {
-          console.log('  ⚠️ 缺少 cartonDimensions')
+          console.log('  ⚠️ Missing cartonDimensions')
         }
       } else {
-        console.log('  ⚠️ pcsPerCarton 无效或为0')
+        console.log('  ⚠️ pcsPerCarton invalid or 0')
       }
     }
 
@@ -435,6 +435,16 @@ export default function NewQuotationPage() {
 
   // 保存报价单
   const handleSave = async (status: 'draft' | 'pending' = 'draft') => {
+    // 检查是否有成本表
+    if (!hasCostTable) {
+      toast({
+        title: '缺少成本表',
+        description: '创建报价单前必须先录入供应商报价并生成成本表',
+        variant: 'destructive',
+      })
+      return
+    }
+
     // 验证表单
     const validationResult = validateQuotationForm({
       projectId: state.projectId,
@@ -531,6 +541,39 @@ export default function NewQuotationPage() {
       </div>
 
       <div className="space-y-6">
+        {/* ========== 0. 成本表缺失提示 ========== */}
+        {!hasCostTable && state.projectId && (
+          <Card className="border-destructive/20 bg-destructive/5">
+            <CardContent className="py-6">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="h-6 w-6 text-destructive mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-destructive mb-2">需要先创建成本表</h3>
+                  <p className="text-muted-foreground mb-4">
+                    创建报价单前，必须先录入供应商报价并生成项目成本表。
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button 
+                      onClick={() => router.push(`/projects/${state.projectId}/rfqs`)}
+                      variant="outline"
+                    >
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      录入供应商报价
+                    </Button>
+                    <Button 
+                      onClick={() => router.push(`/projects/${state.projectId}/cost-table`)}
+                      variant="outline"
+                    >
+                      <Table className="mr-2 h-4 w-4" />
+                      管理成本表
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* ========== 0. 从成本表导入提示 ========== */}
         {hasCostTable && state.projectId && (
           <Card className="border-primary/20 bg-primary/5">
@@ -678,17 +721,16 @@ export default function NewQuotationPage() {
               <div className="space-y-2">
                 <Label>{t('quotations.totalWeight')}</Label>
                 <Input
-                  type="text"
-                  inputMode="decimal"
+                  type="number"
+                  step="0.01"
+                  min="0"
                   value={state.totalWeight ?? ''}
                   onChange={(e) => {
                     const val = e.target.value
-                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                      setState(prev => ({
-                        ...prev,
-                        totalWeight: val === '' ? null : parseFloat(val) || null
-                      }))
-                    }
+                    setState(prev => ({
+                      ...prev,
+                      totalWeight: val === '' ? null : parseFloat(val) || null
+                    }))
                   }}
                   placeholder="0.00"
                 />
@@ -696,19 +738,18 @@ export default function NewQuotationPage() {
               <div className="space-y-2">
                 <Label>{t('quotations.totalVolume')}</Label>
                 <Input
-                  type="text"
-                  inputMode="decimal"
+                  type="number"
+                  step="0.001"
+                  min="0"
                   value={state.totalVolume ?? ''}
                   onChange={(e) => {
                     const val = e.target.value
-                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                      setState(prev => ({
-                        ...prev,
-                        totalVolume: val === '' ? null : parseFloat(val) || null
-                      }))
-                    }
+                    setState(prev => ({
+                      ...prev,
+                      totalVolume: val === '' ? null : parseFloat(val) || null
+                    }))
                   }}
-                  placeholder="0.00"
+                  placeholder="0.000"
                 />
               </div>
               <div className="space-y-2">

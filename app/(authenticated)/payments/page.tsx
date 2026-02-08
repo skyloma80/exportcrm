@@ -168,7 +168,7 @@ export default function PaymentsPage() {
       
       toast({
         title: t('common.success'),
-        description: locale === 'zh' ? '收款已审核通过' : 'Payment approved',
+        description: t('payments.approvedSuccess'),
       });
       loadData();
     } catch (error: any) {
