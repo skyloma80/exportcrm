@@ -35,10 +35,10 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
-import { QuotationPdfButton } from "@/components/quotations/quotation-pdf-button"
 import { SendQuotationDialog } from "@/components/quotations/send-quotation-dialog"
 import { QuotationItemDialog } from "@/components/quotations/quotation-item-dialog"
 import { StatusConfirmDialog } from "@/components/quotations/status-confirm-dialog"
+import { GenerateQuoFileButton } from "@/components/quotations/generate-quo-file-button"
 import type {
   QuotationWithExpand,
   QuotationStatus,
@@ -344,106 +344,118 @@ export default function QuotationDetailPage({ params }: PageProps) {
             </div>
           </div>
           <div className="flex gap-2">
-            {quotation.status === 'draft' && (
-              <>
-                <Button variant="outline" onClick={() => setShowSendDialog(true)}>
-                  <Send className="mr-2 h-4 w-4" />
-                  {t("quotations.actions.sendEmail")}
-                </Button>
-                <Button variant="outline" onClick={() => router.push(`/quotations/${id}/edit?project=${projectIdFromUrl}`)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t("common.edit")}
-                </Button>
-              </>
-            )}
-            {quotation.status === 'sent' && (
-              <>
-                <Button variant="outline" onClick={() => setShowSendDialog(true)}>
-                  <Send className="mr-2 h-4 w-4" />
-                  {t("quotations.actions.resend")}
-                </Button>
-                <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setShowStatusDialog('reject')}>
-                  <XCircle className="mr-2 h-4 w-4" />
-                  {t("quotations.actions.reject")}
-                </Button>
-              </>
-            )}
-            {quotation.status === 'sent' && !existingOrder && (
-              <Button onClick={() => router.push(`/orders/new?project=${projectIdFromUrl}&fromQuotation=${quotation.id}`)}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                {t("quotations.actions.createOrder") || "转订单"}
-              </Button>
-            )}
-            {(quotation.status === 'accepted' || existingOrder) && (
-              <Button onClick={() => router.push(`/orders/new?project=${projectIdFromUrl}&fromQuotation=${quotation.id}`)}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                {t("quotations.actions.createOrder") || "转订单"}
-              </Button>
-            )}
-            {existingOrder && (
-              <Button onClick={() => router.push(`/orders/${existingOrder.id}?project=${projectIdFromUrl}`)}>
-                <FileText className="mr-2 h-4 w-4" />
-                {t("quotations.actions.viewOrder")} ({existingOrder.code})
-              </Button>
-            )}
-            <Button variant="outline" onClick={handleRevise}>
-              <Copy className="mr-2 h-4 w-4" />
-              {t("quotations.actions.revise")}
-            </Button>
-            <QuotationPdfButton
-              quotation={quotation}
-              customer={quotation.expand?.customer}
-              project={quotation.expand?.project}
-              items={items}
-
-            />
+            {/* 顶部仅保留返回按钮功能，其他功能移至下方 Actions 卡片 */}
           </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("quotations.costs.itemsSubtotal")}</CardDescription>
-            <CardTitle className="text-2xl">
-              {formatCurrency(itemsSubtotal)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("quotations.costBreakdown.total")}</CardDescription>
-            <CardTitle className="text-2xl">
-              {formatCurrency(costBreakdownTotal)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("quotations.costs.moldTotal")}</CardDescription>
-            <CardTitle className="text-2xl">
-              {formatCurrency(moldTotal)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("quotations.costs.grandTotal")}</CardDescription>
-            <CardTitle className="text-2xl">
-              {formatCurrency(calculatedGrandTotal)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("quotations.globalMargin.current")}</CardDescription>
-            <CardTitle className="text-2xl">
-              {quotation.global_profit_margin || 0}%
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+      {/* Action Buttons Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>{t('quotations.actionsTitle')}</CardTitle>
+          <CardDescription>{t('quotations.actionsDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* 编辑功能 */}
+            {quotation.status === 'draft' && (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/quotations/${id}/edit?project=${projectIdFromUrl}`)}
+                className="h-auto py-4 flex flex-col items-start gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  <span className="font-semibold">{t("common.edit")}</span>
+                </div>
+                <span className="text-sm text-muted-foreground text-left">修改报价单基本信息和产品明细</span>
+              </Button>
+            )}
+
+            {/* 发送/重发邮件 */}
+            {(quotation.status === 'draft' || quotation.status === 'sent') && (
+              <Button
+                variant="outline"
+                onClick={() => setShowSendDialog(true)}
+                className="h-auto py-4 flex flex-col items-start gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <Send className="h-5 w-5" />
+                  <span className="font-semibold">
+                    {quotation.status === 'draft' ? t("quotations.actions.sendEmail") : t("quotations.actions.resend")}
+                  </span>
+                </div>
+                <span className="text-sm text-muted-foreground text-left">通过邮件将 PDF 报价单发送给客户</span>
+              </Button>
+            )}
+
+            {/* 生成 PDF 文件 */}
+            <GenerateQuoFileButton
+              quotation={quotation}
+              customer={quotation.expand?.customer}
+              project={quotation.expand?.project}
+              items={items}
+              router={router}
+            />
+
+            {/* 状态管理 - 拒绝 */}
+            {quotation.status === 'sent' && (
+              <Button
+                variant="outline"
+                onClick={() => setShowStatusDialog('reject')}
+                className="h-auto py-4 flex flex-col items-start gap-2 border-red-200 hover:bg-red-50 hover:text-red-700"
+              >
+                <div className="flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-500" />
+                  <span className="font-semibold">{t("quotations.actions.reject")}</span>
+                </div>
+                <span className="text-sm text-muted-foreground text-left">标记客户已拒绝此报价并记录原因</span>
+              </Button>
+            )}
+
+            {/* 订单管理 */}
+            {existingOrder ? (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/orders/${existingOrder.id}?project=${projectIdFromUrl}`)}
+                className="h-auto py-4 flex flex-col items-start gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  <span className="font-semibold">{t("quotations.actions.viewOrder")}</span>
+                </div>
+                <span className="text-sm text-muted-foreground text-left">此报价单已转为订单：{existingOrder.code}</span>
+              </Button>
+            ) : (
+              (quotation.status === 'accepted' || quotation.status === 'sent') && (
+                <Button
+                  onClick={() => router.push(`/orders/new?project=${projectIdFromUrl}&fromQuotation=${quotation.id}`)}
+                  className="h-auto py-4 flex flex-col items-start gap-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-semibold">{t("quotations.actions.createOrder") || "转订单"}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground text-left">客户确认报价后，将其转为正式销售订单</span>
+                </Button>
+              )
+            )}
+
+            {/* 修订版本 */}
+            <Button
+              variant="outline"
+              onClick={handleRevise}
+              className="h-auto py-4 flex flex-col items-start gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <Copy className="h-5 w-5" />
+                <span className="font-semibold">{t("quotations.actions.revise")}</span>
+              </div>
+              <span className="text-sm text-muted-foreground text-left">基于当前版本创建新的修订版（提升版本号）</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

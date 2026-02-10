@@ -59,10 +59,10 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'normal',
     color: '#000000',
-    letterSpacing: 4,
+    letterSpacing: 2,
     marginBottom: 10,
   },
   documentCode: {
@@ -90,7 +90,15 @@ const styles = StyleSheet.create({
   },
   officeLabel: {
     fontSize: 10,
-    color: '#f97316',
+    color: '#f97316', // 橙色
+    textTransform: 'capitalize',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  officeLabelBlack: {
+    fontSize: 10,
+    color: '#f97316', // 橙色
+    textTransform: 'capitalize',
     letterSpacing: 1,
     marginBottom: 6,
   },
@@ -103,6 +111,19 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#000000',
     marginTop: 4,
+  },
+  // Content Section - 中间可跨页内容区
+  contentSection: {
+    flex: 1,
+    flexDirection: 'column',
+    flexGrow: 1,
+    flexShrink: 1,
+    marginBottom: 10, // 为offices section预留空间
+  },
+  // Signature Section - 签名区域（不可分页）
+  signatureSection: {
+    marginTop: 10,
+    
   },
   // Info Grid
   infoGrid: {
@@ -125,7 +146,9 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 7,
-    color: '#6b7280',
+    
+    color: '#6b7280', // 浅灰色标签
+    textTransform: 'capitalize',
     letterSpacing: 0.5,
     marginBottom: 4,
   },
@@ -140,7 +163,7 @@ const styles = StyleSheet.create({
   },
   // Table
   table: {
-    marginBottom: 20,
+    marginBottom: 0, // 移除底部边距，由 totalRow 控制
   },
   tableHeader: {
     flexDirection: 'row',
@@ -171,7 +194,11 @@ const styles = StyleSheet.create({
   },
   totalRow: {
     flexDirection: 'row',
+    borderTopWidth: 0, // 移除顶部横线，使用产品行的底部横线
+    borderBottomWidth: 0,
     justifyContent: 'flex-end',
+    marginTop: 8,
+    marginBottom: 30,
   },
   totalLabel: {
     flex: 1,
@@ -356,177 +383,191 @@ export const PurchaseOrderPDF: React.FC<{ data: PurchaseOrderPDFData }> = ({ dat
 
   // Calculate totals
   const itemsSubtotal = data.items.reduce((sum, item) => sum + item.amount, 0);
- 
-  const grandTotal = itemsSubtotal  ;
+
+  const grandTotal = itemsSubtotal;
+
+  // Header Component - 每页顶部固定显示
+  const HeaderSection = () => (
+    <View style={styles.headerSection} wrap={false}>
+      <View style={styles.logoSection}>
+        {logoSrc && <Image src={logoSrc} style={styles.logo} />}
+        {branding?.primaryOffice?.name && (
+          <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
+        )}
+        {branding?.vat && (
+          <Text style={styles.documentCode}>Tax ID: {branding.vat}</Text>
+        )}
+        <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.alustars.com'}</Text>
+      </View>
+      <View style={styles.titleSection}>
+        <Text style={styles.title}>采购订单</Text>
+        <Text style={styles.documentCode}>{data.code}</Text>
+        <Text style={styles.documentDate}>日期: {formatDateCN(data.created)}</Text>
+        {data.expected_delivery_date && (
+          <Text style={styles.documentDate}>交货日期: {formatDateCN(data.expected_delivery_date)}</Text>
+        )}
+      </View>
+    </View>
+  );
+
+  // Offices Component - 每页底部固定显示
+  const OfficesSection = () => (
+    branding && (
+      <View style={styles.officesSection} wrap={false}>
+        <View style={styles.officeBox}>
+          <Text style={styles.officeLabelBlack}>China Office</Text>
+          <Text style={styles.officeText}>{branding.primaryOffice?.address}</Text>
+          {branding.primaryOffice?.phone && (
+            <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
+          )}
+          {branding.primaryOffice?.email && (
+            <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
+          )}
+        </View>
+        <View style={styles.officeBoxRight}>
+          <Text style={styles.officeLabel}>Spain Office</Text>
+          <Text style={styles.officeText}>{branding.secondaryOffice?.address}</Text>
+          {branding.secondaryOffice?.phone && (
+            <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
+          )}
+          {branding.secondaryOffice?.email && (
+            <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
+          )}
+        </View>
+      </View>
+    )
+  );
+
+  // Content Component - 可跨页显示的内容
+  const ContentSection = () => (
+    <View style={styles.contentSection}>
+      {/* Info Grid: Supplier, Project */}
+      <View style={styles.infoGrid}>
+        <View style={styles.infoBox}>
+          <Text style={styles.infoLabel}>供应商</Text>
+          <Text style={styles.infoValue}>{data.supplier?.name_cn || data.supplier?.name || '-'}</Text>
+          {data.supplier?.address && (
+            <Text style={styles.infoSubtext}>{data.supplier.address}</Text>
+          )}
+        </View>
+        <View style={styles.infoBoxLast}>
+          <Text style={styles.infoLabel}>项目</Text>
+          <Text style={styles.infoValue}>{data.project?.name_cn || data.project?.name || '-'}</Text>
+          {data.project?.code && (
+            <Text style={styles.infoSubtext}>{data.project.code}</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Items Table */}
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <View style={styles.colNo}>
+            <Text style={styles.headerCell}>#</Text>
+          </View>
+          <View style={styles.colPartNo}>
+            <Text style={styles.headerCell}>零件号</Text>
+          </View>
+          <View style={styles.colProduct}>
+            <Text style={styles.headerCell}>产品描述</Text>
+          </View>
+          <View style={styles.colQty}>
+            <Text style={styles.headerCell}>数量</Text>
+          </View>
+          <View style={styles.colUnit}>
+            <Text style={styles.headerCell}>单位</Text>
+          </View>
+          <View style={styles.colPrice}>
+            <Text style={styles.headerCell}>单价</Text>
+          </View>
+          <View style={styles.colAmount}>
+            <Text style={styles.headerCell}>金额</Text>
+          </View>
+        </View>
+
+        {data.items.map((item, index) => (
+          <View style={styles.tableRow} key={index}>
+            <View style={styles.colNo}>
+              <Text style={styles.cell}>{index + 1}</Text>
+            </View>
+            <View style={styles.colPartNo}>
+              <Text style={styles.cell}>{item.part_number || '-'}</Text>
+            </View>
+            <View style={styles.colProduct}>
+              <Text style={styles.cell}>{item.product_name_cn || item.product_name || '-'}</Text>
+            </View>
+            <View style={styles.colQty}>
+              <Text style={styles.cell}>{item.quantity?.toLocaleString() || 0}</Text>
+            </View>
+            <View style={styles.colUnit}>
+              <Text style={styles.cell}>{item.unit || '件'}</Text>
+            </View>
+            <View style={styles.colPrice}>
+              <Text style={styles.cell}>{formatCurrency(item.unit_price, data.currency)}</Text>
+            </View>
+            <View style={styles.colAmount}>
+              <Text style={styles.cell}>{formatCurrency(item.amount, data.currency)}</Text>
+            </View>
+          </View>
+        ))}
+
+        {/* Subtotal if has mold items */}
+        {(
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>产品小计:</Text>
+            <Text style={styles.totalValue}>{formatCurrency(itemsSubtotal, data.currency)}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Grand Total */}
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>合计:</Text>
+        <Text style={styles.totalValue}>{formatCurrency(grandTotal, data.currency)}</Text>
+      </View>
+
+      {/* Remarks */}
+      {data.remarks && (
+        <View style={styles.remarks}>
+          <Text style={styles.remarksTitle}>备注</Text>
+          <Text style={styles.remarksText}>{data.remarks}</Text>
+        </View>
+      )}
+
+      {/* Signature Section */}
+      <View style={styles.signatureSection} wrap={false}>
+        <View style={styles.signatureRow}>
+          <View style={styles.signatureLeft}>
+            <Text style={styles.signatureLabel}>签名:</Text>
+            {signatureSrc ? (
+              <Image src={signatureSrc} style={styles.signatureImage} />
+            ) : (
+              <View style={styles.signatureLine} />
+            )}
+            <View style={styles.signerInfoBox}>
+              <Text style={styles.signerName}>{branding?.signer?.name || '-'}</Text>
+              <Text style={styles.signerTitle}>{branding?.signer?.title || '-'}</Text>
+            </View>
+          </View>
+          <View style={styles.stampSection}>
+            {stampSrc ? (
+              <Image src={stampSrc} style={styles.stamp} />
+            ) : (
+              <View style={styles.stampPlaceholder} />
+            )}
+            <Text style={styles.stampLabel}>（公司印章）</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        
-        {/* Original Header: Logo + Title */}
-        <View style={styles.headerSection}>
-          <View style={styles.logoSection}>
-            {logoSrc && <Image src={logoSrc} style={styles.logo} />}
-            {branding?.primaryOffice?.name && (
-              <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
-            )}
-            <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.example.com'}</Text>
-          </View>
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>采购订单</Text>
-            <Text style={styles.documentCode}>{data.code}</Text>
-            <Text style={styles.documentDate}>日期: {formatDateCN(data.created)}</Text>
-            {data.expected_delivery_date && (
-              <Text style={styles.documentDate}>交货日期: {formatDateCN(data.expected_delivery_date)}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Offices Section */}
-        {branding && (
-          <View style={styles.officesSection}>
-            <View style={styles.officeBox}>
-              <Text style={styles.officeLabel}>中国办公室</Text>
-              <Text style={styles.officeText}>{branding.primaryOffice.address}</Text>
-              {branding.primaryOffice.phone && (
-                <Text style={styles.officeContact}>电话: {branding.primaryOffice.phone}</Text>
-              )}
-              {branding.primaryOffice.email && (
-                <Text style={styles.officeContact}>邮箱: {branding.primaryOffice.email}</Text>
-              )}
-            </View>
-            <View style={styles.officeBoxRight}>
-              <Text style={styles.officeLabel}>西班牙办公室</Text>
-              <Text style={styles.officeText}>{branding.secondaryOffice.address}</Text>
-              {branding.secondaryOffice.phone && (
-                <Text style={styles.officeContact}>电话: {branding.secondaryOffice.phone}</Text>
-              )}
-              {branding.secondaryOffice.email && (
-                <Text style={styles.officeContact}>邮箱: {branding.secondaryOffice.email}</Text>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Info Grid: Supplier, Project */}
-        <View style={styles.infoGrid}>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>供应商</Text>
-            <Text style={styles.infoValue}>{data.supplier?.name_cn || data.supplier?.name || '-'}</Text>
-            {data.supplier?.address && (
-              <Text style={styles.infoSubtext}>{data.supplier.address}</Text>
-            )}
-          </View>
-          <View style={styles.infoBoxLast}>
-            <Text style={styles.infoLabel}>项目</Text>
-            <Text style={styles.infoValue}>{data.project?.name_cn || data.project?.name || '-'}</Text>
-            {data.project?.code && (
-              <Text style={styles.infoSubtext}>{data.project.code}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Items Table */}
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <View style={styles.colNo}>
-              <Text style={styles.headerCell}>#</Text>
-            </View>
-            <View style={styles.colPartNo}>
-              <Text style={styles.headerCell}>零件号</Text>
-            </View>
-            <View style={styles.colProduct}>
-              <Text style={styles.headerCell}>产品描述</Text>
-            </View>
-            <View style={styles.colQty}>
-              <Text style={styles.headerCell}>数量</Text>
-            </View>
-            <View style={styles.colUnit}>
-              <Text style={styles.headerCell}>单位</Text>
-            </View>
-            <View style={styles.colPrice}>
-              <Text style={styles.headerCell}>单价</Text>
-            </View>
-            <View style={styles.colAmount}>
-              <Text style={styles.headerCell}>金额</Text>
-            </View>
-          </View>
-
-          {data.items.map((item, index) => (
-            <View style={styles.tableRow} key={index}>
-              <View style={styles.colNo}>
-                <Text style={styles.cell}>{index + 1}</Text>
-              </View>
-              <View style={styles.colPartNo}>
-                <Text style={styles.cell}>{item.part_number || '-'}</Text>
-              </View>
-              <View style={styles.colProduct}>
-                <Text style={styles.cell}>{item.product_name_cn || item.product_name || '-'}</Text>
-              </View>
-              <View style={styles.colQty}>
-                <Text style={styles.cell}>{item.quantity?.toLocaleString() || 0}</Text>
-              </View>
-              <View style={styles.colUnit}>
-                <Text style={styles.cell}>{item.unit || '件'}</Text>
-              </View>
-              <View style={styles.colPrice}>
-                <Text style={styles.cell}>{formatCurrency(item.unit_price, data.currency)}</Text>
-              </View>
-              <View style={styles.colAmount}>
-                <Text style={styles.cell}>{formatCurrency(item.amount, data.currency)}</Text>
-              </View>
-            </View>
-          ))}
-
-          {/* Subtotal if has mold items */}
-          { (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>产品小计:</Text>
-              <Text style={styles.totalValue}>{formatCurrency(itemsSubtotal, data.currency)}</Text>
-            </View>
-          )}
-        </View>
-
-        
-        {/* Grand Total */}
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>合计:</Text>
-          <Text style={styles.totalValue}>{formatCurrency(grandTotal, data.currency)}</Text>
-        </View>
-
-        {/* Remarks */}
-        {data.remarks && (
-          <View style={styles.remarks}>
-            <Text style={styles.remarksTitle}>备注</Text>
-            <Text style={styles.remarksText}>{data.remarks}</Text>
-          </View>
-        )}
-
-        {/* Footer: Signature + Stamp */}
-        <View style={styles.footerSection}  >
-          <View style={styles.signatureRow}>
-            <View style={styles.signatureLeft}>
-              <Text style={styles.signatureLabel}>签名:</Text>
-              {signatureSrc ? (
-                <Image src={signatureSrc} style={styles.signatureImage} />
-              ) : (
-                <View style={styles.signatureLine} />
-              )}
-              <View style={styles.signerInfoBox}>
-                <Text style={styles.signerName}>{branding?.signer?.name || '-'}</Text>
-                <Text style={styles.signerTitle}>{branding?.signer?.title || '-'}</Text>
-              </View>
-            </View>
-            <View style={styles.stampSection}>
-              {stampSrc ? (
-                <Image src={stampSrc} style={styles.stamp} />
-              ) : (
-                <View style={styles.stampPlaceholder} />
-              )}
-              <Text style={styles.stampLabel}>（公司印章）</Text>
-            </View>
-          </View>
-        </View>
+        <HeaderSection />
+        <ContentSection />
+        <OfficesSection />
       </Page>
     </Document>
   );

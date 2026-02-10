@@ -1,8 +1,8 @@
 /**
- * Quotation PDF Template (English)
- * 报价单 PDF 模板（英文）
- * 
- * Modern clean design with black border lines, matching the HTML template.
+ * Quotation PDF Template based on Proforma Invoice Layout (English)
+ * 报价单 PDF 模板（基于形式发票布局，英文）
+ *
+ * 布局与形式发票模板一致，但适配报价单数据
  */
 
 import React from 'react';
@@ -11,23 +11,27 @@ import { defaultFontFamily } from './fonts';
 import { DocumentBranding } from '@/lib/branding/types';
 import { formatUnitPrice, formatAmount, formatAmountWithCode } from '@/lib/utils/currency-formatting';
 import { PAYMENT_TERMS } from '@/lib/constants/trade-constants';
- 
+
 const styles = StyleSheet.create({
   page: {
     fontFamily: defaultFontFamily,
     fontSize: 10,
-    padding: 40,
-
+    paddingTop: 40,
+    paddingLeft: 40,
+    paddingRight: 40,
+    paddingBottom: 20, // 为底部offices section预留空间
     backgroundColor: '#ffffff',
     color: '#000000',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
   },
   // Header Section
   headerSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 30,
-    paddingBottom: 20,
+    marginBottom: 10,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -40,45 +44,57 @@ const styles = StyleSheet.create({
     width: 150,
     maxHeight: 40,
     objectFit: 'contain',
-    marginTop: 8, // 与 QUOTATION 文字顶部对齐
+    marginVertical: 4,
   },
   companyName: {
-    fontSize: 9,
+    fontSize: 12,
     color: '#000000',
-    marginTop: 10, // 紧贴 logo
+    marginTop: 10,
   },
   websiteUrl: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#f97316',
-    marginTop: 10, // 紧贴 logo
+    marginTop: 4,
   },
   titleSection: {
     textAlign: 'left',
     width: '50%',
-    paddingLeft: 30, // 与 Spain Office 对齐
+    paddingLeft: 30,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'normal',
     color: '#000000',
-    letterSpacing: 2,
-    marginBottom: 10,
+    letterSpacing: 1,
+    marginBottom: 5,
   },
   documentCode: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     color: '#000000',
+    marginTop: 6
   },
   documentDate: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     color: '#000000',
-    marginTop: 2,
+    marginTop: 6
   },
-  // Offices Section
+  // Content Section - 中间可跨页内容区
+  contentSection: {
+    flex: 1,
+    flexDirection: 'column',
+    flexGrow: 1,
+    flexShrink: 1,
+    marginBottom: 10, // 为offices section预留空间
+  },
+  // Offices Section - Added to match Quotation template
   officesSection: {
     flexDirection: 'row',
-    marginBottom: 25,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    marginTop: 'auto',
   },
   officeBox: {
     width: '50%',
@@ -88,68 +104,72 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
   },
   officeLabel: {
-    fontSize: 10,
-    color: '#f97316', // 橙色
+    fontSize: 9,
+    color: '#f97316', // Orange
     textTransform: 'capitalize',
     letterSpacing: 1,
     marginBottom: 6,
   },
   officeLabelBlack: {
-    fontSize: 10,
-    color: '#f97316', // 橙色
+    fontSize: 9,
+    color: '#f97316', // Orange (keeping consistent with layout image, using orange for titles)
     textTransform: 'capitalize',
     letterSpacing: 1,
     marginBottom: 6,
   },
   officeText: {
-    fontSize: 9,
-     
+    fontSize: 8,
     color: '#000000',
     lineHeight: 1.5,
   },
   officeContact: {
-    fontSize: 9,
-     
+    fontSize: 8,
     color: '#000000',
     marginTop: 4,
   },
-  // Info Grid (4 columns)
-  infoGrid: {
+
+  // TO Section (Customer Info)
+  toSection: {
+    marginBottom: 10,
+  },
+  toRow: {
     flexDirection: 'row',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingVertical: 10,
-    marginBottom: 25,
-  },
-  infoBox: {
-    flex: 1,
-    paddingHorizontal: 10,
-    borderRightWidth: 1,
-    borderRightColor: '#e5e7eb',
-  },
-  infoBoxLast: {
-    flex: 1,
-    paddingHorizontal: 10,
-  },
-  infoLabel: {
-    fontSize: 7,
-    
-    color: '#6b7280', // 浅灰色标签
-    textTransform: 'capitalize',
-    letterSpacing: 0.5,
     marginBottom: 4,
   },
-  infoValue: {
+  toLabel: {
     fontSize: 10,
-    
+    fontWeight: 'bold',
     color: '#000000',
+    marginRight: 8,
   },
-  infoSubtext: {
-    fontSize: 8,
-     
+  toText: {
+    fontSize: 9,
     color: '#000000',
-    marginTop: 2,
+    lineHeight: 1.4,
+  },
+  // Terms Section
+  termsSection: {
+    marginTop: 10
+  },
+  termsTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1976D2',
+    marginBottom: 8,
+  },
+  termsRow: {
+    flexDirection: 'row',
+    marginBottom: 3,
+  },
+  termsLabel: {
+    width: '26%', //
+    fontSize: 9,
+    color: '#000000', // 黑色 label，与 value 一致
+  },
+  termsValue: {
+    flex: 1,
+    fontSize: 9,
+    color: '#000000', // 黑色内容
   },
   // Table
   table: {
@@ -159,41 +179,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    backgroundColor: '#f3f4f6',
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  colNo: { width: '4%', padding: 8 },
-  colPartNo: { width: '16%', padding: 8 },
-  colProduct: { width: '18%', padding: 8 },
-  colPackaging: { width: '16%', padding: 8 },
-  colQty: { width: '8%', padding: 8, textAlign: 'center' },
+  colNo: { width: '5%', padding: 8 },
+  colPartNo: { width: '20%', padding: 8 },
+  colProduct: { width: '25%', padding: 8 },
+  colQty: { width: '10%', padding: 8, textAlign: 'center' },
   colUnit: { width: '8%', padding: 8, textAlign: 'center' },
-  colPrice: { width: '15%', padding: 8, textAlign: 'right' },
-  colAmount: { width: '15%', padding: 8, textAlign: 'right' },
+  colPrice: { width: '13%', padding: 8, textAlign: 'center' },
+  colAmount: { width: '19%', padding: 8, textAlign: 'center' },
   headerCell: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#6b7280', // 浅灰色表头
+    color: '#1976D2',
     textTransform: 'capitalize',
     letterSpacing: 0.5,
   },
   cell: {
     fontSize: 9,
-     
-    color: '#000000', // 纯黑色
-  },
-  cellSecondary: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#000000', // 纯黑色序号
-  },
-  cellBold: {
-    fontSize: 9,
-    
-    color: '#000000', // 纯黑色
+    color: '#000000',
   },
   totalRow: {
     flexDirection: 'row',
@@ -201,44 +210,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     justifyContent: 'flex-end',
     marginTop: 8,
-    marginBottom: 30,
+    marginBottom: 0, // 不设置底部边距，由下面的组件设置 marginTop
   },
   totalLabel: {
-    flex: 1,
+    width: '81%', // 使总金额标签与表格右对齐部分对齐，前6列的总宽度 (5%+20%+25%+10%+8%+13%=81%)
     padding: 10,
     textAlign: 'right',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#000000',
     textTransform: 'capitalize',
   },
   totalValue: {
-    padding: 10,
+    width: '19%', // 与Amount列宽度相同
+    padding: 8,
     textAlign: 'right',
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#000000',
     flexShrink: 0,
   },
   // Subtotal and Cost Breakdown
-  subtotalRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingTop: 12,
-    paddingRight: 8,
-  },
-  subtotalLabel: {
-    fontSize: 9,
-    color: '#6b7280',
-    textAlign: 'right',
-    width: 120,
-  },
-  subtotalValue: {
-    fontSize: 9,
-    color: '#000000',
-    width: '15%',
-    textAlign: 'right',
-  },
   costRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -254,11 +246,75 @@ const styles = StyleSheet.create({
   costValue: {
     fontSize: 9,
     color: '#000000',
-    width: '15%', // 与 colAmount 宽度一致
+    width: '15%',
     textAlign: 'right',
   },
-  // Footer Section
-  footerSection: {
+  // Bank Info（独立整体）
+  bankInfo: {
+    marginTop: 10
+  },
+  bankTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1976D2',
+    marginBottom: 8,
+  },
+  bankTable: {
+    width: '100%',
+  },
+  bankTableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  bankTableNo: {
+    width: '8%',
+    padding: 6,
+    fontSize: 9,
+    color: '#000000',
+  },
+  bankTableContent: {
+    flex: 1,
+    padding: 6,
+    fontSize: 9,
+    color: '#000000',
+  },
+  bankRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  bankLabel: {
+    width: 160,
+    fontSize: 9,
+    color: '#000000',
+  },
+  bankValue: {
+    fontSize: 9,
+    color: '#000000',
+    lineHeight: 1.6,
+  },
+  bankLine: {
+    fontSize: 9,
+    color: '#000000',
+    marginBottom: 2,
+  },
+  // Remarks
+  remarks: {
+    marginTop: 6,
+  },
+  remarksTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1976D2',
+    marginBottom: 8,
+  },
+  remarksText: {
+    fontSize: 9,
+    color: '#000000',
+    lineHeight: 1.5,
+  },
+  // Signature Section - 签名区域（不可分页）
+  signatureSection: {
     marginTop: 10,
   },
   signatureRow: {
@@ -297,24 +353,12 @@ const styles = StyleSheet.create({
   },
   signerName: {
     fontSize: 9,
-     
-    color: '#000000',
-  },
-  signerNameValue: {
-    fontSize: 9,
-     
     color: '#000000',
   },
   signerTitle: {
     fontSize: 9,
-    
     color: '#000000',
     marginTop: 2,
-  },
-  signerTitleValue: {
-    fontSize: 9,
-   
-    color: '#000000',
   },
   stampSection: {
     width: '50%',
@@ -323,8 +367,8 @@ const styles = StyleSheet.create({
   stampLabel: {
     fontSize: 9,
     color: '#000000',
-    marginTop: -15,
-    textAlign: 'right',
+    marginTop: -20,
+    textAlign: 'left',
   },
   stamp: {
     width: 70,
@@ -340,32 +384,6 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: '#f9fafb',
   },
-  // Website Footer
-  websiteFooter: {
-    marginTop: 40,
-    textAlign: 'center',
-  },
-  websiteLink: {
-    fontSize: 10,
-    color: '#f97316',
-    fontWeight: 'bold',
-  },
-  // Remarks
-  remarks: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  remarksTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  remarksText: {
-    fontSize: 9,
-    color: '#000000',
-    lineHeight: 1.5,
-  },
 });
 
 export interface QuotationPDFData {
@@ -373,17 +391,22 @@ export interface QuotationPDFData {
   created: string;
   valid_until: string;
   currency: string;
-  incoterm: string;
-  delivery_port: string;
-  payment_terms: string;
+  incoterm?: string;
+  delivery_port?: string;
+  payment_terms?: string;
   total_amount: number;
   remarks?: string;
- 
-  delivery_time?: string;      // 交付时间 (Requirements: 1.4)
+
+  delivery_time?: string;      // 交付时间
   cost_breakdown?: Record<string, number>;  // 费用分解
   customer?: {
     name: string;
     address?: string;
+    tax_id?: string;
+    contact_person?: string;
+    phone?: string;
+    email?: string;
+    country?: string;
   };
   project?: {
     name: string;
@@ -399,13 +422,26 @@ export interface QuotationPDFData {
     amount: number;
   }>;
   branding?: DocumentBranding;
+
+  // 条件显示字段 - 如果为空则不显示整行
+  port_of_loading?: string;
+  mode_of_shipment?: string;
+  port_of_destination?: string;
+  country_of_origin?: string;
+  country_of_destination?: string;
+  estimated_shipping_date?: string;
+  customer_po?: string;
+  vendor_code?: string;
+  bank_info?: string;
+  shipping_marks?: string;
+  packing_info?: string;
 }
 
 const formatDate = (date: string) => {
   if (!date) return '-';
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
   });
 };
@@ -423,17 +459,17 @@ const currencySymbols: Record<string, string> = {
 // 使用货币符号格式化（用于表格单元格）
 const formatCurrency = (amount: number, currency: string = 'USD') => {
   const symbol = currencySymbols[currency] || currency;
-  return `${symbol}${amount.toLocaleString('en-US', { 
-    minimumFractionDigits: 2, 
-    maximumFractionDigits: 2 
+  return `${symbol}${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })}`;
 };
 
 // 使用货币代码格式化（用于 Total 行，如 "USD 100.00"）
 const formatCurrencyWithCode = (amount: number, currency: string = 'USD') => {
-  return `${currency} ${amount.toLocaleString('en-US', { 
-    minimumFractionDigits: 2, 
-    maximumFractionDigits: 2 
+  return `${currency} ${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })}`;
 };
 
@@ -443,243 +479,389 @@ const getPaymentTermName = (code: string): string => {
   return term ? term.name : code;
 };
 
+// 国家代码到名称的映射
+const countryCodeToName = (code: string): string => {
+  const countries: Record<string, string> = {
+    'CN': 'China',
+    'US': 'United States',
+    'GB': 'United Kingdom',
+    'DE': 'Germany',
+    'FR': 'France',
+    'JP': 'Japan',
+    'KR': 'South Korea',
+    'IN': 'India',
+    'CA': 'Canada',
+    'AU': 'Australia',
+    'IT': 'Italy',
+    'ES': 'Spain',
+    'BR': 'Brazil',
+    'MX': 'Mexico',
+    'ID': 'Indonesia',
+    'MY': 'Malaysia',
+    'TH': 'Thailand',
+    'VN': 'Vietnam',
+    'PH': 'Philippines',
+    'PK': 'Pakistan',
+    'BD': 'Bangladesh',
+    'NG': 'Nigeria',
+    'EG': 'Egypt',
+    'ZA': 'South Africa',
+    'AR': 'Argentina',
+    'CO': 'Colombia',
+    'CL': 'Chile',
+    'PE': 'Peru',
+    'NZ': 'New Zealand',
+    'AE': 'United Arab Emirates',
+    'RU': 'Russia',
+    'UA': 'Ukraine',
+    'CZ': 'Czech Republic',
+    'NO': 'Norway',
+    'DK': 'Denmark',
+    'FI': 'Finland',
+    'PT': 'Portugal',
+    'GR': 'Greece',
+    'RO': 'Romania',
+    'HU': 'Hungary',
+    'IL': 'Israel',
+    'KE': 'Kenya',
+    'GH': 'Ghana',
+    'TZ': 'Tanzania',
+    'UG': 'Uganda',
+    'ZW': 'Zimbabwe',
+    'ZM': 'Zambia',
+    'BW': 'Botswana',
+    'MU': 'Mauritius',
+    'NA': 'Namibia',
+    'BF': 'Burkina Faso',
+    'SN': 'Senegal',
+    'CI': 'Ivory Coast',
+    'CM': 'Cameroon',
+    'CD': 'Democratic Republic of Congo',
+    'AO': 'Angola',
+    'MZ': 'Mozambique',
+    'MG': 'Madagascar',
+    'LS': 'Lesotho',
+    'SZ': 'Eswatini',
+    'TD': 'Chad',
+    'CF': 'Central African Republic',
+    'TG': 'Togo',
+    'BJ': 'Benin',
+    'GW': 'Guinea-Bissau',
+    'GM': 'Gambia',
+    'GN': 'Guinea',
+    'SL': 'Sierra Leone',
+    'LR': 'Liberia',
+    'SO': 'Somalia',
+    'DJ': 'Djibouti',
+    'ER': 'Eritrea',
+    'ET': 'Ethiopia',
+    'SD': 'Sudan',
+    'SS': 'South Sudan',
+    'RW': 'Rwanda',
+    'BI': 'Burundi',
+    'KM': 'Comoros',
+    'SC': 'Seychelles',
+    'MR': 'Mauritania',
+    'NE': 'Niger',
+    'TN': 'Tunisia',
+    'LY': 'Libya',
+    'DZ': 'Algeria',
+    'CG': 'Republic of Congo',
+    'GA': 'Gabon',
+    'GQ': 'Equatorial Guinea',
+    'ST': 'São Tomé and Príncipe',
+    'CV': 'Cape Verde',
+  };
+  return countries[code] || code;
+};
+
 export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => {
- 
   const branding = data.branding;
-  // Only use image sources if they are non-empty strings
-  const logoSrc = (branding?.logoBase64 || branding?.logoPath) || undefined;
-  const stampSrc = (branding?.stampBase64 || branding?.stampPath) || undefined;
-  const signatureSrc = branding?.signatureBase64 || undefined;
-  
-  // Validate image sources - empty strings and SVG files should be treated as undefined
-  // React-pdf doesn't support SVG files in Image component
-  const isSvg = (src: string | undefined) => src?.toLowerCase().endsWith('.svg');
-  const validLogoSrc = logoSrc && logoSrc.length > 0 && !isSvg(logoSrc) ? logoSrc : undefined;
-  const validStampSrc = stampSrc && stampSrc.length > 0 && !isSvg(stampSrc) ? stampSrc : undefined;
-  const validSignatureSrc = signatureSrc && signatureSrc.length > 0 && !isSvg(signatureSrc) ? signatureSrc : undefined;
+  const logoSrc = branding?.logoBase64 || branding?.logoPath;
+  const stampSrc = branding?.stampBase64 || branding?.stampPath;
+  const signatureSrc = branding?.signatureBase64;
+
+  // 西班牙使用 NIF，其他欧盟国家使用 VAT Number
+  const euCountries = [
+    'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
+    'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
+    'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'
+  ];
+
+  // 判断税号标签
+  const isSpain = data.customer?.country === 'ES';
+  const isEuCustomer = data.customer?.country && euCountries.includes(data.customer.country);
+  const taxLabel = isSpain ? 'NIF' : (isEuCustomer ? 'VAT Number' : 'Tax ID');
+
+  // Header Component - 每页顶部固定显示
+  const HeaderSection = () => (
+    <View style={styles.headerSection} wrap={false}>
+      <View style={styles.logoSection}>
+        {logoSrc && <Image src={logoSrc} style={styles.logo} />}
+        {branding?.primaryOffice?.name && (
+          <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
+        )}
+        {branding?.vat && (
+          <Text style={styles.documentCode}>Tax ID: {branding.vat}</Text>
+        )}
+        <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.alustars.com'}</Text>
+      </View>
+      <View style={styles.titleSection}>
+        <Text style={styles.title}>QUOTATION</Text>
+        {/* Vendor Code & PO Number - 仅在有数据时显示 */}
+        {data.vendor_code && (
+          <Text style={{ ...styles.documentCode }}>
+            Vendor: {data.vendor_code}
+          </Text>
+        )}
+        {data.customer_po && (
+          <Text style={{ ...styles.documentCode }}>
+            PO Number: {data.customer_po}
+          </Text>
+        )}
+        <Text style={styles.documentCode}>NO. {data.code}</Text>
+        <Text style={styles.documentDate}>Date: {formatDate(data.created)}</Text>
+        <Text style={styles.documentDate}>Valid Until: {data.valid_until ? formatDate(data.valid_until) : '-'}</Text>
+      </View>
+    </View>
+  );
+
+  // Offices Component - 每页底部固定显示
+  const OfficesSection = () => (
+    branding && (
+      <View style={styles.officesSection} wrap={false}>
+        <View style={styles.officeBox}>
+          <Text style={styles.officeLabelBlack}>China Office</Text>
+          <Text style={styles.officeText}>{branding.primaryOffice?.address}</Text>
+          {branding.primaryOffice?.phone && (
+            <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
+          )}
+          {branding.primaryOffice?.email && (
+            <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
+          )}
+        </View>
+        <View style={styles.officeBoxRight}>
+          <Text style={styles.officeLabel}>Spain Office</Text>
+          <Text style={styles.officeText}>{branding.secondaryOffice?.address}</Text>
+          {branding.secondaryOffice?.phone && (
+            <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
+          )}
+          {branding.secondaryOffice?.email && (
+            <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
+          )}
+        </View>
+      </View>
+    )
+  );
+
+  // Content Component - 可跨页显示的内容
+  const ContentSection = () => (
+    <View style={styles.contentSection}>
+      {/* TO: Customer Info */}
+      <View style={styles.toSection}>
+        <View style={styles.toRow}>
+          <Text style={styles.toLabel}>TO:</Text>
+          <Text style={styles.toText}>{data.customer?.name || '-'}</Text>
+        </View>
+        {data.customer?.address && (
+          <Text style={styles.toText}>Address: {data.customer.address}</Text>
+        )}
+        {data.customer?.tax_id && (
+          <Text style={styles.toText}>{taxLabel}: {data.customer.tax_id}</Text>
+        )}
+        {data.customer?.contact_person && (
+          <Text style={styles.toText}>Attn: {data.customer.contact_person}</Text>
+        )}
+        {data.customer?.email && (
+          <Text style={styles.toText}>Email: {data.customer.email}</Text>
+        )}
+      </View>
+
+      {/* Items Table */}
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <View style={styles.colNo}>
+            <Text style={styles.headerCell}>#</Text>
+          </View>
+          <View style={styles.colPartNo}>
+            <Text style={styles.headerCell}>Part No.</Text>
+          </View>
+          <View style={styles.colProduct}>
+            <Text style={styles.headerCell}>Description</Text>
+          </View>
+          <View style={styles.colQty}>
+            <Text style={styles.headerCell}>Qty</Text>
+          </View>
+          <View style={styles.colUnit}>
+            <Text style={styles.headerCell}>Unit</Text>
+          </View>
+          <View style={styles.colPrice}>
+            <Text style={styles.headerCell}>Unit Price</Text>
+          </View>
+          <View style={styles.colAmount}>
+            <Text style={styles.headerCell}>Amount</Text>
+          </View>
+        </View>
+
+        {data.items.map((item, index) => (
+          <View style={styles.tableRow} key={index}>
+            <View style={styles.colNo}>
+              <Text style={styles.cell}>{index + 1}</Text>
+            </View>
+            <View style={styles.colPartNo}>
+              <Text style={styles.cell}>{item.part_number || '-'}</Text>
+            </View>
+            <View style={styles.colProduct}>
+              <Text style={styles.cell}>{item.product_name || '-'}</Text>
+            </View>
+            <View style={styles.colQty}>
+              <Text style={styles.cell}>{item.quantity?.toLocaleString() || 0}</Text>
+            </View>
+            <View style={styles.colUnit}>
+              <Text style={styles.cell}>{item.unit || 'PCS'}</Text>
+            </View>
+            <View style={styles.colPrice}>
+              <Text style={styles.cell}>{formatUnitPrice(item.unit_price || 0, data.currency)}</Text>
+            </View>
+            <View style={styles.colAmount}>
+              <Text style={styles.cell}>{formatAmount(item.amount || 0, data.currency)}</Text>
+            </View>
+          </View>
+        ))}
+
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total:</Text>
+          <Text style={styles.totalValue}>{formatAmountWithCode(data.total_amount || 0, data.currency)}</Text>
+        </View>
+      </View>
+
+      {/* Remarks - 仅在有数据时显示 */}
+      {data.remarks && data.remarks.trim() && (
+        <View style={styles.remarks}>
+          <Text style={styles.remarksTitle}>Remarks</Text>
+          <Text style={styles.remarksText}>{data.remarks}</Text>
+        </View>
+      )}
+
+      {/* Terms & Conditions - 仅显示有数据的行 */}
+      <View style={styles.termsSection}>
+        <Text style={styles.termsTitle}>Terms & Conditions</Text>
+
+        {/* 仅当有付款条款数据且不是默认值'-'时显示该行 */}
+        {data.payment_terms && getPaymentTermName(data.payment_terms) !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Payment Term:</Text>
+            <Text style={styles.termsValue}>
+              {getPaymentTermName(data.payment_terms)}
+            </Text>
+          </View>
+        )}
+
+        {/* 仅当有价格条款数据且不是默认值'-'时显示该行 */}
+        {data.incoterm && data.incoterm !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Price Term:</Text>
+            <Text style={styles.termsValue}>{data.incoterm}</Text>
+          </View>
+        )}
+
+        {/* 仅当有原产国数据且不是默认值'-'时显示该行 */}
+        {data.country_of_origin && countryCodeToName(data.country_of_origin) !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Country of Origin:</Text>
+            <Text style={styles.termsValue}>{countryCodeToName(data.country_of_origin)}</Text>
+          </View>
+        )}
+
+        {/* 仅当有目的地国数据且不是默认值'-'时显示该行 */}
+        {data.country_of_destination && countryCodeToName(data.country_of_destination) !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Country of Destination:</Text>
+            <Text style={styles.termsValue}>{countryCodeToName(data.country_of_destination)}</Text>
+          </View>
+        )}
+
+        {/* 仅当有装运港数据且不是默认值'-'时显示该行 */}
+        {data.port_of_loading && data.port_of_loading !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Port of Loading:</Text>
+            <Text style={styles.termsValue}>{data.port_of_loading}</Text>
+          </View>
+        )}
+
+        {/* 仅当有卸货港数据且不是默认值'-'时显示该行 */}
+        {(data.delivery_port || data.port_of_destination) && (data.delivery_port || data.port_of_destination) !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Port of Discharge:</Text>
+            <Text style={styles.termsValue}>{data.delivery_port || data.port_of_destination}</Text>
+          </View>
+        )}
+
+        {/* 仅当有运输方式数据且不是默认值'Sea'时显示该行 */}
+        {data.mode_of_shipment && data.mode_of_shipment !== 'Sea' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Mode of Shipment:</Text>
+            <Text style={styles.termsValue}>By {data.mode_of_shipment}</Text>
+          </View>
+        )}
+
+        {/* 仅当有交付时间数据且不是默认值'-'时显示该行 */}
+        {data.delivery_time && formatDate(data.delivery_time) !== '-' && (
+          <View style={styles.termsRow}>
+            <Text style={styles.termsLabel}>Time of Delivery:</Text>
+            <Text style={styles.termsValue}>{formatDate(data.delivery_time)}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Bank Information - 仅在有数据时显示 */}
+      {data.bank_info && (
+        <View style={styles.bankInfo}>
+          <Text style={styles.bankTitle}>Remittance Instructions</Text>
+          {data.bank_info.split('\n').map((line, index) => (
+            <Text key={index} style={styles.bankLine}>{line}</Text>
+          ))}
+        </View>
+      )}
+
+      {/* Signature Section */}
+      <View style={styles.signatureSection} wrap={false}>
+        <View style={styles.signatureRow}>
+          <View style={styles.signatureLeft}>
+            <Text style={styles.signatureLabel}>Signed by:</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+              <View>
+                {signatureSrc ? (
+                  <Image src={signatureSrc} style={styles.signatureImage} />
+                ) : (
+                  <View style={styles.signatureLine} />
+                )}
+                <View style={styles.signerInfoBox}>
+                  <Text style={styles.signerName}>{branding?.signer?.name || '-'}</Text>
+                  <Text style={styles.signerTitle}>{branding?.signer?.title || '-'}</Text>
+                </View>
+              </View>
+              <View style={styles.stampSection}>
+                {stampSrc ? (
+                  <Image src={stampSrc} style={styles.stamp} />
+                ) : (
+                  <View style={styles.stampPlaceholder} />
+                )}
+                <Text style={styles.stampLabel}>(Company Seal)</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        
-        {/* Original Header: Logo + Title */}
-        <View style={styles.headerSection}>
-          <View style={styles.logoSection}>
-            {validLogoSrc && <Image src={validLogoSrc} style={styles.logo} />}
-            {branding?.primaryOffice?.name && (
-              <Text style={styles.companyName}>{branding.primaryOffice.name}</Text>
-            )}
-
-            <Text style={styles.websiteUrl}>{branding?.websiteUrl || 'www.example.com'}</Text>
-          </View>
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>QUOTATION</Text>
-            <Text style={styles.documentCode}>{data.code}</Text>
-            <Text style={styles.documentDate}>Date: {formatDate(data.created)}</Text>
-            <Text style={styles.documentDate}>Valid Until: {data.valid_until ? formatDate(data.valid_until) : '-'}</Text>
-          </View>
-        </View>
-
-        {/* Offices Section */}
-        {branding && (
-          <View style={styles.officesSection}>
-            <View style={styles.officeBox}>
-              <Text style={styles.officeLabelBlack}>China Office</Text>
-              <Text style={styles.officeText}>{branding.primaryOffice.address}</Text>
-              {branding.primaryOffice.phone && (
-                <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
-              )}
-              {branding.primaryOffice.email && (
-                <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
-              )}
-            </View>
-            <View style={styles.officeBoxRight}>
-              <Text style={styles.officeLabel}>Spain Office</Text>
-              <Text style={styles.officeText}>{branding.secondaryOffice.address}</Text>
-              {branding.secondaryOffice.phone && (
-                <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
-              )}
-              {branding.secondaryOffice.email && (
-                <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Info Grid: Customer, Project, Trade Terms, Payment Terms */}
-        <View style={styles.infoGrid}>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>Customer</Text>
-            <Text style={styles.infoValue}>{data.customer?.name || '-'}</Text>
-          </View>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>Project</Text>
-            <Text style={styles.infoValue}>{data.project?.name || '-'}</Text>
-          </View>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>Incoterms</Text>
-            <Text style={styles.infoValue}>{data.incoterm || '-'}</Text>
-          </View>
-          <View style={styles.infoBoxLast}>
-            <Text style={styles.infoLabel}>Payment Terms</Text>
-            <Text style={styles.infoValue}>{data.payment_terms ? getPaymentTermName(data.payment_terms) : '-'}</Text>
-          </View>
-        </View>
-
-        {/* Items Table */}
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <View style={styles.colNo}>
-              <Text style={styles.headerCell}>#</Text>
-            </View>
-            <View style={styles.colPartNo}>
-              <Text style={styles.headerCell}>Part No.</Text>
-            </View>
-            <View style={styles.colProduct}>
-              <Text style={styles.headerCell}>Description</Text>
-            </View>
-            <View style={styles.colPackaging}>
-              <Text style={styles.headerCell}>Packaging</Text>
-            </View>
-            <View style={styles.colQty}>
-              <Text style={styles.headerCell}>Qty</Text>
-            </View>
-            <View style={styles.colUnit}>
-              <Text style={styles.headerCell}>Unit</Text>
-            </View>
-            <View style={styles.colPrice}>
-              <Text style={styles.headerCell}>Unit Price</Text>
-            </View>
-            <View style={styles.colAmount}>
-              <Text style={styles.headerCell}>Amount</Text>
-            </View>
-          </View>
-
-          {data.items.map((item, index) => (
-            <View style={styles.tableRow} key={index}>
-              <View style={styles.colNo}>
-                <Text style={styles.cell}>{index + 1}</Text>
-              </View>
-              <View style={styles.colPartNo}>
-                <Text style={styles.cell}>{item.part_number || '-'}</Text>
-              </View>
-              <View style={styles.colProduct}>
-                <Text style={styles.cell}>{item.product_name || '-'}</Text>
-              </View>
-              <View style={styles.colPackaging}>
-                {item.packaging ? (
-                  item.packaging.split('\n').map((line, i) => (
-                    <Text key={i} style={styles.cell}>{line}</Text>
-                  ))
-                ) : (
-                  <Text style={styles.cell}>-</Text>
-                )}
-              </View>
-              <View style={styles.colQty}>
-                <Text style={styles.cell}>{item.quantity?.toLocaleString() || 0}</Text>
-              </View>
-              <View style={styles.colUnit}>
-                <Text style={styles.cell}>{item.unit || 'PCS'}</Text>
-              </View>
-              <View style={styles.colPrice}>
-                <Text style={styles.cell}>{formatUnitPrice(item.unit_price || 0, data.currency)}</Text>
-              </View>
-              <View style={styles.colAmount}>
-                <Text style={styles.cell}>{formatAmount(item.amount || 0, data.currency)}</Text>
-              </View>
-            </View>
-          ))}
-
-         
- 
-
-          {/* Total Row - 移除底部横线，只保留顶部横线 */}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>{formatAmountWithCode(data.total_amount || 0, data.currency)}</Text>
-          </View>
-        </View>
-
-        {/* Delivery Time & Remarks - 交货期和备注合并显示 */}
-        {(data.delivery_time || data.remarks) && (
-          <View style={styles.remarks}>
-            {data.delivery_time && (
-              <>
-                <Text style={styles.remarksText}>
-                  <Text style={{ fontWeight: 'bold' }}>Delivery Time: </Text>
-                  {data.delivery_time}
-                </Text>
-              </>
-            )}
-            {data.remarks && (
-              <Text style={[styles.remarksText, data.delivery_time ? { marginTop: 6 } : {}]}>
-                <Text style={{ fontWeight: 'bold' }}>Remarks: </Text>
-                {data.remarks}
-              </Text>
-            )}
-          </View>
-        )}
-
-    
-
-        {/* Footer: Signature + Stamp */}
-        <View style={styles.footerSection} wrap={false}>
-          <View style={styles.signatureRow}>
-            <View style={styles.signatureLeft}>
-              <Text style={styles.signatureLabel}>Signed by:</Text>
-              {validSignatureSrc ? (
-                <Image src={validSignatureSrc} style={styles.signatureImage} />
-              ) : (
-                <View style={styles.signatureLine} />
-              )}
-              <View style={styles.signerInfoBox}>
-                <Text style={styles.signerName}>
-                   <Text style={styles.signerNameValue}>{branding?.signer?.name || '-'}</Text>
-                </Text>
-                <Text style={styles.signerTitle}>
-                   <Text style={styles.signerTitleValue}>{branding?.signer?.title || '-'}</Text>
-                </Text>
-              </View>
-            </View>
-            <View style={styles.stampSection}>
-              
-              {validStampSrc ? (
-                <Image src={validStampSrc} style={styles.stamp} />
-              ) : (
-                <View style={styles.stampPlaceholder} />
-              )}
-              <Text style={styles.stampLabel}>(Company Seal)</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Offices Section - Added to match Quotation template, pushed to bottom of page */}
-        {branding && (
-          <View style={styles.officesSection} wrap={false}>
-            <View style={styles.officeBox}>
-              <Text style={styles.officeLabelBlack}>China Office</Text>
-              <Text style={styles.officeText}>{branding.primaryOffice?.address}</Text>
-              {branding.primaryOffice?.phone && (
-                <Text style={styles.officeContact}>Tel: {branding.primaryOffice.phone}</Text>
-              )}
-              {branding.primaryOffice?.email && (
-                <Text style={styles.officeContact}>Email: {branding.primaryOffice.email}</Text>
-              )}
-            </View>
-            <View style={styles.officeBoxRight}>
-              <Text style={styles.officeLabel}>Spain Office</Text>
-              <Text style={styles.officeText}>{branding.secondaryOffice?.address}</Text>
-              {branding.secondaryOffice?.phone && (
-                <Text style={styles.officeContact}>Tel: {branding.secondaryOffice.phone}</Text>
-              )}
-              {branding.secondaryOffice?.email && (
-                <Text style={styles.officeContact}>Email: {branding.secondaryOffice.email}</Text>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Website Footer removed - already shown in header */}
+        <HeaderSection />
+        <ContentSection />
+        <OfficesSection />
       </Page>
     </Document>
   );

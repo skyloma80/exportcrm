@@ -42,11 +42,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     width: '50%',
   },
-  logo: {
+ logo: {
     width: 150,
     maxHeight: 40,
     objectFit: 'contain',
-    marginTop: 0,
+    marginVertical: 4,
   },
   companyName: {
     fontSize: 12,

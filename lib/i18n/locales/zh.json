@@ -1004,6 +1004,8 @@
       "sendEmail": "发送邮件",
       "resend": "重新发送"
     },
+    "actionsTitle": "操作",
+    "actionsDesc": "此报价单的可用操作",
     "sendSuccess": "报价单已发送",
     "sendError": "发送报价单失败",
     "acceptSuccess": "报价单已标记为已接受",
