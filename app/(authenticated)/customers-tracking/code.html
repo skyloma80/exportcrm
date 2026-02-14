@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ultra-Focused CRM Tracking Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<div class="flex h-screen overflow-hidden">
+<div class="flex-1 flex flex-col min-w-0">
+<div class="flex flex-1 overflow-hidden">
+<div class="w-full lg:w-[400px] xl:w-[480px] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+<div class="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
+<div class="relative">
+<span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-700 transition-all" placeholder="Find clients..." type="text"/>
+</div>
+<div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+<div class="flex gap-2">
+<button class="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-full whitespace-nowrap">All Clients (42)</button>
+<button class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Active</button>
+<button class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded-full whitespace-nowrap hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Needs Follow-up</button>
+</div>
+<button class="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+<span class="material-icons text-sm">filter_list</span>
+                        Filter
+                    </button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 bg-background-light/50 dark:bg-background-dark/20">
+<div class="group bg-white dark:bg-slate-800 p-4 rounded-xl border-2 border-primary shadow-md cursor-pointer transition-all">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">Global Logistics Corp</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contact: Marcus Webb</span>
+</div>
+<span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded uppercase">Active</span>
+</div>
+<div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2">
+<span class="material-icons text-primary text-sm">event</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400 italic">Tomorrow, 10:00 AM</span>
+</div>
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800" data-alt="Avatar of team member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGfHoiMPsh4aSG8YyG5Zu37yaQdYbJp52RVCml9G3TC-9OG2dseexViUXDAC4_shagpfTRv_DHVjT5QKJjE3oRjzElEEKK_YgLnd0jgOTBfi-ojVw4Ku_vojuv1InoD3pGXSfbL_IRvXeQ4A3URcFkaBNlim-k77jM2BZum06OV2h871p2tYyJ1Gu7hTfBxxcc2esN8WC6Gbza71pUrdL1fKzJB41h97jAFye2Y8l_cik_kTH_eh77kdLNA_9udMvvqage0TsLL_yp"/>
+<div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800">+2</div>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm cursor-pointer transition-all">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">Stellar Marketing Inc.</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contact: Sarah Jenkins</span>
+</div>
+<span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] font-bold rounded uppercase">Lead</span>
+</div>
+<div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2">
+<span class="material-icons text-slate-400 text-sm">schedule</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400 italic">Today, 4:30 PM</span>
+</div>
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800" data-alt="Avatar of Sarah Jenkins" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA13YZFfFLdK0IjkLCvfDoMGSTf56x2oRkEX3f7VfrX10_RiGqTrtMWnRUoVU04tF7Ufx8T9Saq6h0eptvl0jn7a4oQZO6ogG-SNq4YGhMnCRtJoAHSTi80AK7PtEpC2KM3w_LUjmanupem6eCSQkFQDR49Ez8mgtIv97nCZEyKcijMiu-GTjACgV4wogmuKhRmU_L4AIoXfnPUPrkSvUYB9jeS6_rygP5uWL8gdmB0wB4qt5xrw0_oTS9QhWy9aFbElOYSn0alaU5-"/>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm cursor-pointer transition-all relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">Quantum Tech Sol.</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contact: David Chen</span>
+</div>
+<span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold rounded uppercase">Follow-up</span>
+</div>
+<div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2">
+<span class="material-icons text-red-500 text-sm">warning</span>
+<span class="text-xs font-medium text-red-600 dark:text-red-400 italic font-bold">Overdue (2 days)</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800">DC</div>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm cursor-pointer transition-all">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">Apex Retail Partners</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contact: Elena Rodriguez</span>
+</div>
+<span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded uppercase">Onboarded</span>
+</div>
+<div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2">
+<span class="material-icons text-slate-400 text-sm">check_circle</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400 italic">Project Started</span>
+</div>
+<div class="flex -space-x-2">
+<img class="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800" data-alt="Avatar of team member" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd6STAB-LNtXuU68_d-V5J4hngdQ-7YthSfqdiSu8mxIi_9Lyr04HFCEaw-kc_aSWaQfhXFzh9Yee5-J8hpwAp2FkIJ70AQDeOxyjvYjV8EJJkKU4ydBR-dHwMHCoAoxJNwcyOPjHT7ubwYYxrc3Ev_zXbZKJ9_jtd-F5u0LQHoR6uG8Wi1xcfGfM8JxYzM1wgoq2kFDLaCetsjM-meG-QEy7WdrtxMnDdfFutGPr3_JvZFdXwqcViArLz261yHX2sqVUo7NVAmqnn"/>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm cursor-pointer transition-all">
+<div class="flex justify-between items-start mb-2">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-white">Horizon Web Media</span>
+<span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Contact: Mike Thompson</span>
+</div>
+<span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded uppercase">Active</span>
+</div>
+<div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2">
+<span class="material-icons text-slate-400 text-sm">event</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400 italic">Oct 24, 2:00 PM</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-slate-800">MT</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between">
+<button class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                            Prev
+                        </button>
+<span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Page 1 of 5</span>
+<button class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                            Next
+                        </button>
+</div>
+</div>
+</div>
+<div class="hidden lg:flex flex-1 bg-background-light dark:bg-background-dark overflow-y-auto custom-scrollbar p-8">
+<div class="max-w-3xl w-full mx-auto pb-12">
+<div class="flex items-center justify-between mb-8">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-widest">
+<span class="material-icons text-sm">edit</span>
+                                Client Profile
+                            </div>
+<h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Global Logistics Corp</h2>
+</div>
+<div class="flex gap-2">
+<button class="px-6 py-2.5 bg-primary text-white font-bold text-sm rounded-lg shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 hover:bg-primary/90 transition-all flex items-center gap-2">
+<span class="material-icons text-lg">save</span>
+                                Save Changes
+                            </button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">Contact Information</h3>
+<button class="text-xs font-semibold text-primary hover:text-primary/80 transition-colors">+ Add Contact</button>
+</div>
+<div class="flex items-start gap-4">
+<img class="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-700 object-cover" data-alt="Primary contact portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGfHoiMPsh4aSG8YyG5Zu37yaQdYbJp52RVCml9G3TC-9OG2dseexViUXDAC4_shagpfTRv_DHVjT5QKJjE3oRjzElEEKK_YgLnd0jgOTBfi-ojVw4Ku_vojuv1InoD3pGXSfbL_IRvXeQ4A3URcFkaBNlim-k77jM2BZum06OV2h871p2tYyJ1Gu7hTfBxxcc2esN8WC6Gbza71pUrdL1fKzJB41h97jAFye2Y8l_cik_kTH_eh77kdLNA_9udMvvqage0TsLL_yp"/>
+<div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Marcus Webb</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">Logistics Director</p>
+</div>
+<div>
+<div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 mb-1">
+<span class="material-icons text-sm text-slate-400">email</span>
+                                        marcus.webb@globallogistics.com
+                                    </div>
+<div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+<span class="material-icons text-sm text-slate-400">chat</span>
+                                        WeChat: mwebb_glc
+                                    </div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">
+<form class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold text-black uppercase tracking-wide">Priority Level</label>
+<div class="flex gap-3">
+<label class="flex-1 inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" name="priority" type="radio"/>
+<span class="ml-2 text-xs font-bold">Low</span>
+</label>
+<label class="flex-1 inline-flex items-center px-4 py-2 rounded-lg border-2 border-primary bg-primary/5 text-primary cursor-pointer hover:bg-primary/10 transition-colors">
+<input checked="" class="form-checkbox h-4 w-4 text-primary rounded border-primary focus:ring-offset-0 focus:ring-0" name="priority" type="radio"/>
+<span class="ml-2 text-xs font-bold">Medium</span>
+</label>
+<label class="flex-1 inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" name="priority" type="radio"/>
+<span class="ml-2 text-xs font-bold">High</span>
+</label>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-black uppercase tracking-wide">Contact Status</label>
+<div class="flex gap-2">
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-primary bg-primary/5 text-primary cursor-pointer hover:bg-primary/10 transition-colors">
+<input checked="" class="form-checkbox h-4 w-4 text-primary rounded border-primary focus:ring-offset-0 focus:ring-0" name="status" type="radio"/>
+<span class="ml-2 text-xs font-bold">Contacted</span>
+</label>
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" name="status" type="radio"/>
+<span class="ml-2 text-xs font-bold">Replied</span>
+</label>
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" name="status" type="radio"/>
+<span class="ml-2 text-xs font-bold">No Reply</span>
+</label>
+</div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="text-xs font-bold text-black uppercase tracking-wide">Outreach Notes</label>
+<span class="text-[10px] text-black font-medium">Auto-saved at 14:32</span>
+</div>
+<div class="relative border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+<div class="flex items-center gap-1 p-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" type="button"><span class="material-icons text-sm">format_bold</span></button>
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" type="button"><span class="material-icons text-sm">format_italic</span></button>
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" type="button"><span class="material-icons text-sm">format_list_bulleted</span></button>
+<div class="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+<button class="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" type="button"><span class="material-icons text-sm">link</span></button>
+</div>
+<textarea class="w-full px-4 py-3 bg-white dark:bg-slate-900 text-black border-none focus:ring-0 outline-none resize-none placeholder-slate-400 font-medium" placeholder="Enter details about the latest interaction..." rows="6">Had a discovery call with Marcus today. They are expanding their European logistics hub and looking for a better tracking solution. Budget is approved for Q4. Scheduled a demo for tomorrow morning.</textarea>
+</div>
+</div>
+<div class="space-y-2 mb-6">
+<label class="text-xs font-bold text-black uppercase tracking-wide">Next Step Action</label>
+<div class="flex gap-3">
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-primary bg-primary/5 text-primary cursor-pointer hover:bg-primary/10 transition-colors">
+<input checked="" class="form-checkbox h-4 w-4 text-primary rounded border-primary focus:ring-offset-0 focus:ring-0" type="checkbox"/>
+<span class="ml-2 text-xs font-bold">Follow-up</span>
+</label>
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" type="checkbox"/>
+<span class="ml-2 text-xs font-bold">Call</span>
+</label>
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" type="checkbox"/>
+<span class="ml-2 text-xs font-bold">Meeting</span>
+</label>
+<label class="inline-flex items-center px-4 py-2 rounded-lg border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-slate-400 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+<input class="form-checkbox h-4 w-4 text-slate-400 rounded border-slate-300 focus:ring-offset-0 focus:ring-0" type="checkbox"/>
+<span class="ml-2 text-xs font-bold">Quote</span>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold text-black uppercase tracking-wide">Next Step Date</label>
+<div class="relative">
+<input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-black font-medium focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" type="date" value="2023-10-24"/>
+<span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">calendar_today</span>
+</div>
+</div>
+</div>
+</form>
+</div>
+<div class="mt-12">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+<span class="material-icons text-primary text-lg">history</span>
+                            Recent Activity
+                        </h3>
+<div class="space-y-4">
+<div class="flex gap-4">
+<div class="relative flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/20 mt-1.5 z-10"></div>
+<div class="w-px h-full bg-slate-200 dark:bg-slate-800 absolute top-3"></div>
+</div>
+<div class="pb-4">
+<p class="text-sm text-slate-700 dark:text-slate-300"><span class="font-semibold text-slate-900 dark:text-white">Alex Rivera</span> moved status from <span class="text-amber-600 font-medium">Lead</span> to <span class="text-blue-600 font-medium">Active</span></p>
+<p class="text-[11px] text-slate-500 font-medium mt-1 uppercase tracking-tight">Today • 2:32 PM</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="relative flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700 mt-1.5 z-10"></div>
+<div class="w-px h-full bg-slate-200 dark:bg-slate-800 absolute top-3"></div>
+</div>
+<div class="pb-4">
+<p class="text-sm text-slate-700 dark:text-slate-300">New note added: <span class="italic text-slate-500">"Spoke with CFO regarding budgetary constraints..."</span></p>
+<p class="text-[11px] text-slate-500 font-medium mt-1 uppercase tracking-tight">Oct 20, 2023 • 10:15 AM</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="relative flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700 mt-1.5 z-10"></div>
+</div>
+<div>
+<p class="text-sm text-slate-700 dark:text-slate-300">Client record created</p>
+<p class="text-[11px] text-slate-500 font-medium mt-1 uppercase tracking-tight">Oct 18, 2023 • 9:00 AM</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

@@ -39,9 +39,15 @@ const baseNavGroups: NavGroup[] = [
     ],
   },
   {
-    labelKey: "nav.partners",
+    labelKey: "nav.customerManagement",
     items: [
       { titleKey: "nav.customers", url: "/customers", icon: Users },
+      { titleKey: "nav.customerTracking", url: "/customers-tracking", icon: Users },
+    ],
+  },
+  {
+    labelKey: "nav.supplierServiceProvider",
+    items: [
       { titleKey: "nav.suppliers", url: "/suppliers", icon: Factory },
       { titleKey: "nav.serviceProviders", url: "/service-providers", icon: Truck },
     ],
