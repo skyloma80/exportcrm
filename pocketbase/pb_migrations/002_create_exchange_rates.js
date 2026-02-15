@@ -29,8 +29,7 @@ migrate((app) => {
             type: "text",
             required: true,
             min: 3,
-            max: 3,
-            pattern: "^[A-Z]{3}$"
+            max: 3 
         },
         {
             name: "rate",
