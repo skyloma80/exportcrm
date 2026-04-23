@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Customer as CustomerType, customerContactService } from '@/lib/pocketbase/services/customers';
 import ActivityHistory from './ActivityHistory';
-import { Edit3, Save, Mail, MessageSquare, Calendar as CalendarIcon, Bold, Italic, List, Link, History, User, Phone, MapPin, Plus } from 'lucide-react';
+import { Edit3, Save, Mail, MessageSquare, Calendar as CalendarIcon, History, User, Phone, MapPin, Plus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -86,27 +86,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onS
     is_primary: false
   });
 
-  // 富文本编辑器引用
-  const notesRef = useRef<HTMLDivElement>(null);
 
-  // 富文本格式化函数
-  const formatText = (command: string) => {
-    if (notesRef.current) {
-      notesRef.current.focus();
-      document.execCommand(command, false);
-    }
-  };
-
-  // 插入链接函数
-  const insertLink = () => {
-    if (notesRef.current) {
-      const url = prompt('请输入链接地址:');
-      if (url) {
-        notesRef.current.focus();
-        document.execCommand('createLink', false, url);
-      }
-    }
-  };
 
   // 当customer prop发生变化时，更新内部状态和加载联系人
   useEffect(() => {
@@ -593,59 +573,15 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({ customer, onS
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-black tracking-wide">Outreach Notes</label>
               </div>
-              <div className="relative border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                <div className="flex items-center gap-1 p-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                  <button 
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" 
-                    type="button"
-                    onClick={() => formatText('bold')}
-                    title="Bold"
-                  >
-                    <Bold size={16} />
-                  </button>
-                  <button 
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" 
-                    type="button"
-                    onClick={() => formatText('italic')}
-                    title="Italic"
-                  >
-                    <Italic size={16} />
-                  </button>
-                  <button 
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" 
-                    type="button"
-                    onClick={() => formatText('insertUnorderedList')}
-                    title="Bullet List"
-                  >
-                    <List size={16} />
-                  </button>
-                  <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
-                  <button 
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400" 
-                    type="button"
-                    onClick={insertLink}
-                    title="Insert Link"
-                  >
-                    <Link size={16} />
-                  </button>
-                </div>
-                <div
-                  ref={notesRef}
-                  contentEditable
-                  className="w-full px-4 py-3 bg-white dark:bg-slate-900 text-black border-none focus:ring-0 outline-none resize-none font-medium min-h-[120px]"
-                  onInput={(e) => {
-                    const content = e.currentTarget.innerHTML;
-                    setNotes(content);
-                    handleInputChange('notes', content);
-                  }}
-                  dangerouslySetInnerHTML={{ __html: notes }}
-                />
-                {notes === '' && (
-                  <div className="absolute inset-0 px-4 py-3 pointer-events-none text-slate-400 font-medium flex items-center">
-                    Enter details about the latest interaction...
-                  </div>
-                )}
-              </div>
+              <textarea
+                className="w-full px-4 py-3 bg-white dark:bg-slate-900 text-black border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-0 outline-none resize-none font-medium min-h-[120px] placeholder-slate-400"
+                placeholder="Enter details about the latest interaction..."
+                value={notes}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  handleInputChange('notes', e.target.value);
+                }}
+              />
             </div>
             
             <div className="space-y-2 mb-6">

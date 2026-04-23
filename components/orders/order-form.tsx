@@ -435,7 +435,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
               />
             </div>
             <div className="space-y-2">
-              <Label>{locale === 'zh' ? '供应商代码 (Vendor Code)' : 'Vendor Code'}</Label>
+              <Label>{locale === 'zh' ? '供应商代码 ' : 'Supplier ID'}</Label>
               <Input
                 value={formData.vendor_code}
                 onChange={(e) => setFormData(prev => ({ ...prev, vendor_code: e.target.value }))}
@@ -579,7 +579,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
               <Input
                 value={formData.mode_of_shipment}
                 onChange={(e) => setFormData(prev => ({ ...prev, mode_of_shipment: e.target.value }))}
-                 
+
               />
               <div className="flex flex-wrap gap-2 mt-1">
                 <Button
@@ -588,7 +588,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                   size="sm"
                   onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Sea' }))}
                 >
-                    Sea
+                  Sea
                 </Button>
                 <Button
                   type="button"
@@ -596,7 +596,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                   size="sm"
                   onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (FedEx)' }))}
                 >
-                   Air (FedEx)
+                  Air (FedEx)
                 </Button>
                 <Button
                   type="button"
@@ -604,7 +604,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                   size="sm"
                   onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (DHL)' }))}
                 >
-                   Air (DHL)
+                  Air (DHL)
                 </Button>
                 <Button
                   type="button"
@@ -620,7 +620,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                   size="sm"
                   onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Express (UPS)' }))}
                 >
-                   Express (UPS)
+                  Express (UPS)
                 </Button>
               </div>
             </div>

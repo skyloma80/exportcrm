@@ -256,20 +256,23 @@ export interface Unit {
 export const UNITS: Record<string, Unit> = {
   // Quantity units - 数量单位
   PCS: { code: 'PCS', name: 'Pieces', name_cn: '件', category: 'quantity' },
+  EA: { code: 'EA', name: 'Each', name_cn: '个 ', category: 'quantity' },
+  U: { code: 'UNIT', name: 'Unit', name_cn: '个 ', category: 'quantity' },
+
   SET: { code: 'SET', name: 'Sets', name_cn: '套', category: 'quantity' },
   PAIR: { code: 'PAIR', name: 'Pairs', name_cn: '对', category: 'quantity' },
   DOZ: { code: 'DOZ', name: 'Dozens', name_cn: '打', category: 'quantity' },
   CTN: { code: 'CTN', name: 'Cartons', name_cn: '箱', category: 'quantity' },
   PKG: { code: 'PKG', name: 'Packages', name_cn: '包', category: 'quantity' },
   ROLL: { code: 'ROLL', name: 'Rolls', name_cn: '卷', category: 'quantity' },
-  
+
   // Weight units - 重量单位
   KG: { code: 'KG', name: 'Kilograms', name_cn: '千克', category: 'weight' },
   G: { code: 'G', name: 'Grams', name_cn: '克', category: 'weight' },
   MT: { code: 'MT', name: 'Metric Tons', name_cn: '公吨', category: 'weight' },
   LB: { code: 'LB', name: 'Pounds', name_cn: '磅', category: 'weight' },
   OZ: { code: 'OZ', name: 'Ounces', name_cn: '盎司', category: 'weight' },
-  
+
   // Length units - 长度单位
   M: { code: 'M', name: 'Meters', name_cn: '米', category: 'length' },
   CM: { code: 'CM', name: 'Centimeters', name_cn: '厘米', category: 'length' },
@@ -277,14 +280,14 @@ export const UNITS: Record<string, Unit> = {
   FT: { code: 'FT', name: 'Feet', name_cn: '英尺', category: 'length' },
   IN: { code: 'IN', name: 'Inches', name_cn: '英寸', category: 'length' },
   YD: { code: 'YD', name: 'Yards', name_cn: '码', category: 'length' },
-  
+
   // Volume units - 体积单位
   CBM: { code: 'CBM', name: 'Cubic Meters', name_cn: '立方米', category: 'volume' },
   L: { code: 'L', name: 'Liters', name_cn: '升', category: 'volume' },
   ML: { code: 'ML', name: 'Milliliters', name_cn: '毫升', category: 'volume' },
   CUFT: { code: 'CUFT', name: 'Cubic Feet', name_cn: '立方英尺', category: 'volume' },
   GAL: { code: 'GAL', name: 'Gallons', name_cn: '加仑', category: 'volume' },
-  
+
   // Area units - 面积单位
   SQM: { code: 'SQM', name: 'Square Meters', name_cn: '平方米', category: 'area' },
   SQFT: { code: 'SQFT', name: 'Square Feet', name_cn: '平方英尺', category: 'area' },
@@ -339,18 +342,18 @@ export const SHIPPING_METHODS: Record<string, ShippingMethod> = {
   SEA_FCL: { code: 'SEA_FCL', name: 'Sea FCL (Full Container Load)', name_cn: '海运整箱', category: 'sea' },
   SEA_LCL: { code: 'SEA_LCL', name: 'Sea LCL (Less Container Load)', name_cn: '海运拼箱', category: 'sea' },
   SEA_BULK: { code: 'SEA_BULK', name: 'Sea Bulk', name_cn: '海运散货', category: 'sea' },
-  
+
   // Air freight - 空运
   AIR_EXPRESS: { code: 'AIR_EXPRESS', name: 'Air Express', name_cn: '航空快递', category: 'air' },
   AIR_CARGO: { code: 'AIR_CARGO', name: 'Air Cargo', name_cn: '航空货运', category: 'air' },
-  
+
   // Land transport - 陆运
   TRUCK: { code: 'TRUCK', name: 'Truck', name_cn: '卡车运输', category: 'land' },
-  
+
   // Rail - 铁路
   RAIL: { code: 'RAIL', name: 'Rail', name_cn: '铁路运输', category: 'rail' },
   RAIL_CHINA_EUROPE: { code: 'RAIL_CHINA_EUROPE', name: 'China-Europe Railway', name_cn: '中欧班列', category: 'rail' },
-  
+
   // Express - 快递
   DHL: { code: 'DHL', name: 'DHL Express', name_cn: 'DHL快递', category: 'express' },
   FEDEX: { code: 'FEDEX', name: 'FedEx', name_cn: '联邦快递', category: 'express' },
@@ -396,7 +399,7 @@ export const INSURANCE_TYPES: Record<string, InsuranceType> = {
     category: 'basic',
     description: 'Covers all risks of physical loss or damage',
   },
-  
+
   // Additional insurance - 附加险
   TPND: {
     code: 'TPND',
@@ -433,7 +436,7 @@ export const INSURANCE_TYPES: Record<string, InsuranceType> = {
     category: 'additional',
     description: 'Covers rust damage to metal goods',
   },
-  
+
   // Special insurance - 特殊险
   STRIKE: {
     code: 'STRIKE',
@@ -519,23 +522,23 @@ export const MATERIALS: Record<string, Material> = {
   AL7075: { code: 'AL7075', name: 'Aluminum 7075', name_cn: '铝合金7075', category: 'aluminum' },
   ADC12: { code: 'ADC12', name: 'ADC12 Die Cast Aluminum', name_cn: '压铸铝ADC12', category: 'aluminum' },
   A380: { code: 'A380', name: 'A380 Die Cast Aluminum', name_cn: '压铸铝A380', category: 'aluminum' },
-  
+
   // Carbon steel
   Q235: { code: 'Q235', name: 'Carbon Steel Q235', name_cn: '碳钢Q235', category: 'steel' },
   Q345: { code: 'Q345', name: 'Carbon Steel Q345', name_cn: '碳钢Q345', category: 'steel' },
   SPCC: { code: 'SPCC', name: 'Cold Rolled Steel SPCC', name_cn: '冷轧钢SPCC', category: 'steel' },
   SPHC: { code: 'SPHC', name: 'Hot Rolled Steel SPHC', name_cn: '热轧钢SPHC', category: 'steel' },
-  
+
   // Stainless steel
   SS304: { code: 'SS304', name: 'Stainless Steel 304', name_cn: '不锈钢304', category: 'stainless' },
   SS316: { code: 'SS316', name: 'Stainless Steel 316', name_cn: '不锈钢316', category: 'stainless' },
   SS201: { code: 'SS201', name: 'Stainless Steel 201', name_cn: '不锈钢201', category: 'stainless' },
-  
+
   // Copper alloys
   BRASS: { code: 'BRASS', name: 'Brass', name_cn: '黄铜', category: 'copper' },
   BRONZE: { code: 'BRONZE', name: 'Bronze', name_cn: '青铜', category: 'copper' },
   COPPER: { code: 'COPPER', name: 'Pure Copper', name_cn: '紫铜', category: 'copper' },
-  
+
   // Zinc alloys
   ZAMAK3: { code: 'ZAMAK3', name: 'Zamak 3', name_cn: '锌合金3号', category: 'zinc' },
   ZAMAK5: { code: 'ZAMAK5', name: 'Zamak 5', name_cn: '锌合金5号', category: 'zinc' },
