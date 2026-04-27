@@ -45,7 +45,10 @@ export class ExcelPiService {
     const worksheet = workbook.worksheets[0];
 
     const items = order.expand?.order_items_via_order || [];
+    console.log('bank_info type:', typeof order.bank_info);
+    console.log('bank_info value:', order.bank_info);
     const remittanceLines = this.extractRemittanceLines(order.bank_info);
+    console.log('Remittance lines:', JSON.stringify(remittanceLines, null, 2));
     const customer = order.expand?.customer;
 
     // ====== 1. 清空Items模板行 ======
@@ -73,27 +76,28 @@ export class ExcelPiService {
     const rowsInserted = items.length > templateRowCount ? items.length - templateRowCount : 0;
 
     if (rowsInserted > 0) {
+      // 先清除模板行的 B:C 合并，避免 spliceRows 自动复制
+      worksheet.unMergeCells('B11:C11');
+
       // 插入新行
       worksheet.spliceRows(templateRow + templateRowCount, 0, ...Array(rowsInserted).fill([]));
 
-      // 复制模板行样式和合并单元格到新行
+      // 复制模板行样式到新行
       const sourceRow = worksheet.getRow(templateRow);
       for (let i = 0; i < rowsInserted; i++) {
         const newRowNumber = templateRow + templateRowCount + i;
         const newRow = worksheet.getRow(newRowNumber);
         newRow.height = sourceRow.height;
+        
         // 复制样式
         sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const targetCell = newRow.getCell(colNumber);
           targetCell.style = { ...cell.style };
         });
-        // 复制B11:C11合并单元格
-        try {
-          worksheet.mergeCells(`B${newRowNumber}:C${newRowNumber}`);
-        } catch (e) {
-          // 可能已经存在
-        }
       }
+
+      // 重新设置模板行的 B:C 合并
+      worksheet.mergeCells('B11:C11');
     }
 
     // 填充Items数据
@@ -108,7 +112,6 @@ export class ExcelPiService {
       }
 
       row.getCell(1).value = index + 1;
-      // B列是合并单元格的起始位置，填B列即可
       row.getCell(2).value = item.product_code || (product as any)?.part_number || product?.code || '';
       row.getCell(4).value = description;
       row.getCell(5).value = item.quantity;
@@ -127,6 +130,16 @@ export class ExcelPiService {
       if ((product as any)?.hs_code) lines++;
       row.height = lines * 15;
     });
+
+    // 填充数据后设置 B列:C列合并（必须在填充数据之后）
+    for (let i = 0; i < items.length; i++) {
+      const rowNumber = templateRow + i;
+      try {
+        worksheet.mergeCells(`B${rowNumber}:C${rowNumber}`);
+      } catch (e) {
+        // 已经合并则跳过
+      }
+    }
 
     // ====== 5. Total ======
     const totalRowIndex = 15 + rowsInserted;
@@ -164,16 +177,21 @@ export class ExcelPiService {
 
         const sourceRow = worksheet.getRow(remittanceTemplateRow);
         for (let i = 0; i < rowsToInsert; i++) {
-          const newRow = worksheet.getRow(remittanceTemplateRow + 1 + i);
+          const newRowNumber = remittanceTemplateRow + 1 + i;
+          const newRow = worksheet.getRow(newRowNumber);
           newRow.height = sourceRow.height;
           sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
             const targetCell = newRow.getCell(colNumber);
             targetCell.style = { ...cell.style };
           });
+          try {
+            worksheet.mergeCells(`A${newRowNumber}:H${newRowNumber}`);
+          } catch (e) {
+            // 可能已经存在
+          }
         }
       }
 
-      // Remittance 加序号（如 "1. BENEFICIARY NAME:..."）
       remittanceLines.forEach((line, index) => {
         const row = worksheet.getRow(remittanceTemplateRow + index);
         const numberedLine = `${index + 1}. ${line}`;
@@ -188,20 +206,16 @@ export class ExcelPiService {
     // ====== 9. 使用 JSZip 恢复原始媒体文件 ======
     const newZip = await JSZip.loadAsync(fs.readFileSync(tempOutputPath));
 
-    // 恢复媒体文件
     for (const [fileName, data] of Object.entries(originalMedia)) {
       newZip.file(fileName, data);
     }
-    // 恢复 drawings
     for (const [fileName, data] of Object.entries(originalDrawings)) {
       newZip.file(fileName, data);
     }
-    // 恢复 drawing rels
     for (const [fileName, data] of Object.entries(originalDrawingRels)) {
       newZip.file(fileName, data);
     }
 
-    // 找到 PI 工作表对应的 sheet 文件
     const workbookXmlFile = newZip.file('xl/workbook.xml');
     if (workbookXmlFile) {
       const workbookXml = await workbookXmlFile.async('string');
@@ -219,13 +233,11 @@ export class ExcelPiService {
             if (sheetNumMatch) {
               const sheetNum = sheetNumMatch[1];
 
-              // 恢复 worksheet rels 文件
               const originalSheetRels = originalWorksheetRels[`xl/worksheets/_rels/sheet1.xml.rels`];
               if (originalSheetRels) {
                 newZip.file(`xl/worksheets/_rels/sheet${sheetNum}.xml.rels`, originalSheetRels);
               }
 
-              // 恢复 drawing 引用
               const sheetFile = newZip.file(`xl/worksheets/${sheetFileName}`);
               if (sheetFile) {
                 const sheetXml = await sheetFile.async('string');
@@ -243,10 +255,8 @@ export class ExcelPiService {
       }
     }
 
-    // 生成最终文件
     const outputBuffer = await newZip.generateAsync({ type: 'nodebuffer' });
 
-    // 删除临时文件
     fs.unlinkSync(tempOutputPath);
 
     return outputBuffer as unknown as Buffer;
@@ -255,7 +265,6 @@ export class ExcelPiService {
   private extractRemittanceLines(bankInfo: any): string[] {
     if (!bankInfo) return [];
 
-    // 处理 JSON 字符串数组（如 '["line1", "line2"]'）
     if (typeof bankInfo === 'string') {
       try {
         const parsed = JSON.parse(bankInfo);
@@ -265,13 +274,20 @@ export class ExcelPiService {
       } catch (e) {
         // 不是 JSON，继续按普通字符串处理
       }
-      // 普通字符串按换行分割
       return bankInfo.split('\n').filter((line: string) => line.trim());
     }
 
-    // 处理真正的数组
     if (Array.isArray(bankInfo)) {
-      return bankInfo.map(String).filter((line: string) => line && line.trim());
+      try {
+        const jsonString = bankInfo.join('\n');
+        const parsed = JSON.parse(jsonString);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((line: string) => line && line.trim());
+        }
+      } catch (e) {
+        // 不是 JSON，按普通字符串数组处理
+      }
+      return bankInfo.filter((line: string) => line && line.trim());
     }
 
     return [];
