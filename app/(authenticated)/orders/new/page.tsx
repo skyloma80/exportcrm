@@ -30,25 +30,18 @@ export default function NewOrderPage() {
   const { toast } = useToast()
   const { setItems: setBreadcrumbItems } = useBreadcrumb()
 
-  // Get URL parameters
   const projectIdFromUrl = searchParams.get("project")
-  const fromQuotationId = searchParams.get("fromQuotation")
 
-  // Enforce project context
-  if (!projectIdFromUrl) {
-    notFound()
-  }
 
-  // Use project context hook
+
+  // 项目上下文
   const { returnUrl } = useProjectContext({
     documentType: 'order',
     currentPageLabel: t("orders.new")
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [quotationData, setQuotationData] = useState<any>(null)
-  const [quotationItems, setQuotationItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(!!fromQuotationId)
+  const [loading, setLoading] = useState(false)
 
   // Set breadcrumb
   useEffect(() => {
@@ -58,53 +51,7 @@ export default function NewOrderPage() {
     return () => setBreadcrumbItems([])
   }, [setBreadcrumbItems, t])
 
-  // Load quotation data if converting from quotation
-  useEffect(() => {
-    if (fromQuotationId) {
-      loadQuotationData()
-    }
-  }, [fromQuotationId])
-
-  const loadQuotationData = async () => {
-    if (!fromQuotationId) return
-
-    setLoading(true)
-    try {
-      const pb = getPocketBase()
-
-      // Load quotation
-      const quotation = await pb.collection("quotations").getOne(fromQuotationId, {
-        expand: "project,customer"
-      })
-      setQuotationData(quotation)
-
-      // Load quotation items
-      const items = await pb.collection("quotation_items").getFullList({
-        filter: `quotation = "${fromQuotationId}"`,
-        expand: "product",
-        sort: "created",
-      })
-      setQuotationItems(items)
-
-      toast({
-        title: locale === 'zh' ? '已导入报价单数据' : 'Quotation data imported',
-        description: locale === 'zh'
-          ? `从报价单 ${quotation.code} 导入了 ${items.length} 个产品`
-          : `Imported ${items.length} items from quotation ${quotation.code}`,
-      })
-    } catch (err: any) {
-      console.error("Error loading quotation:", err)
-      toast({
-        title: locale === 'zh' ? '加载报价单失败' : 'Failed to load quotation',
-        description: err.message,
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSubmit = async (data: OrderCreateInput) => {
+  const handleSubmit = async (data: OrderCreateInput, items: any[]) => {
     setIsSubmitting(true)
     try {
       const pb = getPocketBase()
@@ -113,15 +60,15 @@ export default function NewOrderPage() {
       const orderCode = await generateOrderCode(pb)
       console.log('Generated order code:', orderCode, 'Type:', typeof orderCode)
 
-      // Calculate total amount from quotation items
-      const totalAmount = quotationItems.reduce((sum, item) => sum + (item.amount || 0), 0)
+      // Calculate total amount from items
+      const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0)
       console.log('Calculated total amount:', totalAmount)
 
       const currentUser = pb.authStore.model?.id
 
-      // Prepare order data
-      const orderData = {
-        project: projectIdFromUrl,
+      // Prepare order data - 项目可选
+      const orderData: any = {
+        project: data.project || undefined,
         customer: data.customer,
         incoterm: data.incoterm,
         port_of_loading: data.port_of_loading,
@@ -136,7 +83,6 @@ export default function NewOrderPage() {
         remarks: data.remarks,
         customer_po: data.customer_po,
         vendor_code: data.vendor_code,
-        quotation: fromQuotationId || undefined,
       }
 
       console.log('Creating order with data:', orderData)
@@ -145,27 +91,22 @@ export default function NewOrderPage() {
       const { orderService } = await import('@/lib/pocketbase/services/orders')
       const order = await orderService.createOrder(orderData, currentUser, totalAmount > 0 ? totalAmount : undefined)
 
-      // Create order items if converting from quotation
-      if (quotationItems.length > 0) {
-        for (const item of quotationItems) {
+      // Create order items 
+      if (items.length > 0) {
+        for (const item of items) {
           await pb.collection("order_items").create({
             order: order.id,
-            product: item.product,
-            product_code: item.product_code,
+            product: item.product || null,
+            product_name: item.product_name || undefined,
+            product_code: item.product_code || undefined,
             quantity: item.quantity,
-            unit: item.unit,
             unit_price: item.unit_price,
             amount: item.amount,
           })
         }
       }
 
-      // Update quotation status to accepted if converting from quotation
-      if (fromQuotationId) {
-        await pb.collection("quotations").update(fromQuotationId, {
-          status: 'accepted',
-        })
-      }
+
 
       toast({
         title: t("orders.createSuccess"),
@@ -173,14 +114,15 @@ export default function NewOrderPage() {
       })
 
       // Navigate to order detail page
-      router.push(`/orders/${order.id}?project=${projectIdFromUrl}`)
+      router.push(`/orders/${order.id}`)
     } catch (err: any) {
       console.error("Create error:", err)
       console.error("Error response:", err.response)
       console.error("Error data:", err.data)
+      const errorData = err.response?.data ? JSON.stringify(err.response.data) : null;
       toast({
         title: t("orders.createError"),
-        description: err.data?.message || err.message,
+        description: errorData || err.data?.message || err.message,
         variant: "destructive",
       })
     } finally {
@@ -189,7 +131,7 @@ export default function NewOrderPage() {
   }
 
   const handleBack = () => {
-    router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=orders`)
+    router.push(returnUrl || '/orders')
   }
 
   if (loading) {
@@ -210,33 +152,18 @@ export default function NewOrderPage() {
           <div>
             <h1 className="text-3xl font-bold">{t("orders.new")}</h1>
             <p className="text-muted-foreground mt-1">
-              {fromQuotationId && quotationData
-                ? `${locale === 'zh' ? '从报价单转换' : 'Convert from quotation'}: ${quotationData.code}`
-                : t("orders.newDescription") || (locale === 'zh' ? '创建新订单' : 'Create a new order')}
+              {t("orders.newDescription") || (locale === 'zh' ? '创建新订单' : 'Create a new order')}
             </p>
           </div>
         </div>
       </div>
 
       <OrderForm
-        initialData={quotationData ? {
-          project: projectIdFromUrl,
-          customer: quotationData.customer,
-          incoterm: quotationData.incoterm,
-          port_of_loading: quotationData.port_of_loading,
-          port_of_destination: quotationData.port_of_destination,
-          payment_terms: quotationData.payment_terms,
-          currency: quotationData.currency,
-          exchange_rate: quotationData.exchange_rate,
-
-          remarks: quotationData.remarks,
-        } : {
-          project: projectIdFromUrl,
+        initialData={{
+          project: projectIdFromUrl || undefined,
         }}
         onSubmit={handleSubmit}
         isLoading={isSubmitting}
-        projectLocked={true}
-        items={quotationItems}
       />
     </div>
   )

@@ -12,7 +12,9 @@ import {
   Command,
   Calculator,
   MessageSquarePlus,
+  ShoppingCart,
   HardDrive,
+  ArrowLeftRight,
 } from "lucide-react"
 
 import { NavMain, NavGroup } from "@/components/layout/nav-main"
@@ -36,6 +38,7 @@ const baseNavGroups: NavGroup[] = [
     items: [
       { titleKey: "nav.dashboard", url: "/dashboard", icon: LayoutDashboard },
       { titleKey: "nav.projects", url: "/projects", icon: FolderKanban },
+      { titleKey: "nav.orders", url: "/orders", icon: ArrowLeftRight },
     ],
   },
   {
@@ -49,6 +52,7 @@ const baseNavGroups: NavGroup[] = [
     labelKey: "nav.supplierServiceProvider",
     items: [
       { titleKey: "nav.suppliers", url: "/suppliers", icon: Factory },
+      { titleKey: "nav.purchaseOrders", url: "/purchase-orders", icon: ShoppingCart },
       { titleKey: "nav.serviceProviders", url: "/service-providers", icon: Truck },
     ],
   },

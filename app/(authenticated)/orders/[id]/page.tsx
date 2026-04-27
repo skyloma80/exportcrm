@@ -52,10 +52,10 @@ export default function OrderManagementPage({ params }: PageProps) {
   // Get project context
   const projectIdFromUrl = searchParams.get("project")
 
-  // Enforce project context: return 404 if no project parameter
-  if (!projectIdFromUrl) {
-    notFound()
-  }
+  // Project context is optional for independent orders
+  // if (!projectIdFromUrl) {
+  //   notFound()
+  // }
 
   // Use project context hook to get return URL
   const { returnUrl } = useProjectContext({
@@ -229,173 +229,28 @@ export default function OrderManagementPage({ params }: PageProps) {
 
     setGeneratingPI(true)
     try {
-      const customer = order.expand?.customer
-      const project = order.expand?.project
-      const orderItems = order.expand?.order_items_via_order || []
-
-      // Load branding
-      const branding = await brandingService.getDocumentBranding('customer')
-
-      // Load primary contact
-      const pb = getPocketBase()
-      let primaryContact = null
-      if (customer?.id) {
-        const contactResult = await pb.collection('customer_contacts').getList(1, 1, {
-          filter: `customer = "${customer.id}" && is_primary = true`,
-        })
-        if (contactResult.items.length > 0) {
-          primaryContact = contactResult.items[0]
-        }
+      // Direct download from API
+      const response = await fetch(`/api/orders/${order.id}/export-pi`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PI Excel');
       }
 
-      // Load bank account - get default or first available
-      let bankInfo = ''
-      if (order.bank_info && typeof order.bank_info === 'string') {
-        bankInfo = order.bank_info
-      } else {
-        // Query default bank account from database
-        try {
-          const defaultBank = await pb.collection('bank_accounts').getFirstListItem('is_default = true')
-          bankInfo = defaultBank.content || ''
-        } catch (e: any) {
-          // If no default, get first available
-          try {
-            const firstBank = await pb.collection('bank_accounts').getList(1, 1)
-            if (firstBank.items.length > 0) {
-              bankInfo = firstBank.items[0].content || ''
-            }
-          } catch (err) {
-            console.error('Failed to load bank account:', err)
-          }
-        }
-      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const timestamp = format(new Date(), 'yyyy-MM-dd');
+      a.download = `PI-${order.code}-${timestamp}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
-      // Prepare PDF data
-      const itemsTotal = orderItems.reduce((sum, item) => {
-        return sum + (item.amount || (item.quantity * item.unit_price) || 0)
-      }, 0)
-
-      const costBreakdown = order.cost_breakdown as Record<string, number> | undefined
-      const costTotal = costBreakdown
-        ? Object.values(costBreakdown).reduce((sum, val) => sum + (val || 0), 0)
-        : 0
-
-      const calculatedTotal = itemsTotal + costTotal
-
-      // Convert order code to compact format A{YY}{XXXX}
-      const convertToCompactCode = (code: string): string => {
-        if (!code) return ''
-        const match = code.match(/^(?:O|ORD)-(\d{4})-(\d+)$/)
-        if (match) {
-          const year = match[1].slice(-2)
-          const seq = parseInt(match[2], 10).toString().padStart(4, '0')
-          return `A${year}${seq}`
-        }
-        return code
-      }
-
-      const displayCode = order.code ? convertToCompactCode(order.code) : ''
-
-      const pdfData: InvoicePDFData = {
-        code: displayCode,
-        issue_date: order.created,
-        currency: order.currency || 'USD',
-        total_amount: calculatedTotal,
-        remarks: order.remarks,
-        bank_info: bankInfo,
-        order: {
-          code: order.code,
-          incoterm: order.incoterm,
-          port_of_loading: order.port_of_loading,
-          port_of_destination: order.port_of_destination,
-          payment_terms: order.payment_terms,
-          estimated_shipping_date: order.estimated_shipping_date,
-          customer_po: order.customer_po,
-          vendor_code: order.vendor_code,
-        },
-        customer: customer ? {
-          name: customer.name,
-          address: (customer as any).address,
-          tax_id: (customer as any).tax_id,
-          contact_person: primaryContact?.name || '',
-          phone: primaryContact?.phone || (customer as any).phone,
-          email: primaryContact?.email || (customer as any).email,
-          country: (customer as any).country,
-        } : undefined,
-        project: project ? {
-          name: project.name,
-          code: project.code,
-        } : undefined,
-        items: orderItems.map(item => {
-          const product = item.expand?.product as any
-          const packagingLines: string[] = []
-          if (product?.pcs_per_carton) {
-            packagingLines.push(`${product.pcs_per_carton} pcs/ctn`)
-          }
-          if (product?.carton_dimensions) {
-            const d = product.carton_dimensions
-            packagingLines.push(`${d.length}×${d.width}×${d.height} mm`)
-          }
-          if (product?.carton_gross_weight) {
-            packagingLines.push(`G.W: ${product.carton_gross_weight} kg/ctn`)
-          }
-          const packaging = packagingLines.length > 0 ? packagingLines.join('\n') : undefined
-          const description = product?.description || product?.name || '-'
-
-          return {
-            part_number: product?.part_number || '-',
-            product_code: product?.code || item.product_code,
-            product_name: description,
-            packaging,
-            quantity: item.quantity,
-            unit: item.unit || 'PCS',
-            unit_price: item.unit_price,
-            amount: item.amount || (item.quantity * item.unit_price),
-          }
-        }),
-        terms: {
-          payment: order.payment_terms,
-          price_term: order.incoterm,
-          // 提供合理的默认值，确保PI中始终有值显示
-          country_of_origin: order.country_of_origin || 'CN',  // 默认为中国
-          country_of_destination: order.country_of_destination || (customer as any)?.country || '',  // 优先使用客户国家，然后是空字符串
-          port_of_discharge: order.port_of_destination,
-          mode_of_shipment: order.mode_of_shipment || (order.port_of_loading && order.port_of_destination ? 'Sea' : ''),
-          port_of_loading: order.port_of_loading,
-          time_of_delivery: order.estimated_shipping_date || '',
-        },
-        branding: branding || undefined,
-      }
-
-      // Generate filename with timestamp: PI-{订单号}-YYYY-MM-DD-HHMMSS.pdf
-      const timestamp = format(new Date(), 'yyyy-MM-dd-HHmmss')
-      const filename = `PI-${order.code}-${timestamp}.pdf`
-
-      // Build folder path: Customers/{客户名}/{项目名}/orders/{订单号}/PI/
-      const customerName = customer?.name || 'Unknown'
-      const projectName = project?.name || 'Unknown'
-      const folder = `Customers/${customerName}/${projectName}/orders/${order.code}/PI`
-
-      await ensureFolderExists(folder)
-
-      // Upload PDF to S3
-      const result = await uploadPdfToDisk(<InvoicePDF data={pdfData} />, filename, folder)
-
-      if (result.success) {
-        toast({
-          title: t('orders.management.piGenerateSuccess'),
-          description: t('orders.management.piGenerateSuccessDesc'),
-        })
-
-        // Navigate to disk directory
-        await navigateToDisk(folder, router)
-      } else {
-        toast({
-          title: t('orders.management.piGenerateError'),
-          description: result.error,
-          variant: 'destructive',
-        })
-      }
+      toast({
+        title: t('orders.management.piGenerateSuccess'),
+        description: locale === 'zh' ? 'PI Excel 已成功生成并下载' : 'PI Excel has been generated and downloaded',
+      })
     } catch (error: any) {
       console.error('Generate PI error:', error)
       toast({

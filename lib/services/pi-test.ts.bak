@@ -1,0 +1,127 @@
+import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
+import { cloneDeep } from 'lodash';
+import * as fs from 'fs';
+
+async function modifyPI() {
+  const originalZip = await JSZip.loadAsync(fs.readFileSync('PI-template.xlsx'));
+  const originalMedia: { [key: string]: Buffer } = {};
+  const originalDrawings: { [key: string]: Buffer } = {};
+  const originalDrawingRels: { [key: string]: Buffer } = {};
+  const originalWorksheetRels: { [key: string]: Buffer } = {};
+  
+  for (const fileName of Object.keys(originalZip.files)) {
+    const file = originalZip.file(fileName);
+    if (!file) continue;
+    if (fileName.startsWith('xl/media/')) {
+      originalMedia[fileName] = await file.async('nodebuffer');
+    }
+    if (fileName.match(/xl\/drawings\/drawing\d+\.xml$/)) {
+      originalDrawings[fileName] = await file.async('nodebuffer');
+    }
+    if (fileName.match(/xl\/drawings\/_rels\/drawing\d+\.xml\.rels$/)) {
+      originalDrawingRels[fileName] = await file.async('nodebuffer');
+    }
+    if (fileName.match(/xl\/worksheets\/_rels\/sheet\d+\.xml\.rels$/)) {
+      originalWorksheetRels[fileName] = await file.async('nodebuffer');
+    }
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile('PI-template.xlsx');
+  const worksheet = workbook.getWorksheet('PI');
+  if (!worksheet) throw new Error('Worksheet PI not found');
+
+  const srcProductRow = worksheet.getRow(11);
+  worksheet.spliceRows(13, 0);
+  worksheet.spliceRows(13, 0);
+  worksheet.spliceRows(13, 0);
+  worksheet.spliceRows(13, 0);
+
+  for (let i = 0; i < 4; i++) {
+    const newRow = worksheet.getRow(13 + i);
+    newRow.getCell(1).value = 3 + i;
+    for (let col = 2; col <= 8; col++) {
+      const srcCell = srcProductRow.getCell(col);
+      newRow.getCell(col).value = cloneDeep(srcCell.value);
+      newRow.getCell(col).style = cloneDeep(srcCell.style);
+    }
+  }
+
+  const srcRemittanceRow = worksheet.getRow(28);
+  worksheet.spliceRows(29, 0);
+  worksheet.spliceRows(29, 0);
+  worksheet.spliceRows(29, 0);
+
+  const remittanceItems = [
+    '    2. BANK NAME: BANK OF CHINA ',
+    '    3. ACCOUNT NO.: 1234567890 ',
+    '    4. SWIFT CODE: BKCHCNBJ '
+  ];
+
+  for (let i = 0; i < remittanceItems.length; i++) {
+    worksheet.getRow(29 + i).getCell(1).value = remittanceItems[i];
+    worksheet.getRow(29 + i).getCell(1).style = cloneDeep(srcRemittanceRow.getCell(1).style);
+  }
+
+  await workbook.xlsx.writeFile('PI-output-temp.xlsx');
+
+  const newZip = await JSZip.loadAsync(fs.readFileSync('PI-output-temp.xlsx'));
+  
+  for (const [fileName, data] of Object.entries(originalMedia)) {
+    newZip.file(fileName, data);
+  }
+  for (const [fileName, data] of Object.entries(originalDrawings)) {
+    newZip.file(fileName, data);
+  }
+  for (const [fileName, data] of Object.entries(originalDrawingRels)) {
+    newZip.file(fileName, data);
+  }
+
+  // 找到 PI 工作表对应的 sheet 文件
+  const workbookXmlFile = newZip.file('xl/workbook.xml');
+  if (!workbookXmlFile) throw new Error('workbook.xml not found');
+  const workbookXml = await workbookXmlFile.async('string');
+  const piSheetMatch = workbookXml.match(/<sheet[^>]*name="PI"[^>]*r:id="(rId\d+)"/);
+  
+  if (piSheetMatch) {
+    // 找到 workbook.xml.rels 中 sheet 文件名
+    const workbookRelsFile = newZip.file('xl/_rels/workbook.xml.rels');
+    if (!workbookRelsFile) throw new Error('workbook.xml.rels not found');
+    const workbookRels = await workbookRelsFile.async('string');
+    const sheetRelMatch = workbookRels.match(new RegExp(`Id="${piSheetMatch[1]}"[^>]*Target="worksheets/(sheet\\d+\\.xml)"`));
+    
+    if (sheetRelMatch) {
+      const sheetFileName = sheetRelMatch[1];
+      const sheetNumMatch = sheetFileName.match(/sheet(\d+)\.xml/);
+      if (!sheetNumMatch) throw new Error('Cannot extract sheet number');
+      const sheetNum = sheetNumMatch[1];
+      
+      // 恢复 worksheet rels 文件
+      const originalSheetRels = originalWorksheetRels['xl/worksheets/_rels/sheet1.xml.rels'];
+      if (originalSheetRels) {
+        newZip.file(`xl/worksheets/_rels/sheet${sheetNum}.xml.rels`, originalSheetRels);
+      }
+      
+      // 在 sheet xml 中添加 drawing 引用
+      const sheetFile = newZip.file(`xl/worksheets/${sheetFileName}`);
+      if (sheetFile) {
+        const sheetXml = await sheetFile.async('string');
+        if (!sheetXml.includes('<drawing')) {
+          const sheetWithDrawing = sheetXml.replace('</worksheet>', '<drawing r:id="rId3"/></worksheet>');
+          newZip.file(`xl/worksheets/${sheetFileName}`, sheetWithDrawing);
+        } else {
+          // 修正已有的 drawing 引用
+          const fixedSheetXml = sheetXml.replace(/<drawing[^>]*r:id="rId\d+"[^>]*\/>/, '<drawing r:id="rId3"/>');
+          newZip.file(`xl/worksheets/${sheetFileName}`, fixedSheetXml);
+        }
+      }
+    }
+  }
+
+  fs.writeFileSync('PI-output.xlsx', await newZip.generateAsync({ type: 'nodebuffer' }));
+  fs.unlinkSync('PI-output-temp.xlsx');
+  console.log('Done: PI-output.xlsx');
+}
+
+modifyPI().catch(console.error);

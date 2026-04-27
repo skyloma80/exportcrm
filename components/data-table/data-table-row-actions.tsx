@@ -17,6 +17,12 @@ interface DataTableRowActionsProps<TData> {
   onView?: (row: TData) => void
   onEdit?: (row: TData) => void
   onDelete?: (row: TData) => void
+  extraActions?: {
+    label: string
+    icon?: React.ComponentType<{ className?: string }>
+    onClick: (row: TData) => void
+    className?: string
+  }[]
 }
 
 export function DataTableRowActions<TData>({
@@ -24,6 +30,7 @@ export function DataTableRowActions<TData>({
   onView,
   onEdit,
   onDelete,
+  extraActions,
 }: DataTableRowActionsProps<TData>) {
   return (
     <DropdownMenu>
@@ -50,7 +57,7 @@ export function DataTableRowActions<TData>({
             Edit
           </DropdownMenuItem>
         )}
-        {(onView || onEdit) && onDelete && <DropdownMenuSeparator />}
+        {(onView || onEdit || (extraActions && extraActions.length > 0)) && onDelete && <DropdownMenuSeparator />}
         {onDelete && (
           <DropdownMenuItem
             onClick={() => onDelete(row.original)}
@@ -59,6 +66,21 @@ export function DataTableRowActions<TData>({
             <Trash className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
+        )}
+        {extraActions && extraActions.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            {extraActions.map((action, index) => (
+              <DropdownMenuItem
+                key={index}
+                onClick={() => action.onClick(row.original)}
+                className={action.className}
+              >
+                {action.icon && <action.icon className="mr-2 h-4 w-4" />}
+                {action.label}
+              </DropdownMenuItem>
+            ))}
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

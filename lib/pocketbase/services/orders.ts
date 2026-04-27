@@ -9,7 +9,7 @@ import { RecordModel } from 'pocketbase';
 import { BaseCollectionService } from '../base-service';
 import { codeGenerator, CODE_PREFIXES, generateOrderCode } from '@/lib/services/code-generator';
 import { activityLogService } from './activity-logs';
-import { bankAccountService } from './bank-accounts';
+import { remittanceService } from './remittance';
 
 // ============================================================================
 // Types
@@ -61,7 +61,7 @@ export interface BankInfo {
 
 export interface Order extends RecordModel {
   code: string;
-  project: string;
+  project?: string;
   customer: string;
   quotation?: string;
   status: OrderStatus;
@@ -79,7 +79,7 @@ export interface Order extends RecordModel {
   country_of_destination?: string;
   mode_of_shipment?: string;
   // PI-related fields
-  bank_info?: string | BankInfo;  // 新数据为 string，旧数据为 BankInfo 对象（向后兼容）
+  bank_info?: string[];
   shipping_marks?: string;
   estimated_shipping_date?: string;
   remarks?: string;  // 备注（包含包装信息等）
@@ -96,6 +96,7 @@ export interface OrderItem extends RecordModel {
   unit_price: number;
   amount: number;
   shipped_quantity?: number;
+  cost_price?: number;
 }
 
 export interface OrderPayment extends RecordModel {
@@ -170,7 +171,7 @@ export interface OrderItemWithExpand extends OrderItem {
 }
 
 export interface OrderCreateInput {
-  project: string;
+  project?: string;
   customer: string;
   quotation?: string;
   incoterm: string;
@@ -185,7 +186,7 @@ export interface OrderCreateInput {
   country_of_destination?: string;
   mode_of_shipment?: string;
   // PI-related fields
-  bank_info?: string | BankInfo;  // 新数据为 string，旧数据为 BankInfo 对象（向后兼容）
+  bank_info?: string[];
   shipping_marks?: string;
   estimated_shipping_date?: string;
   remarks?: string;  // 备注（包含包装信息等）
@@ -202,6 +203,7 @@ export interface OrderItemCreateInput {
   product: string;
   quantity: number;
   unit_price: number;
+  cost_price?: number;
 }
 
 export interface OrderPaymentCreateInput {
@@ -254,6 +256,21 @@ class OrderService extends BaseCollectionService<Order> {
   }
 
   /**
+   * Get paginated orders with expand
+   */
+  async getListWithExpand(page: number = 1, perPage: number = 50, filter: string = ''): Promise<{ items: OrderWithExpand[], totalItems: number }> {
+    const result = await this.pb.collection('orders').getList<OrderWithExpand>(page, perPage, {
+      filter,
+      sort: '-created',
+      expand: 'customer,project',
+    });
+    return {
+      items: result.items,
+      totalItems: result.totalItems,
+    };
+  }
+
+  /**
    * Get orders by project
    */
   async getByProject(projectId: string): Promise<Order[]> {
@@ -289,17 +306,26 @@ class OrderService extends BaseCollectionService<Order> {
   async createOrder(data: OrderCreateInput, userId?: string, totalAmount?: number): Promise<Order> {
     const code = await this.generateCode();
 
-    // Use 0.01 as default to avoid PocketBase validation error for required field
+    // Resolve bank_info: use provided value, or fall back to default Remittance template
+    let resolvedBankInfo: string[] = data.bank_info ?? [];
+    if (resolvedBankInfo.length === 0) {
+      try {
+        const defaultRemittance = await remittanceService.getDefault();
+        if (defaultRemittance?.items && defaultRemittance.items.length > 0) {
+          resolvedBankInfo = defaultRemittance.items;
+        }
+      } catch (e) {
+        console.warn('Could not load default remittance template:', e);
+      }
+    }
+
     const orderData: any = {
       ...data,
       code,
       status: 'draft' as OrderStatus,
       total_amount: totalAmount && totalAmount > 0 ? totalAmount : 0.01,
       paid_amount: 0,
-      bank_info: data.bank_info || (await (async () => {
-        const defaultBank = await bankAccountService.getDefault();
-        return defaultBank?.content;
-      })()),
+      bank_info: resolvedBankInfo,
     };
 
     // Add created_by if provided
@@ -307,7 +333,14 @@ class OrderService extends BaseCollectionService<Order> {
       orderData.created_by = userId;
     }
 
-    const order = await this.create(orderData);
+    let order: Order;
+    try {
+      order = await this.create(orderData);
+    } catch (e: any) {
+      // Expose PocketBase validation details for debugging
+      console.error('PocketBase create order failed:', JSON.stringify(e?.response ?? e, null, 2));
+      throw e;
+    }
 
     // Log activity
     try {

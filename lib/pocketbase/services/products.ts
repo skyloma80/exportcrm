@@ -42,6 +42,7 @@ export interface Product extends RecordModel {
   carton_dimensions?: CartonDimensions;  // 纸箱尺寸 (mm)
   carton_gross_weight?: number;      // 单箱毛重 (kg)
   carton_net_weight?: number;        // 单箱净重 (kg)
+  purchase_price_notes?: string;     // 采购价格备注
 }
 
 export interface ProductMold extends RecordModel {
@@ -89,6 +90,7 @@ export interface ProductCreateInput {
   carton_dimensions?: CartonDimensions;
   carton_gross_weight?: number;
   carton_net_weight?: number;
+  purchase_price_notes?: string;
 }
 
 export interface ProductUpdateInput extends Partial<ProductCreateInput> {}

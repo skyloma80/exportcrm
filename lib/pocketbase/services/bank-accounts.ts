@@ -14,7 +14,8 @@ import { BaseCollectionService } from '../base-service';
 
 export interface BankAccount extends RecordModel {
   name: string;           // 账户名称
-  content: string;        // 银行信息内容（纯文本）
+  content: string;        // 银行信息内容（向后兼容，纯文本）
+  lines?: string[];       // 银行信息明细（JSON 列表）
   is_default: boolean;    // 是否默认
 }
 

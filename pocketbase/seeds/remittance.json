@@ -1,0 +1,48 @@
+[
+  {
+    "name": "EUR account",
+    "items": [
+      "BENEFICIARY NAME: CHONGQING ALUSTARS INTERNATIONAL CO.,LTD",
+      "ACCOUNT NUMBER: 123917886435000",
+      "BENEFICIARY BANK: China Merchants Bank, Chongqing Branch",
+      "SWIFT CODE: CMBCCNBS245"
+    ],
+    "is_default": false
+  },
+  {
+    "name": "USD account",
+    "items": [
+      "BENEFICIARY NAME: CHONGQING ALUSTARS INTERNATIONAL CO.,LTD",
+      "ACCOUNT NUMBER: 123917886410001",
+      "BENEFICIARY BANK: China Merchants Bank, Chongqing Branch",
+      "SWIFT CODE: CMBCCNBS245"
+    ],
+    "is_default": false
+  },
+  {
+    "name": "RMB account",
+    "items": [
+      "BENEFICIARY NAME: CHONGQING ALUSTARS INTERNATIONAL CO.,LTD",
+      "ACCOUNT NUMBER: 123917886410001",
+      "BENEFICIARY BANK: China Merchants Bank, Chongqing Branch",
+      "SWIFT CODE: CMBCCNBS245"
+    ],
+    "is_default": false
+  },
+  {
+    "name": "全球收款账户 BankingCircle S.A.丹麦-多币种（连连）",
+    "items": [
+      "Account Name: CHONGQING ALUSTARS INTERNATIONAL CO., LTD.",
+      "Account No.: DK4289000057912169",
+      "Bank: Banking Circle Denmark",
+      "Country/Region: Denmark",
+      "Bank Address: Lautrupsgade 13-15 2100 Copenhagen Denmark",
+      "SWIFT CODE: SXPYDKKK",
+      "BANK CODE: 8900",
+      "BRANCH CODE: XXX",
+      "Clearing system: Support for local mainstream clearing systems",
+      "Remarks: Please include the following contents to your receiver when making a payment.[Seller Name]; [Product]; [PI/Contract Number]"
+    ],
+    "is_default": false
+  }
+]

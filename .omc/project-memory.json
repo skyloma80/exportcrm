@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1774789318634,
+  "lastScanned": 1777272713204,
   "projectRoot": "D:\\exportcrm",
   "techStack": {
     "languages": [
@@ -92,7 +92,7 @@
       "path": "app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1774789318551,
+      "lastAccessed": 1777272713121,
       "keyFiles": [
         "globals.css",
         "layout.tsx",
@@ -103,17 +103,30 @@
       "path": "components",
       "purpose": "UI components",
       "fileCount": 2,
-      "lastAccessed": 1774789318553,
+      "lastAccessed": 1777272713123,
       "keyFiles": [
         "auth-provider.tsx",
         "theme-provider.tsx"
+      ]
+    },
+    "excel-template": {
+      "path": "excel-template",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1777272713154,
+      "keyFiles": [
+        "PI-code-test.xlsx",
+        "PI-template.xlsx",
+        "PI-test-output.xlsx",
+        "PI.xlsx",
+        "采购订单.xlsx"
       ]
     },
     "hooks": {
       "path": "hooks",
       "purpose": null,
       "fileCount": 9,
-      "lastAccessed": 1774789318571,
+      "lastAccessed": 1777272713155,
       "keyFiles": [
         "use-collection.tsx",
         "use-mobile.tsx",
@@ -126,7 +139,7 @@
       "path": "lib",
       "purpose": "Library code",
       "fileCount": 1,
-      "lastAccessed": 1774789318572,
+      "lastAccessed": 1777272713155,
       "keyFiles": [
         "utils.ts"
       ]
@@ -135,7 +148,7 @@
       "path": "migrations",
       "purpose": "Database migrations",
       "fileCount": 1,
-      "lastAccessed": 1774789318572,
+      "lastAccessed": 1777272713156,
       "keyFiles": [
         "030_create_customer_tracking_collection.go"
       ]
@@ -144,14 +157,14 @@
       "path": "modules",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1774789318572,
+      "lastAccessed": 1777272713156,
       "keyFiles": []
     },
     "pocketbase": {
       "path": "pocketbase",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1774789318573,
+      "lastAccessed": 1777272713158,
       "keyFiles": [
         "README.md"
       ]
@@ -160,25 +173,32 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 4,
-      "lastAccessed": 1774789318574,
+      "lastAccessed": 1777272713158,
       "keyFiles": [
         "email-preview-rfq.html",
         "email-preview.html",
         "logo.png"
       ]
     },
+    "scratch": {
+      "path": "scratch",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777272713158,
+      "keyFiles": []
+    },
     "app\\api": {
       "path": "app\\api",
       "purpose": "API routes",
       "fileCount": 0,
-      "lastAccessed": 1774789318575,
+      "lastAccessed": 1777272713159,
       "keyFiles": []
     },
     "pocketbase\\seeds": {
       "path": "pocketbase\\seeds",
       "purpose": "Database seeds",
       "fileCount": 10,
-      "lastAccessed": 1774789318577,
+      "lastAccessed": 1777272713161,
       "keyFiles": [
         "app_config.json",
         "customers.json",
@@ -188,195 +208,123 @@
   },
   "hotPaths": [
     {
-      "path": "pocketbase\\pb_migrations",
-      "accessCount": 3,
-      "lastAccessed": 1774789416536,
+      "path": "lib\\services\\excel-pi-service.ts",
+      "accessCount": 37,
+      "lastAccessed": 1777298692554,
+      "type": "file"
+    },
+    {
+      "path": "components\\orders\\order-form.tsx",
+      "accessCount": 13,
+      "lastAccessed": 1777283378420,
+      "type": "directory"
+    },
+    {
+      "path": "app\\(authenticated)\\orders\\new\\page.tsx",
+      "accessCount": 8,
+      "lastAccessed": 1777282563529,
+      "type": "file"
+    },
+    {
+      "path": "components\\data-table\\data-table-row-actions.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1777282013557,
+      "type": "directory"
+    },
+    {
+      "path": "app\\api\\purchase-orders\\[id]\\export-po\\route.ts",
+      "accessCount": 5,
+      "lastAccessed": 1777282326585,
+      "type": "file"
+    },
+    {
+      "path": "app\\api",
+      "accessCount": 4,
+      "lastAccessed": 1777281036636,
       "type": "directory"
     },
     {
       "path": "",
-      "accessCount": 2,
-      "lastAccessed": 1774789409658,
+      "accessCount": 4,
+      "lastAccessed": 1777284437447,
       "type": "directory"
     },
     {
-      "path": "pocketbase",
-      "accessCount": 2,
-      "lastAccessed": 1774789427821,
+      "path": "hooks\\use-project-context.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777281541189,
+      "type": "file"
+    },
+    {
+      "path": "app\\api\\orders\\[id]\\export-pi\\route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777282133422,
+      "type": "file"
+    },
+    {
+      "path": "lib\\services\\excel-po-service.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777285366387,
       "type": "directory"
     },
     {
-      "path": "pocketbase\\pb_migrations\\001_create_code_sequences.js",
+      "path": "lib\\pocketbase\\services\\orders.ts",
       "accessCount": 2,
-      "lastAccessed": 1774789485737,
-      "type": "file"
+      "lastAccessed": 1777283318785,
+      "type": "directory"
     },
     {
-      "path": "pocketbase\\pb_migrations\\003_create_customers.js",
+      "path": "C:\\Users\\hw\\AppData\\Local\\Temp\\claude\\D--exportcrm\\13062b9f-b293-482e-b486-97f286e54c29\\tasks\\b5sqhbhqp.output",
       "accessCount": 2,
-      "lastAccessed": 1774789486874,
+      "lastAccessed": 1777294492680,
       "type": "file"
     },
     {
-      "path": "pocketbase\\pb_migrations\\006_create_projects.js",
-      "accessCount": 2,
-      "lastAccessed": 1774789488158,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\008_create_quotations.js",
-      "accessCount": 2,
-      "lastAccessed": 1774789489004,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\010_create_purchase_orders.js",
-      "accessCount": 2,
-      "lastAccessed": 1774789495721,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\024_create_project_cost_tables.js",
-      "accessCount": 2,
-      "lastAccessed": 1774789513574,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\030_create_customer_tracking_collection.js",
-      "accessCount": 2,
-      "lastAccessed": 1774789524105,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\031_create_customer_activities_collection.js",
-      "accessCount": 2,
-      "lastAccessed": 1774789524446,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\seeds\\customers.json",
+      "path": "app",
       "accessCount": 1,
-      "lastAccessed": 1774789442074,
+      "lastAccessed": 1777279337270,
+      "type": "directory"
+    },
+    {
+      "path": "lib",
+      "accessCount": 1,
+      "lastAccessed": 1777281314659,
+      "type": "directory"
+    },
+    {
+      "path": "hooks",
+      "accessCount": 1,
+      "lastAccessed": 1777281357143,
+      "type": "directory"
+    },
+    {
+      "path": "app\\(authenticated)\\orders\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777281902405,
+      "type": "directory"
+    },
+    {
+      "path": "hooks\\use-toast.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777282483434,
+      "type": "directory"
+    },
+    {
+      "path": "components\\purchase-orders\\quick-purchase-order-form.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777284223222,
+      "type": "directory"
+    },
+    {
+      "path": "lib\\services\\pi-test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777291950832,
       "type": "file"
     },
     {
-      "path": "pocketbase\\pb_migrations\\002_create_exchange_rates.js",
+      "path": "C:\\Users\\hw\\AppData\\Local\\Temp\\claude\\D--exportcrm\\13062b9f-b293-482e-b486-97f286e54c29\\tasks\\bmveavx3k.output",
       "accessCount": 1,
-      "lastAccessed": 1774789486524,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\004_create_suppliers.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789487604,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\005_create_products.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789488035,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\007_create_rfqs.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789488775,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\009_create_orders.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789495356,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\011_create_invoices.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789496477,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\012_create_shipments.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789496746,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\014_create_user_settings.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789497779,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\015_create_tasks.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789498408,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\016_create_app_config.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789498594,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\017_create_bank_accounts.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789508950,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\018_create_service_providers.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789509470,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\019_create_activity_logs.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789510380,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\020_create_feedbacks.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789510714,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\021_create_ai_config.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789512269,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\022_create_po_payments.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789512432,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\023_create_purchase_order_mold_items.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789513461,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\025_add_order_po_vendor_fields.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789523587,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\026_add_created_and_updated_by_fields.js",
-      "accessCount": 1,
-      "lastAccessed": 1774789523621,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\DATABASE_SCHEMA.md",
-      "accessCount": 1,
-      "lastAccessed": 1774790051946,
+      "lastAccessed": 1777297602071,
       "type": "file"
     }
   ],

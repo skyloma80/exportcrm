@@ -88,13 +88,13 @@ export default function PurchaseOrderDetailPage() {
   const poId = params.id as string
   const [activeTab, setActiveTab] = useTabState("info")
 
-  // 获取项目上下文
+  // 获取项目上下文 (可选)
   const projectIdFromUrl = searchParams.get("project")
 
-  // 强制项目上下文：无项目参数返回 404 (Requirements: 1.4)
-  if (!projectIdFromUrl) {
-    notFound()
-  }
+  // 不再强制项目上下文
+  // if (!projectIdFromUrl) {
+  //   notFound()
+  // }
 
   // 使用项目上下文 Hook 获取面包屑和返回 URL
   // 采购订单应该在订单下管理，所以需要获取订单信息

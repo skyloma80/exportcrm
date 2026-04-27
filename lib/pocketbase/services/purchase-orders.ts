@@ -150,6 +150,21 @@ class PurchaseOrderService extends BaseCollectionService<PurchaseOrder> {
   }
 
   /**
+   * Get paginated POs with expand
+   */
+  async getListWithExpand(page: number = 1, perPage: number = 50, filter: string = ''): Promise<{ items: PurchaseOrderWithExpand[], totalItems: number }> {
+    const result = await this.pb.collection('purchase_orders').getList<PurchaseOrderWithExpand>(page, perPage, {
+      filter,
+      sort: '-created',
+      expand: 'supplier,project',
+    });
+    return {
+      items: result.items,
+      totalItems: result.totalItems,
+    };
+  }
+
+  /**
    * Get POs by project
    */
   async getByProject(projectId: string): Promise<PurchaseOrder[]> {

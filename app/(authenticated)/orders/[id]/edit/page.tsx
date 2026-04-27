@@ -97,12 +97,15 @@ export default function EditOrderPageV2({ params }: PageProps) {
     }
   }
 
-  const handleSubmit = async (data: OrderCreateInput) => {
+  const handleSubmit = async (data: OrderCreateInput, items: any[]) => {
     if (!order) return
 
     setIsSubmitting(true)
     try {
       const pb = getPocketBase()
+
+      // Calculate total amount from items
+      const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0)
 
       // Prepare update data - include all PI-related fields
       const updateData: Record<string, any> = {
@@ -122,12 +125,28 @@ export default function EditOrderPageV2({ params }: PageProps) {
         remarks: data.remarks || null,
         customer_po: data.customer_po || null,
         vendor_code: data.vendor_code || null,
+        total_amount: totalAmount > 0 ? totalAmount : 0.01,
       }
 
       console.log('Saving order data:', updateData)
-      console.log('country_of_destination:', data.country_of_destination)
-
       const result = await pb.collection("orders").update(order.id, updateData)
+
+      // Update items: delete existing, create new
+      const existingItems = await pb.collection("order_items").getFullList({ filter: `order = "${order.id}"` })
+      for (const item of existingItems) {
+        await pb.collection("order_items").delete(item.id)
+      }
+      for (const item of items) {
+        await pb.collection("order_items").create({
+          order: order.id,
+          product: item.product || null,
+          product_name: item.product_name || undefined,
+          product_code: item.product_code || undefined,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          amount: item.amount,
+        })
+      }
 
       console.log('Saved order result:', result)
 
@@ -143,9 +162,10 @@ export default function EditOrderPageV2({ params }: PageProps) {
       // Stay on edit page - do not redirect (Requirements: 需求2.6)
     } catch (err: any) {
       console.error("Update error:", err)
+      const errorData = err.response?.data ? JSON.stringify(err.response.data) : null;
       toast({
         title: t("orders.edit.saveError"),
-        description: err.message,
+        description: errorData || err.message,
         variant: "destructive",
       })
     } finally {

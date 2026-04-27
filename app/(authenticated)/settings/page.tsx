@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Building2, Ruler } from 'lucide-react';
+import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Building2, Ruler, CreditCard } from 'lucide-react';
 import { BrandingConfigCard } from '@/components/settings/branding-config-card';
 import { FeedbackManagement } from '@/components/settings/feedback-management';
 import Link from 'next/link';
@@ -132,6 +132,10 @@ export default function SettingsPage() {
             <Building2 className="mr-2 h-4 w-4" />
             {locale === 'zh' ? '银行账户' : 'Bank Accounts'}
           </TabsTrigger>
+          <TabsTrigger value="remittance">
+            <CreditCard className="mr-2 h-4 w-4" />
+            {locale === 'zh' ? '汇款模板' : 'Remittance'}
+          </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="feedback">
               <MessageSquare className="mr-2 h-4 w-4" />
@@ -157,6 +161,25 @@ export default function SettingsPage() {
                 <Button>
                   <Building2 className="mr-2 h-4 w-4" />
                   {locale === 'zh' ? '管理银行账户' : 'Manage Accounts'}
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="remittance">
+          <div className="rounded-lg border bg-card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">{locale === 'zh' ? '汇款模板管理' : 'Remittance Templates'}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {locale === 'zh' ? '配置汇款指令模板，在订单中快速引用' : 'Configure remittance templates for quick reference in orders'}
+                </p>
+              </div>
+              <Link href="/settings/remittance">
+                <Button>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  {locale === 'zh' ? '管理模板' : 'Manage Templates'}
                 </Button>
               </Link>
             </div>

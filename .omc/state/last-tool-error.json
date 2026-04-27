@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"D:\\\\exportcrm\\\\components\\\\purchase-orders\\\\quick-purchase-order-form.tsx\",\"limit\":85}",
+  "error": "File does not exist. Note: your current working directory is D:\\exportcrm.",
+  "timestamp": "2026-04-27T10:07:43.037Z",
+  "retry_count": 1
+}

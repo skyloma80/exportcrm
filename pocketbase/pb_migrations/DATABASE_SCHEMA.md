@@ -366,8 +366,8 @@
 |--------|------|------|------|------|
 | id | text | - | PK | 主键 |
 | code | text(20) | ✓ | - | 订单号 |
-| project | relation | ✓ | FK → projects | 关联项目 |
-| customer | relation | ✓ | FK → customers | 关联客户 |
+| project | relation | - | FK → projects | 关联项目（可选） |
+| customer | relation | - | FK → customers | 关联客户（可选） |
 | quotation | relation | - | FK → quotations | 关联报价 |
 | customer_po | text(100) | - | - | 客户采购订单号 |
 | vendor_code | text(100) | - | - | 供应商代码 |
