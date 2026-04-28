@@ -5,17 +5,10 @@ import { format } from 'date-fns';
 import * as fs from 'fs';
 import type { OrderWithExpand } from '@/lib/pocketbase/services/orders';
 
-/**
- * PI Excel Export Service
- * 形式发票 Excel 导出服务
- *
- * 使用 JSZip 手动处理图片，解决 ExcelJS 图片处理 bug
- */
 export class ExcelPiService {
   private templatePath = path.join(process.cwd(), 'excel-template', 'PI-template.xlsx');
 
   async generatePiExcel(order: OrderWithExpand): Promise<Buffer> {
-    // ====== 1. 使用 JSZip 保存原始模板中的媒体文件 ======
     const originalZip = await JSZip.loadAsync(fs.readFileSync(this.templatePath));
     const originalMedia: { [key: string]: Buffer } = {};
     const originalDrawings: { [key: string]: Buffer } = {};
@@ -39,7 +32,6 @@ export class ExcelPiService {
       }
     }
 
-    // ====== 2. 使用 ExcelJS 处理数据 ======
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(this.templatePath);
     const worksheet = workbook.worksheets[0];
@@ -51,8 +43,6 @@ export class ExcelPiService {
     console.log('Remittance lines:', JSON.stringify(remittanceLines, null, 2));
     const customer = order.expand?.customer;
 
-    // ====== 1. 清空Items模板行 ======
-    // Row 11 是Items模板行，清空数据但保留样式
     const templateRow = 11;
     const templateRowCount = 1;
 
@@ -61,46 +51,42 @@ export class ExcelPiService {
       row11.getCell(c).value = '';
     }
 
-    // ====== 2. Header Info (Row 2-5) ======
     worksheet.getCell('G2').value = order.vendor_code || '';
     worksheet.getCell('G3').value = order.customer_po || '';
     worksheet.getCell('G4').value = order.code || '';
     worksheet.getCell('G5').value = format(new Date(order.created), 'MMM dd, yyyy');
 
-    // ====== 3. Customer Info (Row 6-8) ======
     worksheet.getCell('B6').value = customer?.name || '';
     worksheet.getCell('B7').value = (customer as any)?.address || '';
     worksheet.getCell('B8').value = (customer as any)?.tax_id || '';
 
-    // ====== 4. Items Table - 动态插入行并复制模板行格式 ======
     const rowsInserted = items.length > templateRowCount ? items.length - templateRowCount : 0;
 
     if (rowsInserted > 0) {
-      // 先清除模板行的 B:C 合并，避免 spliceRows 自动复制
       worksheet.unMergeCells('B11:C11');
-
-      // 插入新行
       worksheet.spliceRows(templateRow + templateRowCount, 0, ...Array(rowsInserted).fill([]));
 
-      // 复制模板行样式到新行
       const sourceRow = worksheet.getRow(templateRow);
       for (let i = 0; i < rowsInserted; i++) {
         const newRowNumber = templateRow + templateRowCount + i;
         const newRow = worksheet.getRow(newRowNumber);
         newRow.height = sourceRow.height;
-        
-        // 复制样式
+
         sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const targetCell = newRow.getCell(colNumber);
           targetCell.style = { ...cell.style };
         });
+
+        const merges = (worksheet as any)._merges;
+        if (merges) {
+          delete merges[`B${newRowNumber}`];
+          delete merges[`C${newRowNumber}`];
+        }
       }
 
-      // 重新设置模板行的 B:C 合并
       worksheet.mergeCells('B11:C11');
     }
 
-    // 填充Items数据
     items.forEach((item, index) => {
       const rowNumber = templateRow + index;
       const row = worksheet.getRow(rowNumber);
@@ -120,7 +106,6 @@ export class ExcelPiService {
       row.getCell(8).value = item.amount;
     });
 
-    // 动态调整行高
     items.forEach((item, index) => {
       const rowNumber = templateRow + index;
       const row = worksheet.getRow(rowNumber);
@@ -131,9 +116,10 @@ export class ExcelPiService {
       row.height = lines * 15;
     });
 
-    // 填充数据后设置 B列:C列合并（必须在填充数据之后）
     for (let i = 0; i < items.length; i++) {
       const rowNumber = templateRow + i;
+      if (rowNumber === templateRow) continue;
+      
       try {
         worksheet.mergeCells(`B${rowNumber}:C${rowNumber}`);
       } catch (e) {
@@ -141,16 +127,13 @@ export class ExcelPiService {
       }
     }
 
-    // ====== 5. Total ======
     const totalRowIndex = 15 + rowsInserted;
-
     const totalCell = worksheet.getRow(totalRowIndex).getCell(8);
     totalCell.value = {
       formula: `SUM(H${templateRow}:H${templateRow + items.length - 1})`,
       result: order.total_amount,
     };
 
-    // ====== 6. Terms and Conditions ======
     const termsStartRow = 17 + rowsInserted;
     worksheet.getRow(termsStartRow + 1).getCell(3).value = order.payment_terms || '';
     worksheet.getRow(termsStartRow + 2).getCell(3).value = order.incoterm || '';
@@ -163,7 +146,6 @@ export class ExcelPiService {
       ? format(new Date(order.estimated_shipping_date), 'yyyy-MM-dd')
       : '';
 
-    // ====== 7. Remittance Instructions ======
     const remittanceTemplateRow = 28 + rowsInserted;
 
     for (let c = 1; c <= 8; c++) {
@@ -199,11 +181,9 @@ export class ExcelPiService {
       });
     }
 
-    // ====== 8. 写出临时文件 ======
     const tempOutputPath = path.join(process.cwd(), 'excel-template', 'PI-output-temp.xlsx');
     await workbook.xlsx.writeFile(tempOutputPath);
 
-    // ====== 9. 使用 JSZip 恢复原始媒体文件 ======
     const newZip = await JSZip.loadAsync(fs.readFileSync(tempOutputPath));
 
     for (const [fileName, data] of Object.entries(originalMedia)) {
