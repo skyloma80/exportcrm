@@ -2,13 +2,14 @@ import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
 import path from 'path';
 import { format } from 'date-fns';
-import * as fs from 'fs';
+import fs from 'fs';
 import type { OrderWithExpand } from '@/lib/pocketbase/services/orders';
 
 export class ExcelPiService {
   private templatePath = path.join(process.cwd(), 'excel-template', 'PI-template.xlsx');
 
   async generatePiExcel(order: OrderWithExpand): Promise<Buffer> {
+    // 保存原始模板的媒体资源（logo图片等）
     const originalZip = await JSZip.loadAsync(fs.readFileSync(this.templatePath));
     const originalMedia: { [key: string]: Buffer } = {};
     const originalDrawings: { [key: string]: Buffer } = {};
@@ -37,10 +38,6 @@ export class ExcelPiService {
     const worksheet = workbook.worksheets[0];
 
     const items = order.expand?.order_items_via_order || [];
-    console.log('bank_info type:', typeof order.bank_info);
-    console.log('bank_info value:', order.bank_info);
-    const remittanceLines = this.extractRemittanceLines(order.bank_info);
-    console.log('Remittance lines:', JSON.stringify(remittanceLines, null, 2));
     const customer = order.expand?.customer;
 
     const templateRow = 11;
@@ -152,9 +149,29 @@ export class ExcelPiService {
       worksheet.getRow(remittanceTemplateRow).getCell(c).value = '';
     }
 
-    if (remittanceLines.length > 0) {
-      if (remittanceLines.length > 1) {
-        const rowsToInsert = remittanceLines.length - 1;
+    // bank_info 可能是 string (JSON) 或 string[]
+    let bankInfoList: string[] = [];
+    const rawBankInfo = order.bank_info as any;
+    if (rawBankInfo) {
+      if (Array.isArray(rawBankInfo)) {
+        bankInfoList = rawBankInfo;
+      } else if (typeof rawBankInfo === 'string' && rawBankInfo.trim()) {
+        try {
+          const parsed = JSON.parse(rawBankInfo);
+          if (Array.isArray(parsed)) {
+            bankInfoList = parsed;
+          }
+        } catch (e) {
+          console.warn('Failed to parse bank_info:', e);
+        }
+      }
+    }
+    
+    // 填充 bank_info
+    if (bankInfoList.length) {
+      console.log('bankInfoList:', bankInfoList);
+      const rowsToInsert = bankInfoList.length - 1;
+      if (rowsToInsert > 0) {
         worksheet.spliceRows(remittanceTemplateRow + 1, 0, ...Array(rowsToInsert).fill([]));
 
         const sourceRow = worksheet.getRow(remittanceTemplateRow);
@@ -174,17 +191,18 @@ export class ExcelPiService {
         }
       }
 
-      remittanceLines.forEach((line, index) => {
+      bankInfoList.forEach((line: string, index: number) => {
         const row = worksheet.getRow(remittanceTemplateRow + index);
-        const numberedLine = `${index + 1}. ${line}`;
-        row.getCell(1).value = numberedLine;
+        row.getCell(1).value = `${index + 1}. ${line}`;
       });
     }
 
-    const tempOutputPath = path.join(process.cwd(), 'excel-template', 'PI-output-temp.xlsx');
-    await workbook.xlsx.writeFile(tempOutputPath);
+    // 写入临时文件
+    const tempPath = path.join(process.cwd(), 'excel-template', 'PI-temp.xlsx');
+    await workbook.xlsx.writeFile(tempPath);
 
-    const newZip = await JSZip.loadAsync(fs.readFileSync(tempOutputPath));
+    // 用 JSZip 恢复原始媒体资源（logo图片等）
+    const newZip = await JSZip.loadAsync(fs.readFileSync(tempPath));
 
     for (const [fileName, data] of Object.entries(originalMedia)) {
       newZip.file(fileName, data);
@@ -196,6 +214,7 @@ export class ExcelPiService {
       newZip.file(fileName, data);
     }
 
+    // 恢复 sheet 关系
     const workbookXmlFile = newZip.file('xl/workbook.xml');
     if (workbookXmlFile) {
       const workbookXml = await workbookXmlFile.async('string');
@@ -237,40 +256,9 @@ export class ExcelPiService {
 
     const outputBuffer = await newZip.generateAsync({ type: 'nodebuffer' });
 
-    fs.unlinkSync(tempOutputPath);
+    fs.unlinkSync(tempPath);
 
     return outputBuffer as unknown as Buffer;
-  }
-
-  private extractRemittanceLines(bankInfo: any): string[] {
-    if (!bankInfo) return [];
-
-    if (typeof bankInfo === 'string') {
-      try {
-        const parsed = JSON.parse(bankInfo);
-        if (Array.isArray(parsed)) {
-          return parsed.filter((line: string) => line && line.trim());
-        }
-      } catch (e) {
-        // 不是 JSON，继续按普通字符串处理
-      }
-      return bankInfo.split('\n').filter((line: string) => line.trim());
-    }
-
-    if (Array.isArray(bankInfo)) {
-      try {
-        const jsonString = bankInfo.join('\n');
-        const parsed = JSON.parse(jsonString);
-        if (Array.isArray(parsed)) {
-          return parsed.filter((line: string) => line && line.trim());
-        }
-      } catch (e) {
-        // 不是 JSON，按普通字符串数组处理
-      }
-      return bankInfo.filter((line: string) => line && line.trim());
-    }
-
-    return [];
   }
 }
 

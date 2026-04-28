@@ -25,8 +25,12 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    // 已经是 JSON 字符串格式，直接传给 service 处理
+    // Service 会负责解析
+    const orderWithBankInfo = order;
+
     // Generate Excel buffer
-    const buffer = await excelPiService.generatePiExcel(order);
+    const buffer = await excelPiService.generatePiExcel(orderWithBankInfo);
 
     // Prepare filename
     const filename = `PI-${order.code}-${new Date().toISOString().split('T')[0]}.xlsx`;

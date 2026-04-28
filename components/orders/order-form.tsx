@@ -152,9 +152,27 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
     country_of_origin: initialData?.country_of_origin || "CN",
     country_of_destination: initialData?.country_of_destination || "",
     mode_of_shipment: initialData?.mode_of_shipment || "",
-    bank_info: typeof initialData?.bank_info === 'string'
-      ? initialData.bank_info
-      : (initialData?.bank_info ? JSON.stringify(initialData.bank_info, null, 2) : ""),
+    bank_info: (() => {
+      const raw = initialData?.bank_info;
+      if (!raw) return '';
+      // 现在存的是 JSON 字符串，需要解析为数组再转回换行符分隔的字符串
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            return parsed.join('\n');
+          }
+        } catch (e) {
+          // 解析失败，可能是旧格式的直接换行字符串
+          return raw;
+        }
+      }
+      // 如果是数组（旧数据格式）
+      if (Array.isArray(raw)) {
+        return raw.join('\n');
+      }
+      return '';
+    })(),
     shipping_marks: initialData?.shipping_marks || "",
     estimated_shipping_date: formatDateForInput(initialData?.estimated_shipping_date),
     remarks: initialData?.remarks || "",
@@ -302,7 +320,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
       country_of_origin: formData.country_of_origin || undefined,
       country_of_destination: formData.country_of_destination || undefined,
       mode_of_shipment: formData.mode_of_shipment || undefined,
-      bank_info: formData.bank_info ? formData.bank_info.split('\n').filter(l => l.trim()) : undefined,
+      // 存为 JSON 字符串，PocketBase text 字段可以正确存储
+      bank_info: formData.bank_info ? JSON.stringify(formData.bank_info.split('\n').filter(l => l.trim())) : undefined,
       shipping_marks: formData.shipping_marks || undefined,
       estimated_shipping_date: formData.estimated_shipping_date || undefined,
       remarks: formData.remarks || undefined,
@@ -375,7 +394,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                 <TableRow>
                   <TableHead className="w-[150px]">{locale === 'zh' ? '零件号 (Part No.)' : 'Part Number'}</TableHead>
                   <TableHead className="min-w-[200px]">{locale === 'zh' ? '描述 (Description)' : 'Description'}</TableHead>
-                  <TableHead className="w-[120px]">{locale === 'zh' ? '数量' : 'Quantity'}</TableHead>
+                  <TableHead className="w-[100px]">{locale === 'zh' ? '数量' : 'Quantity'}</TableHead>
+                  <TableHead className="w-[100px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
                   <TableHead className="w-[150px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
                   <TableHead className="text-right w-[150px]">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -384,7 +404,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
               <TableBody>
                 {localItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       {locale === 'zh' ? '暂无产品，请点击右上角添加' : 'No products added yet'}
                     </TableCell>
                   </TableRow>
@@ -419,6 +439,14 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                             className="h-8"
                             value={item.quantity || ''} 
                             onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.unit || ''}
+                            onChange={(e) => updateLocalItemString(index, 'unit', e.target.value)}
+                            placeholder="PCS"
+                            className="h-8 text-sm"
                           />
                         </TableCell>
                         <TableCell>

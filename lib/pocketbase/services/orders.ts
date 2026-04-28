@@ -78,8 +78,8 @@ export interface Order extends RecordModel {
   country_of_origin?: string;
   country_of_destination?: string;
   mode_of_shipment?: string;
-  // PI-related fields
-  bank_info?: string[];
+  // PI-related fields - 存为 JSON 字符串
+  bank_info?: string;
   shipping_marks?: string;
   estimated_shipping_date?: string;
   remarks?: string;  // 备注（包含包装信息等）
@@ -185,8 +185,8 @@ export interface OrderCreateInput {
   country_of_origin?: string;
   country_of_destination?: string;
   mode_of_shipment?: string;
-  // PI-related fields
-  bank_info?: string[];
+  // PI-related fields - 存为 JSON 字符串，取出时需解析
+  bank_info?: string;
   shipping_marks?: string;
   estimated_shipping_date?: string;
   remarks?: string;  // 备注（包含包装信息等）
@@ -307,12 +307,13 @@ class OrderService extends BaseCollectionService<Order> {
     const code = await this.generateCode();
 
     // Resolve bank_info: use provided value, or fall back to default Remittance template
-    let resolvedBankInfo: string[] = data.bank_info ?? [];
-    if (resolvedBankInfo.length === 0) {
+    // bank_info 现在是 JSON 字符串格式
+    let resolvedBankInfo: string = data.bank_info ?? '[]';
+    if (!data.bank_info || data.bank_info === '[]') {
       try {
         const defaultRemittance = await remittanceService.getDefault();
         if (defaultRemittance?.items && defaultRemittance.items.length > 0) {
-          resolvedBankInfo = defaultRemittance.items;
+          resolvedBankInfo = JSON.stringify(defaultRemittance.items);
         }
       } catch (e) {
         console.warn('Could not load default remittance template:', e);
