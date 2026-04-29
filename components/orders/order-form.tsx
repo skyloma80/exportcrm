@@ -29,7 +29,7 @@ import { useI18n } from "@/lib/i18n/use-i18n"
 import { useToast } from "@/hooks/use-toast"
 import { useProjectContext } from "@/hooks/use-project-context"
 import { getPocketBase } from "@/lib/pocketbase/auth"
-import { INCOTERMS } from "@/lib/constants/trade-standards"
+import { INCOTERMS, QUANTITY_UNITS } from "@/lib/constants/trade-standards"
 import { CURRENCIES, COMMON_CURRENCIES } from "@/lib/constants/currencies"
 import { getRate } from "@/lib/services/exchange-rate"
 import type { Order, OrderCreateInput, OrderItemWithExpand } from "@/lib/pocketbase/services/orders"
@@ -427,8 +427,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                             value={item.product_name || ''}
                             onChange={(e) => updateLocalItemString(index, 'product_name', e.target.value)}
                             placeholder="Description"
-                            className="min-h-[2rem] h-8 text-sm resize-y"
-                            rows={1}
+                            className="min-h-[3rem] h-12 text-sm resize-y"
+                            rows={2}
                           />
                         </TableCell>
                         <TableCell>
@@ -442,12 +442,21 @@ export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderForm
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={item.unit || ''}
-                            onChange={(e) => updateLocalItemString(index, 'unit', e.target.value)}
-                            placeholder="PCS"
-                            className="h-8 text-sm"
-                          />
+                          <Select 
+                            value={item.unit || ''} 
+                            onValueChange={(value) => updateLocalItemString(index, 'unit', value)}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="PCS" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {QUANTITY_UNITS.map((unit) => (
+                                <SelectItem key={unit.code} value={unit.code}>
+                                  {unit.code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">

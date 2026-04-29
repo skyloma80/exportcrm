@@ -45,6 +45,7 @@ import {
   Plus,
   Eye,
   Send,
+  FileDown,
 } from "lucide-react"
 import {
   purchaseOrderService,
@@ -227,6 +228,40 @@ export default function PurchaseOrderDetailPage() {
     window.open(url, '_blank')
   }
 
+  const handleGenerateExcel = async () => {
+    if (!po) return
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/purchase-orders/${po.id}/export-po`)
+      if (!response.ok) throw new Error('Failed to generate PO Excel')
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `PO-${po.code}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      toast({
+        title: locale === 'zh' ? '生成成功' : 'Generated Successfully',
+        description: locale === 'zh' ? '采购订单 Excel 已下载' : 'Purchase Order Excel has been downloaded',
+      })
+    } catch (error: any) {
+      console.error('Generate PO error:', error)
+      toast({
+        title: locale === 'zh' ? '生成失败' : 'Generation Failed',
+        description: error.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Calculate totals
   const itemsSubtotal = items.reduce((sum, item) => sum + item.amount, 0)
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
@@ -281,6 +316,10 @@ export default function PurchaseOrderDetailPage() {
               items={items}
 
             />
+            <Button variant="outline" onClick={handleGenerateExcel} disabled={loading}>
+              <FileDown className="mr-2 h-4 w-4" />
+              {locale === 'zh' ? '导出 Excel' : 'Export Excel'}
+            </Button>
             <Button variant="outline" onClick={() => setEmailDialogOpen(true)}>
               <Send className="mr-2 h-4 w-4" />
               {locale === 'zh' ? '发送邮件' : 'Send Email'}
@@ -479,12 +518,10 @@ export default function PurchaseOrderDetailPage() {
                           <TableCell>
                             <div>
                               <p className="font-medium">
-                                {(item as any).expand?.product
-                                  ? getDisplayName((item as any).expand.product)
-                                  : "-"}
+                                {item.product_name || (item as any).expand?.product?.name || "-"}
                               </p>
-                              <p className="text-sm text-muted-foreground">
-                                {(item as any).expand?.product?.code}
+                              <p className="text-sm text-muted-foreground font-mono">
+                                {item.product_code || (item as any).expand?.product?.code}
                               </p>
                             </div>
                           </TableCell>

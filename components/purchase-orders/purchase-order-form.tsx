@@ -4,134 +4,184 @@
  * Purchase Order Form Component
  * 采购订单表单组件
  * 
- * 强制项目上下文：项目信息从 URL 参数获取，项目选择器已隐藏
+ * 按照销售订单同样的模式，不强制关联项目
  * Requirements: 3.1
  */
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+import { PortSelect } from "@/components/ui/port-select"
+import { PaymentTermsSelect } from "@/components/ui/payment-terms-select"
+import { CountrySelect } from "@/components/ui/country-select"
+import { RemittanceSelect } from "@/components/ui/remittance-select"
+import { ProjectSelect } from "@/components/ui/project-select"
+import { SupplierSelect } from "@/components/ui/supplier-select"
+import { Ship, Building2, Package, Save, Plus, Trash2, RefreshCw } from "lucide-react"
+import { ProductSelectDialog } from "@/components/orders/product-select-dialog"
 import { useI18n } from "@/lib/i18n/use-i18n"
+import { useToast } from "@/hooks/use-toast"
 import { useProjectContext } from "@/hooks/use-project-context"
 import { getPocketBase } from "@/lib/pocketbase/auth"
-import { CURRENCY_LIST } from "@/lib/constants/currencies"
-import type { PurchaseOrder, POCreateInput } from "@/lib/pocketbase/services/purchase-orders"
-
-interface Supplier {
-  id: string
-  code: string
-  name: string
-  name_cn?: string
-}
-
-interface Order {
-  id: string
-  code: string
-  project: string
-}
-
-interface RFQ {
-  id: string
-  code: string
-  project: string
-}
+import { INCOTERMS, QUANTITY_UNITS } from "@/lib/constants/trade-standards"
+import { CURRENCIES, COMMON_CURRENCIES } from "@/lib/constants/currencies"
+import { getRate } from "@/lib/services/exchange-rate"
+import type { PurchaseOrder, POCreateInput, PurchaseOrderItem } from "@/lib/pocketbase/services/purchase-orders"
+import type { Product } from "@/lib/pocketbase/services/products"
+import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 export interface PurchaseOrderFormProps {
   initialData?: Partial<PurchaseOrder>
-  onSubmit: (data: POCreateInput) => Promise<void>
-  onCancel?: () => void
+  onSubmit: (data: POCreateInput, items: any[]) => Promise<void>
   isLoading?: boolean
-  /** 是否锁定项目字段（强制项目上下文，项目信息已在面包屑中展示） */
-  projectLocked?: boolean
+  items?: PurchaseOrderItem[]
 }
 
-export function PurchaseOrderForm({ initialData, onSubmit, onCancel, isLoading }: PurchaseOrderFormProps) {
+export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: PurchaseOrderFormProps) {
   const { t, locale } = useI18n()
-  
-  // 使用项目上下文 Hook - 项目信息从 URL 参数获取 (Requirements: 3.1)
-  const { project: contextProject } = useProjectContext()
-  
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
-  const [rfqs, setRfqs] = useState<RFQ[]>([])
-  
+  const { toast } = useToast()
+
+  const { project: contextProject, isWithinProject, projectId } = useProjectContext()
+
+  const [localItems, setLocalItems] = useState<any[]>(items || [])
+  const [showProductSearch, setShowProductSearch] = useState(false)
+
+  useEffect(() => {
+    if (items) {
+      setLocalItems(items)
+    }
+  }, [items])
+
+  const handleAddProduct = (products: any[]) => {
+    setLocalItems(prev => [
+      ...prev,
+      ...products.map(product => ({
+        id: undefined,
+        product: product.id,
+        product_code: product.part_number || product.code || '',
+        product_name: locale === 'zh' && product.name_cn ? product.name_cn : (product.name || ''),
+        quantity: 1,
+        unit: product.unit || 'PCS',
+        unit_price: product.unit_price || 0,
+        amount: product.unit_price || 0,
+        expand: { product }
+      }))
+    ])
+    setShowProductSearch(false)
+  }
+
+  const updateLocalItem = (index: number, field: string, value: number) => {
+    setLocalItems(prev => {
+      const newItems = [...prev]
+      const cur = { ...newItems[index] }
+      cur[field] = value
+      cur.amount = (field === 'quantity' ? value : cur.quantity) * (field === 'unit_price' ? value : cur.unit_price)
+      newItems[index] = cur
+      return newItems
+    })
+  }
+
+  const updateLocalItemString = (index: number, field: string, value: string) => {
+    setLocalItems(prev => {
+      const newItems = [...prev]
+      newItems[index] = { ...newItems[index], [field]: value }
+      return newItems
+    })
+  }
+
+  const removeLocalItem = (index: number) => {
+    setLocalItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const formatDateForInput = (dateStr?: string): string => {
+    if (!dateStr) return ""
+    return dateStr.split(" ")[0].split("T")[0]
+  }
+
   const [formData, setFormData] = useState({
     project: initialData?.project || "",
     supplier: initialData?.supplier || "",
-    order: initialData?.order || "",
-    rfq: initialData?.rfq || "",
-    currency: initialData?.currency || "CNY", // 采购订单默认人民币
-    total_amount: initialData?.total_amount || 0,
-    expected_delivery_date: initialData?.expected_delivery_date || "",
+    incoterm: initialData?.incoterm || "FOB",
+    port_of_loading: initialData?.port_of_loading || "",
+    port_of_destination: initialData?.port_of_destination || "",
+    payment_terms: initialData?.payment_terms || "",
+    currency: initialData?.currency || "CNY",
+    exchange_rate: initialData?.exchange_rate || 1,
+    expected_delivery_date: formatDateForInput(initialData?.expected_delivery_date),
+    country_of_origin: initialData?.country_of_origin || "CN",
+    country_of_destination: initialData?.country_of_destination || "",
+    mode_of_shipment: initialData?.mode_of_shipment || "",
+    bank_info: initialData?.bank_info || "",
+    shipping_marks: initialData?.shipping_marks || "",
+    estimated_shipping_date: formatDateForInput(initialData?.estimated_shipping_date),
+    remarks: initialData?.remarks || "",
+    our_po: initialData?.our_po || "",
+    supplier_code: initialData?.supplier_code || "",
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [currentRate, setCurrentRate] = useState<number | null>(null)
+  const [rateLoading, setRateLoading] = useState(false)
+  const [generatingPackaging, setGeneratingPackaging] = useState(false)
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState<string | undefined>(undefined)
 
-  // Load suppliers only (项目从上下文获取)
   useEffect(() => {
-    const loadData = async () => {
+    const loadExchangeRate = async () => {
+      if (formData.currency === 'CNY') {
+        setCurrentRate(1)
+        setFormData(prev => ({ ...prev, exchange_rate: 1 }))
+        return
+      }
+
+      setRateLoading(true)
       try {
-        const pb = getPocketBase()
-        const suppliersRes = await pb.collection("suppliers").getFullList<Supplier>({ sort: "name" })
-        setSuppliers(suppliersRes)
+        const rate = await getRate(formData.currency, 'CNY')
+        setCurrentRate(rate)
+        setFormData(prev => ({ ...prev, exchange_rate: rate }))
       } catch (err) {
-        console.error("Error loading data:", err)
+        console.error("Error loading exchange rate:", err)
+        setCurrentRate(null)
+      } finally {
+        setRateLoading(false)
       }
     }
-    loadData()
-  }, [])
+    loadExchangeRate()
+  }, [formData.currency])
 
-  // 当项目上下文加载完成时，更新表单数据并加载关联数据 (Requirements: 3.1)
   useEffect(() => {
-    if (contextProject && !initialData?.project) {
+    if (isWithinProject && contextProject && !initialData?.project) {
       setFormData(prev => ({
         ...prev,
         project: contextProject.id,
       }))
-      // 加载该项目的订单和询价单
-      loadRelatedData(contextProject.id)
-    } else if (initialData?.project) {
-      // 编辑模式：加载初始项目的关联数据
-      loadRelatedData(initialData.project)
     }
-  }, [contextProject, initialData?.project])
-
-  // Load orders and RFQs for a project
-  const loadRelatedData = async (projectId: string) => {
-    try {
-      const pb = getPocketBase()
-      const [ordersRes, rfqsRes] = await Promise.all([
-        pb.collection("orders").getFullList<Order>({
-          filter: `project = "${projectId}"`,
-          sort: "-created",
-        }),
-        pb.collection("rfqs").getFullList<RFQ>({
-          filter: `project = "${projectId}"`,
-          sort: "-created",
-        }),
-      ])
-      setOrders(ordersRes)
-      setRfqs(rfqsRes)
-    } catch (err) {
-      console.error("Error loading related data:", err)
-      setOrders([])
-      setRfqs([])
-    }
-  }
-
-  const getDisplayName = (item: { name: string; name_cn?: string }) => {
-    return locale === 'zh' && item.name_cn ? item.name_cn : item.name
-  }
+  }, [isWithinProject, contextProject, initialData?.project])
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-    
     if (!formData.supplier) newErrors.supplier = t("validation.required")
     if (!formData.currency) newErrors.currency = t("validation.required")
-    
+    if (localItems.length === 0) {
+      toast({
+        title: t("validation.error"),
+        description: locale === 'zh' ? '请至少添加一个产品' : 'Please add at least one product',
+        variant: "destructive",
+      })
+      return false
+    }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -139,159 +189,242 @@ export function PurchaseOrderForm({ initialData, onSubmit, onCancel, isLoading }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-    
-    await onSubmit({
-      project: formData.project || undefined,
-      supplier: formData.supplier,
-      order: formData.order || undefined,
-      rfq: formData.rfq || undefined,
-      currency: formData.currency,
-      total_amount: formData.total_amount,
-      expected_delivery_date: formData.expected_delivery_date || undefined,
-    })
+
+    const projectIdToUse = formData.project || projectId || null
+    const supplierIdToUse = formData.supplier || null
+
+    try {
+      await onSubmit({
+        ...formData,
+        project: projectIdToUse as any,
+        supplier: supplierIdToUse as any,
+        total_amount: localItems.reduce((sum, item) => sum + item.amount, 0),
+      }, localItems)
+    } catch (err: any) {
+      console.error("Form submission error:", err)
+      if (err.response?.data) {
+        console.error("Validation errors:", JSON.stringify(err.response.data, null, 2))
+      }
+      throw err
+    }
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("purchaseOrders.info.basic")}</CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
-          {/* Supplier - 项目信息已在面包屑中展示，移除项目选择器 (Requirements: 3.1) */}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{locale === 'zh' ? '基本信息' : 'Basic Info'}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="supplier">{t("purchaseOrders.columns.supplier")} *</Label>
-              <Select 
-                value={formData.supplier} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, supplier: v }))}
-              >
-                <SelectTrigger className={errors.supplier ? "border-destructive" : ""}>
-                  <SelectValue placeholder={t("purchaseOrders.placeholders.supplier")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map(supplier => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.code} - {getDisplayName(supplier)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>{locale === 'zh' ? '供应商' : 'Supplier'} *</Label>
+              <SupplierSelect
+                value={formData.supplier}
+                onChange={(s) => setFormData(prev => ({ ...prev, supplier: s?.id || "" }))}
+                placeholder={locale === 'zh' ? '选择供应商' : 'Select supplier'}
+              />
               {errors.supplier && <p className="text-sm text-destructive">{errors.supplier}</p>}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="currency">{t("purchaseOrders.columns.currency")} *</Label>
-              <Select 
-                value={formData.currency} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}
-              >
-                <SelectTrigger className={errors.currency ? "border-destructive" : ""}>
-                  <SelectValue placeholder={t("purchaseOrders.placeholders.currency")} />
-                </SelectTrigger>
+              <Label>{locale === 'zh' ? '关联项目（可选）' : 'Project (Optional)'}</Label>
+              <ProjectSelect
+                value={formData.project || projectId || ""}
+                onChange={(p) => setFormData(prev => ({ ...prev, project: p?.id || "" }))}
+                placeholder={locale === 'zh' ? '选择项目' : 'Select project'}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-base">{locale === 'zh' ? '产品明细' : 'Product Items'}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => {
+              setLocalItems(prev => [
+                ...prev,
+                {
+                  id: undefined,
+                  product: '',
+                  product_name: '',
+                  product_code: '',
+                  quantity: 1,
+                  unit: 'PCS',
+                  unit_price: 0,
+                  amount: 0,
+                }
+              ])
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              {locale === 'zh' ? '添加自定义产品' : 'Add Custom'}
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowProductSearch(true)}>
+              <Package className="mr-2 h-4 w-4" />
+              {locale === 'zh' ? '从库中添加' : 'Add from Library'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{locale === 'zh' ? '零件号' : 'Part No.'}</TableHead>
+                <TableHead>{locale === 'zh' ? '描述' : 'Description'}</TableHead>
+                <TableHead className="w-[100px]">{locale === 'zh' ? '数量' : 'Qty'}</TableHead>
+                <TableHead className="w-[100px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
+                <TableHead className="w-[150px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
+                <TableHead className="text-right">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {localItems.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Input
+                      value={item.product_code || ''}
+                      onChange={(e) => updateLocalItemString(index, 'product_code', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Textarea
+                      value={item.product_name || ''}
+                      onChange={(e) => updateLocalItemString(index, 'product_name', e.target.value)}
+                      className="min-h-[2rem] h-8 text-sm resize-y"
+                      rows={1}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      className="h-8 text-sm"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={item.unit || ''}
+                      onChange={(e) => updateLocalItemString(index, 'unit', e.target.value)}
+                      placeholder="PCS"
+                      className="h-8 text-sm"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      value={item.unit_price}
+                      onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                      className="h-8 text-sm"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {(item.quantity * item.unit_price).toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLocalItem(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{locale === 'zh' ? '贸易与物流' : 'Trade & Shipping'}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '我们的 PO 号' : 'Our PO Number'}</Label>
+              <Input
+                value={formData.our_po}
+                onChange={(e) => setFormData(prev => ({ ...prev, our_po: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '币种' : 'Currency'} *</Label>
+              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {CURRENCY_LIST.map(currency => (
-                    <SelectItem key={currency.code} value={currency.code}>
-                      {currency.code} - {locale === 'zh' ? currency.name_cn : currency.name}
-                    </SelectItem>
+                  {COMMON_CURRENCIES.map(code => (
+                    <SelectItem key={code} value={code}>{code}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.currency && <p className="text-sm text-destructive">{errors.currency}</p>}
             </div>
           </div>
-
-          {/* Related Order & RFQ (项目上下文已确定，显示关联选项) */}
-          {formData.project && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="order">{t("purchaseOrders.columns.order")}</Label>
-                <Select 
-                  value={formData.order || "_none_"} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, order: v === "_none_" ? "" : v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("purchaseOrders.placeholders.order")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none_">{locale === 'zh' ? '不关联销售订单' : 'No sales order'}</SelectItem>
-                    {orders.map(order => (
-                      <SelectItem key={order.id} value={order.id}>
-                        {order.code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="rfq">{t("purchaseOrders.columns.rfq")}</Label>
-                <Select 
-                  value={formData.rfq || "_none_"} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, rfq: v === "_none_" ? "" : v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("purchaseOrders.placeholders.rfq")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none_">{locale === 'zh' ? '不关联询价单' : 'No RFQ'}</SelectItem>
-                    {rfqs.map(rfq => (
-                      <SelectItem key={rfq.id} value={rfq.id}>
-                        {rfq.code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Amount & Delivery Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="total_amount">{t("purchaseOrders.columns.totalAmount")}</Label>
-              <Input
-                id="total_amount"
-                type="number"
-                step="0.01"
-                min={0}
-                value={formData.total_amount || ""}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  total_amount: e.target.value ? parseFloat(e.target.value) : 0 
-                }))}
-                placeholder="0.00"
-              />
-              <p className="text-xs text-muted-foreground">
-                {locale === 'zh' ? '添加产品明细后会自动计算' : 'Will be calculated after adding items'}
-              </p>
+              <Label>{locale === 'zh' ? '贸易术语' : 'Incoterm'}</Label>
+              <Select value={formData.incoterm} onValueChange={(v) => setFormData(prev => ({ ...prev, incoterm: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.keys(INCOTERMS).map(code => (
+                    <SelectItem key={code} value={code}>{code}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="expected_delivery_date">{t("purchaseOrders.columns.expectedDelivery")}</Label>
+              <Label>{locale === 'zh' ? '付款条款' : 'Payment Terms'}</Label>
+              <PaymentTermsSelect
+                value={formData.payment_terms}
+                onChange={(v) => setFormData(prev => ({ ...prev, payment_terms: v }))}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '交货日期' : 'Delivery Date'}</Label>
               <Input
-                id="expected_delivery_date"
                 type="date"
                 value={formData.expected_delivery_date}
                 onChange={(e) => setFormData(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
               />
             </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '运输方式' : 'Shipping Mode'}</Label>
+              <Input
+                value={formData.mode_of_shipment}
+                onChange={(e) => setFormData(prev => ({ ...prev, mode_of_shipment: e.target.value }))}
+              />
+            </div>
           </div>
         </CardContent>
+      </Card>
 
-        <CardFooter className="flex justify-end gap-2">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              {t("common.cancel")}
-            </Button>
-          )}
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? t("common.loading") : t("common.save")}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{locale === 'zh' ? '备注' : 'Remarks'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            value={formData.remarks}
+            onChange={(e) => setFormData(prev => ({ ...prev, remarks: e.target.value }))}
+            rows={4}
+          />
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-4">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? t("common.loading") : t("common.save")}
+        </Button>
+      </div>
+
+      <ProductSelectDialog
+        open={showProductSearch}
+        onOpenChange={setShowProductSearch}
+        onSelect={handleAddProduct}
+      />
+    </form>
   )
 }
-
-export default PurchaseOrderForm

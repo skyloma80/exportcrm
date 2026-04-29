@@ -28,11 +28,30 @@ export interface PurchaseOrder extends RecordModel {
   total_amount: number;
   paid_amount?: number;
   expected_delivery_date?: string;
+  
+  // Trade fields (mirroring Sales Orders)
+  incoterm?: string;
+  port_of_loading?: string;
+  port_of_destination?: string;
+  payment_terms?: string;
+  exchange_rate?: number;
+  country_of_origin?: string;
+  country_of_destination?: string;
+  mode_of_shipment?: string;
+  bank_info?: string; // JSON string
+  shipping_marks?: string;
+  estimated_shipping_date?: string;
+  remarks?: string;
+  supplier_code?: string; // Similar to vendor_code in SO
+  our_po?: string; // Similar to customer_po in SO
 }
 
 export interface PurchaseOrderItem extends RecordModel {
   purchase_order: string;
-  product: string;
+  product?: string; // Optional for free-text items
+  product_name?: string;
+  product_code?: string;
+  unit?: string;
   quantity: number;
   unit_price: number;
   amount: number;
@@ -93,11 +112,30 @@ export interface POCreateInput {
   total_amount: number;
   paid_amount?: number;
   expected_delivery_date?: string;
+  
+  // Trade fields
+  incoterm?: string;
+  port_of_loading?: string;
+  port_of_destination?: string;
+  payment_terms?: string;
+  exchange_rate?: number;
+  country_of_origin?: string;
+  country_of_destination?: string;
+  mode_of_shipment?: string;
+  bank_info?: string;
+  shipping_marks?: string;
+  estimated_shipping_date?: string;
+  remarks?: string;
+  supplier_code?: string;
+  our_po?: string;
 }
 
 export interface POItemCreateInput {
   purchase_order: string;
-  product: string;
+  product?: string;
+  product_name?: string;
+  product_code?: string;
+  unit?: string;
   quantity: number;
   unit_price: number;
   amount: number;
@@ -207,12 +245,13 @@ class PurchaseOrderService extends BaseCollectionService<PurchaseOrder> {
   /**
    * Create PO with auto-generated code
    */
-  async createPO(data: POCreateInput): Promise<PurchaseOrder> {
+  async createPO(data: POCreateInput, totalAmount?: number): Promise<PurchaseOrder> {
     const code = await this.generateCode();
     return this.create({
       ...data,
       code,
       status: data.status || 'draft',
+      total_amount: totalAmount || data.total_amount || 0,
       paid_amount: data.paid_amount || 0,
     });
   }

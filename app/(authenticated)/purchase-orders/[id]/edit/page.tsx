@@ -21,6 +21,7 @@ import {
   POCreateInput 
 } from "@/lib/pocketbase/services/purchase-orders"
 import { useToast } from "@/hooks/use-toast"
+import { getPocketBase } from "@/lib/pocketbase/auth"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { useProjectContext } from "@/hooks/use-project-context"
 
@@ -39,11 +40,6 @@ export default function EditPurchaseOrderPage() {
   
   // 获取项目上下文
   const projectIdFromUrl = searchParams.get("project")
-  
-  // 强制项目上下文：无项目参数返回 404 (Requirements: 1.4)
-  if (!projectIdFromUrl) {
-    notFound()
-  }
   
   // 使用项目上下文 Hook 获取面包屑和返回 URL
   const { 
@@ -74,7 +70,7 @@ export default function EditPurchaseOrderPage() {
   const loadPurchaseOrder = async () => {
     setLoading(true)
     try {
-      const data = await purchaseOrderService.getOne(poId)
+      const data = await purchaseOrderService.getWithDetails(poId)
       setPo(data)
     } catch (error) {
       console.error("Error loading purchase order:", error)
@@ -88,16 +84,47 @@ export default function EditPurchaseOrderPage() {
     }
   }
 
-  const handleSubmit = async (data: POCreateInput) => {
+  const handleSubmit = async (data: POCreateInput, items: any[]) => {
     setIsSubmitting(true)
     try {
-      await purchaseOrderService.update(poId, data)
+      const pb = getPocketBase()
+      
+      // Calculate total
+      const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0)
+      
+      // Update PO
+      await purchaseOrderService.update(poId, {
+        ...data,
+        total_amount: totalAmount,
+      })
+
+      // Update items: delete existing and create new (simplest for now)
+      const existingItems = await pb.collection("purchase_order_items").getFullList({
+        filter: `purchase_order = "${poId}"`
+      })
+      
+      for (const item of existingItems) {
+        await pb.collection("purchase_order_items").delete(item.id)
+      }
+
+      for (const item of items) {
+        await pb.collection("purchase_order_items").create({
+          purchase_order: poId,
+          product: item.product || null,
+          product_name: item.product_name || undefined,
+          product_code: item.product_code || undefined,
+          unit: item.unit || undefined,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          amount: item.amount,
+        })
+      }
+
       toast({
         title: t("purchaseOrders.updateSuccess"),
         description: t("purchaseOrders.updateSuccessDesc"),
       })
-      // 保存后返回项目详情页的采购单标签页 (Requirements: 4.2)
-      router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=purchase-orders`)
+      router.push(returnUrl || `/purchase-orders/${poId}`)
     } catch (error: any) {
       console.error("Error updating purchase order:", error)
       toast({
@@ -155,10 +182,9 @@ export default function EditPurchaseOrderPage() {
       {/* Form - 项目选择器已隐藏 (Requirements: 3.1) */}
       <PurchaseOrderForm
         initialData={po}
+        items={(po as any).expand?.purchase_order_items_via_purchase_order || []}
         onSubmit={handleSubmit}
-        onCancel={handleBack}
         isLoading={isSubmitting}
-        projectLocked={true}
       />
     </div>
   )
