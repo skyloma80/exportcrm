@@ -5,12 +5,19 @@ import path from 'path';
 import { format } from 'date-fns';
 import fs from 'fs';
 import { purchaseOrderService, purchaseOrderItemService } from '@/lib/pocketbase/services/purchase-orders';
+import { createServerPocketBase } from '@/lib/pocketbase/server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication
+    const pb = await createServerPocketBase();
+    if (!pb.authStore.isValid) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id: poId } = await params;
     const po = await purchaseOrderService.getWithDetails(poId);
     if (!po) {
