@@ -24,9 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 })
     }
     
-    // Parse request body
     const body = await request.json()
-    const { orderId, to, subject, body: emailBody, piPath } = body
+    const { orderId, to, subject, body: emailBody, attachmentBase64, attachmentName } = body
     
     // Validate required fields
     if (!orderId || !to || !subject || !emailBody) {
@@ -68,24 +67,16 @@ export async function POST(request: NextRequest) {
     
     // Prepare attachments
     const attachments = []
-    if (piPath) {
+    if (attachmentBase64 && attachmentName) {
       try {
-        const storage = createStorage()
-        const { data: blob, error } = await storage.download(piPath)
-        
-        if (!error && blob) {
-          const arrayBuffer = await blob.arrayBuffer()
-          const buffer = Buffer.from(arrayBuffer)
-          
-          attachments.push({
-            filename: piPath.split('/').pop() || 'PI.pdf',
-            content: buffer,
-            contentType: 'application/pdf',
-          })
-        }
+        const buffer = Buffer.from(attachmentBase64, 'base64')
+        attachments.push({
+          filename: attachmentName,
+          content: buffer,
+          contentType: attachmentName.endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
       } catch (error) {
-        console.error('Error loading PI attachment:', error)
-        // Continue without attachment
+        console.error('Error processing attachment:', error)
       }
     }
     
@@ -99,7 +90,7 @@ export async function POST(request: NextRequest) {
       recipientName: null, // User already included greeting in message
       subject,
       bodyContent: formattedMessage,
-      attachmentNote: piPath ? piPath.split('/').pop() : undefined,
+      attachmentNote: attachmentName,
     })
     
     // Send email

@@ -4,7 +4,6 @@
  * Purchase Order Detail Page
  * 采购订单详情页
  * 
- * 强制项目上下文：必须通过 URL 参数 `project` 传递项目 ID，否则返回 404
  * Requirements: 1.4, 2.1
  */
 
@@ -64,8 +63,6 @@ import {
   SendPOEmailDialog
 } from "@/components/purchase-orders"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
-import { useProjectContext } from "@/hooks/use-project-context"
-
 // Payment type with voucher_file
 interface PaymentWithFile {
   id: string
@@ -89,24 +86,8 @@ export default function PurchaseOrderDetailPage() {
   const poId = params.id as string
   const [activeTab, setActiveTab] = useTabState("info")
 
-  // 获取项目上下文 (可选)
-  const projectIdFromUrl = searchParams.get("project")
-
-  // 不再强制项目上下文
-  // if (!projectIdFromUrl) {
-  //   notFound()
-  // }
-
-  // 使用项目上下文 Hook 获取面包屑和返回 URL
-  // 采购订单应该在订单下管理，所以需要获取订单信息
-  const {
-    project: contextProject,
-    customer: contextCustomer,
-    returnUrl
-  } = useProjectContext({
-    documentType: 'purchase-order',
-    currentPageLabel: '' // Will be set when PO loads
-  })
+  // 简单的返回路径
+  const returnUrl = `/purchase-orders`
 
   const [po, setPo] = useState<PurchaseOrderWithExpand | null>(null)
   const [loading, setLoading] = useState(true)
@@ -116,18 +97,13 @@ export default function PurchaseOrderDetailPage() {
   const { items, loading: itemsLoading } = usePurchaseOrderItems(poId)
   const { payments, loading: paymentsLoading, refetch: refetchPayments } = usePurchaseOrderPayments(poId)
 
-  // Set breadcrumb when PO loads (Requirements: 2.1)
-  // 采购订单面包屑：客户 > 项目 > 订单 > 采购单
+  // 采购订单面包屑：采购单列表 > 采购单
   useEffect(() => {
-    if (po && contextCustomer && contextProject) {
+    if (po) {
       const items: any[] = [
         {
-          label: contextCustomer.name,
-          href: `/customers/${contextCustomer.id}`,
-        },
-        {
-          label: contextProject.name,
-          href: `/projects/${contextProject.id}`,
+          label: t("nav.purchaseOrders") || "Purchase Orders",
+          href: "/purchase-orders",
         },
       ]
 
@@ -135,7 +111,7 @@ export default function PurchaseOrderDetailPage() {
       if (po.expand?.order) {
         items.push({
           label: po.expand.order.code,
-          href: `/orders/${po.expand.order.id}?project=${projectIdFromUrl}`,
+          href: `/orders/${po.expand.order.id}`,
         })
       }
 
@@ -147,7 +123,7 @@ export default function PurchaseOrderDetailPage() {
       setBreadcrumb(items)
     }
     return () => setBreadcrumb([])
-  }, [po, contextCustomer, contextProject, projectIdFromUrl, setBreadcrumb])
+  }, [po, setBreadcrumb, t])
 
   useEffect(() => {
     loadPurchaseOrder()
@@ -280,7 +256,7 @@ export default function PurchaseOrderDetailPage() {
         <div className="text-center py-12">
           <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
           <h2 className="text-xl font-semibold mb-2">{t("purchaseOrders.notFound")}</h2>
-          <Button onClick={() => router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=purchase-orders`)}>
+          <Button onClick={() => router.push(returnUrl)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("common.back")}
           </Button>
@@ -324,7 +300,7 @@ export default function PurchaseOrderDetailPage() {
               <Send className="mr-2 h-4 w-4" />
               {locale === 'zh' ? '发送邮件' : 'Send Email'}
             </Button>
-            <Button variant="outline" onClick={() => router.push(`/purchase-orders/${po.id}/edit?project=${projectIdFromUrl}`)}>
+            <Button variant="outline" onClick={() => router.push(`/purchase-orders/${po.id}/edit`)}>
               <Edit className="mr-2 h-4 w-4" />
               {t("common.edit")}
             </Button>
@@ -441,19 +417,6 @@ export default function PurchaseOrderDetailPage() {
                     <div>
                       <p className="font-medium">{getDisplayName(po.expand.supplier)}</p>
                       <p className="text-sm text-muted-foreground">{po.expand.supplier.code}</p>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">-</p>
-                  )}
-                </div>
-
-                {/* Project */}
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("purchaseOrders.columns.project")}</p>
-                  {po.expand?.project ? (
-                    <div>
-                      <p className="font-medium">{getDisplayName(po.expand.project)}</p>
-                      <p className="text-sm text-muted-foreground">{po.expand.project.code}</p>
                     </div>
                   ) : (
                     <p className="text-muted-foreground">-</p>

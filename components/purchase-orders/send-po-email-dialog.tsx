@@ -20,15 +20,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useToast } from '@/hooks/use-toast';
-import { usePdfGenerator } from '@/hooks/use-pdf-generator';
-import { PurchaseOrderPDF, type PurchaseOrderPDFData } from '@/lib/pdf';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Upload } from 'lucide-react';
 import { supplierContactService } from '@/lib/pocketbase/services/suppliers';
 import { brandingService } from '@/lib/services/branding-service';
 import type { DocumentBranding } from '@/lib/branding/types';
-import type { 
-  PurchaseOrderWithExpand, 
-  PurchaseOrderItem,  
+import type {
+  PurchaseOrderWithExpand,
+  PurchaseOrderItem,
 } from '@/lib/pocketbase/services/purchase-orders';
 
 interface SendPOEmailDialogProps {
@@ -36,7 +34,7 @@ interface SendPOEmailDialogProps {
   onOpenChange: (open: boolean) => void;
   purchaseOrder: PurchaseOrderWithExpand;
   items: PurchaseOrderItem[];
-   
+
   onSuccess?: () => void;
 }
 
@@ -44,13 +42,13 @@ export function SendPOEmailDialog({
   open,
   onOpenChange,
   purchaseOrder,
-  items, 
+  items,
   onSuccess,
 }: SendPOEmailDialogProps) {
   const { t, locale } = useI18n();
   const { toast } = useToast();
-  const { generatePdfBlob } = usePdfGenerator();
   const [isSending, setIsSending] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [branding, setBranding] = useState<DocumentBranding | null>(null);
 
   const supplier = purchaseOrder.expand?.supplier;
@@ -145,11 +143,9 @@ export function SendPOEmailDialog({
       return;
     }
 
-    // 验证必要数据
-    if (items.length === 0) {
+    if (!attachment) {
       toast({
-        title: '数据不完整',
-        description: '采购订单没有产品明细',
+        title: locale === 'zh' ? '请上传附件' : 'Please upload an attachment',
         variant: 'destructive',
       });
       return;
@@ -158,50 +154,10 @@ export function SendPOEmailDialog({
     setIsSending(true);
 
     try {
-      // 确保 branding 数据已加载
-      let brandingData = branding;
-      if (!brandingData) {
-        brandingData = await brandingService.getDocumentBranding('supplier');
-        setBranding(brandingData);
-      }
-
-      // 构建 PDF 数据
-      const pdfData: PurchaseOrderPDFData = {
-        code: purchaseOrder.code,
-        created: purchaseOrder.created,
-        expected_delivery_date: purchaseOrder.expected_delivery_date,
-        currency: purchaseOrder.currency || 'CNY',
-        total_amount: purchaseOrder.total_amount,
-        remarks: (purchaseOrder as any).remarks,
-        supplier: supplier ? {
-          name: supplier.name,
-          name_cn: supplier.name_cn,
-          address: (supplier as any).address,
-        } : undefined,
-        project: project ? {
-          name: project.name,
-          name_cn: project.name_cn,
-          code: project.code,
-        } : undefined,
-        items: items.map(item => ({
-          product_code: (item as any).expand?.product?.code,
-          product_name: (item as any).expand?.product?.name,
-          product_name_cn: (item as any).expand?.product?.name_cn,
-          quantity: item.quantity,
-          unit: (item as any).unit || '件',
-          unit_price: item.unit_price,
-          amount: item.amount,
-        })),
-       
-        branding: brandingData || undefined,
-      };
-
-      // 生成 PDF
-      const pdfBlob = await generatePdfBlob(<PurchaseOrderPDF data={pdfData} />);
-      
       // 转换为 base64
-      const arrayBuffer = await pdfBlob.arrayBuffer();
+      const arrayBuffer = await attachment.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString('base64');
+      const filename = attachment.name;
 
       // 发送邮件
       const response = await fetch(`/api/purchase-orders/${purchaseOrder.id}/send-email`, {
@@ -211,7 +167,8 @@ export function SendPOEmailDialog({
           to: formData.to,
           subject: formData.subject,
           message: formData.message,
-          pdfBase64: base64,
+          attachmentBase64: base64,
+          attachmentName: filename,
         }),
       });
 
@@ -245,9 +202,7 @@ export function SendPOEmailDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>发送采购订单</DialogTitle>
-          <DialogDescription>
-            将采购订单 PDF 通过邮件发送给供应商
-          </DialogDescription>
+
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -282,8 +237,15 @@ export function SendPOEmailDialog({
             />
           </div>
 
-          <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-            <p>📎 附件: {purchaseOrder.code}.pdf</p>
+          <div className="space-y-2">
+            <Label>上传附件 (PDF/Excel)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                accept=".pdf,.xlsx,.xls"
+                onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              />
+            </div>
           </div>
         </div>
 

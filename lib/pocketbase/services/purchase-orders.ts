@@ -19,7 +19,6 @@ export type MoldType = 'die_casting' | 'stamping' | 'injection' | 'cnc_fixture' 
 
 export interface PurchaseOrder extends RecordModel {
   code: string;
-  project?: string;
   supplier: string;
   order?: string;
   rfq?: string;
@@ -78,13 +77,6 @@ export interface PurchaseOrderPayment extends RecordModel {
 
 export interface PurchaseOrderWithExpand extends PurchaseOrder {
   expand?: {
-    project?: {
-      id: string;
-      code: string;
-      name: string;
-      name_cn?: string;
-      customer: string;
-    };
     supplier?: {
       id: string;
       code: string;
@@ -103,7 +95,6 @@ export interface PurchaseOrderWithExpand extends PurchaseOrder {
 }
 
 export interface POCreateInput {
-  project?: string;
   supplier: string;
   order?: string;
   rfq?: string;
@@ -178,7 +169,7 @@ class PurchaseOrderService extends BaseCollectionService<PurchaseOrder> {
   async getWithDetails(id: string): Promise<PurchaseOrderWithExpand | null> {
     try {
       const po = await this.pb.collection('purchase_orders').getOne<PurchaseOrderWithExpand>(id, {
-        expand: 'project,supplier,order,rfq',
+        expand: 'supplier,order,rfq',
       });
       return po;
     } catch (e: any) {
@@ -194,22 +185,12 @@ class PurchaseOrderService extends BaseCollectionService<PurchaseOrder> {
     const result = await this.pb.collection('purchase_orders').getList<PurchaseOrderWithExpand>(page, perPage, {
       filter,
       sort: '-created',
-      expand: 'supplier,project',
+      expand: 'supplier',
     });
     return {
       items: result.items,
       totalItems: result.totalItems,
     };
-  }
-
-  /**
-   * Get POs by project
-   */
-  async getByProject(projectId: string): Promise<PurchaseOrder[]> {
-    return this.getFullList({
-      filter: `project = "${projectId}"`,
-      sort: '-id',
-    });
   }
 
   /**

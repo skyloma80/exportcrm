@@ -4,7 +4,6 @@
  * Edit Purchase Order Page
  * 编辑采购订单页面
  * 
- * 强制项目上下文：必须通过 URL 参数 `project` 传递项目 ID，否则返回 404
  * Requirements: 1.4, 2.1, 4.2, 4.3
  */
 
@@ -23,7 +22,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { getPocketBase } from "@/lib/pocketbase/auth"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
-import { useProjectContext } from "@/hooks/use-project-context"
+import { usePurchaseOrderItems } from "@/hooks/collections/purchase-orders"
 
 export default function EditPurchaseOrderPage() {
   const router = useRouter()
@@ -37,31 +36,20 @@ export default function EditPurchaseOrderPage() {
   const [po, setPo] = useState<PurchaseOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
-  // 获取项目上下文
-  const projectIdFromUrl = searchParams.get("project")
-  
-  // 使用项目上下文 Hook 获取面包屑和返回 URL
-  const { 
-    project: contextProject, 
-    customer: contextCustomer, 
-    returnUrl 
-  } = useProjectContext({
-    documentType: 'purchase-order',
-    currentPageLabel: t("common.edit")
-  })
+  const { items, loading: itemsLoading } = usePurchaseOrderItems(poId)
+  const returnUrl = `/purchase-orders/${poId}`
 
   // 设置面包屑 (Requirements: 2.1)
   // 注意：只设置当前页面标签，客户和项目信息由 layout 根据 URL 参数自动添加
   useEffect(() => {
     if (po) {
       setBreadcrumb([
-        { label: po.code, href: `/purchase-orders/${po.id}?project=${projectIdFromUrl}` },
+        { label: po.code, href: `/purchase-orders/${po.id}` },
         { label: t("common.edit") },
       ])
     }
     return () => setBreadcrumb([])
-  }, [po, setBreadcrumb, t, projectIdFromUrl])
+  }, [po, setBreadcrumb, t])
 
   useEffect(() => {
     loadPurchaseOrder()
@@ -137,12 +125,11 @@ export default function EditPurchaseOrderPage() {
     }
   }
 
-  // 返回/取消按钮导航到项目详情页 (Requirements: 4.3)
   const handleBack = () => {
-    router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=purchase-orders`)
+    router.push(returnUrl)
   }
 
-  if (loading) {
+  if (loading || itemsLoading) {
     return (
       <div className="flex items-center justify-center h-96">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -179,10 +166,10 @@ export default function EditPurchaseOrderPage() {
         </div>
       </div>
 
-      {/* Form - 项目选择器已隐藏 (Requirements: 3.1) */}
+      {/* Form */}
       <PurchaseOrderForm
         initialData={po}
-        items={(po as any).expand?.purchase_order_items_via_purchase_order || []}
+        items={items}
         onSubmit={handleSubmit}
         isLoading={isSubmitting}
       />

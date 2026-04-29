@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 import { orderService } from '@/lib/pocketbase/services/orders';
+import { setServerPB } from '@/lib/pocketbase/base-service';
 
 /**
  * Orders API Route (POST)
@@ -14,6 +15,9 @@ export async function POST(request: NextRequest) {
     if (!pb.authStore.isValid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Set server PB for services
+    setServerPB(pb);
 
     const data = await request.json();
     const { items, ...orderData } = data;

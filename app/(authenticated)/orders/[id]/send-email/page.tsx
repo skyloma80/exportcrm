@@ -34,18 +34,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ViewOrderDocumentButton } from "@/components/orders/view-order-document-button"
 import type { OrderWithExpand } from "@/lib/pocketbase/services/orders"
 
-interface EmailFormData {
   to: string
   subject: string
   body: string
-  selectedPI: string
-}
-
-interface PIDocument {
-  name: string
-  path: string
-  size?: number
-  created?: string
 }
 
 export default function OrderSendEmailPage() {
@@ -63,16 +54,12 @@ export default function OrderSendEmailPage() {
   const [order, setOrder] = useState<OrderWithExpand | null>(null)
   const [customerInfo, setCustomerInfo] = useState<any>(null)
   const [projectInfo, setProjectInfo] = useState<any>(null)
-  const [piDocuments, setPiDocuments] = useState<PIDocument[]>([])
-  const [isSending, setIsSending] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingPIs, setIsLoadingPIs] = useState(false)
+  const [attachment, setAttachment] = useState<File | null>(null)
   
   const [formData, setFormData] = useState<EmailFormData>({
     to: '',
     subject: '',
     body: '',
-    selectedPI: '',
   })
 
   // Set breadcrumb
@@ -135,14 +122,9 @@ export default function OrderSendEmailPage() {
           setProjectInfo(project)
         }
         
-        // Load PI documents
-        if (customer && orderData) {
-          await loadPIDocuments(orderData, customer, project)
-        }
-        
         // Initialize email form
         if (customer && orderData) {
-          await initEmailForm(orderData, customer, project, '')
+          await initEmailForm(orderData, customer, project)
         }
       } catch (error) {
         console.error("Error loading order data:", error)
@@ -159,42 +141,7 @@ export default function OrderSendEmailPage() {
     loadOrderData()
   }, [orderId, projectId, t, toast, locale])
 
-  // Load PI documents
-  const loadPIDocuments = async (orderData: any, customer: any, project: any) => {
-    try {
-      setIsLoadingPIs(true)
-      
-      // Load PI documents via API
-      try {
-        const response = await fetch(`/api/orders/${orderData.id}/pi-documents`)
-        
-        if (!response.ok) {
-          throw new Error('Failed to load PI documents')
-        }
-        
-        const data = await response.json()
-        const piFiles = data.files || []
-        
-        setPiDocuments(piFiles)
-        
-        // Auto-select the first (latest) PI
-        if (piFiles.length > 0) {
-          setFormData(prev => ({ ...prev, selectedPI: piFiles[0].path }))
-        }
-      } catch (error) {
-        console.error("Error loading PI files:", error)
-        // If directory doesn't exist or is empty, just set empty array
-        setPiDocuments([])
-      }
-    } catch (error) {
-      console.error("Error loading PI documents:", error)
-    } finally {
-      setIsLoadingPIs(false)
-    }
-  }
-
-  // Initialize email form
-  const initEmailForm = async (order: any, customer: any, project: any, selectedPI: string) => {
+  const initEmailForm = async (order: any, customer: any, project: any) => {
     let email = ''
     let contactPerson = getCustomerName(customer)
 
@@ -241,11 +188,6 @@ Best regards`
     }))
   }
 
-  // Handle PI selection change
-  const handlePIChange = (value: string) => {
-    setFormData(prev => ({ ...prev, selectedPI: value }))
-  }
-
   const handleSend = async () => {
     // Validation
     if (!formData.to) {
@@ -257,9 +199,9 @@ Best regards`
       return
     }
 
-    if (!formData.selectedPI) {
+    if (!attachment) {
       toast({
-        title: t("orders.sendEmail.validationError"),
+        title: locale === 'zh' ? '请上传附件' : 'Please upload an attachment',
         description: t("orders.sendEmail.selectPIRequired"),
         variant: "destructive"
       })
@@ -278,6 +220,11 @@ Best regards`
     setIsSending(true)
 
     try {
+      // Convert attachment to base64
+      const arrayBuffer = await attachment.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString('base64')
+      const filename = attachment.name
+
       const response = await fetch(`/api/orders/send-email`, {
         method: 'POST',
         headers: {
@@ -288,7 +235,8 @@ Best regards`
           to: formData.to,
           subject: formData.subject,
           body: formData.body,
-          piPath: formData.selectedPI,
+          attachmentBase64: base64,
+          attachmentName: filename,
         }),
       })
 
@@ -325,8 +273,6 @@ Best regards`
       </div>
     )
   }
-
-  const selectedPIDoc = piDocuments.find(doc => doc.path === formData.selectedPI)
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -370,59 +316,16 @@ Best regards`
             </div>
           </CardHeader>
           <CardContent>
-            {isLoadingPIs ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2 text-sm text-muted-foreground">
-                  {t("orders.sendEmail.loadingPIs")}
-                </span>
+            <div className="space-y-3">
+              <Label>上传附件 (PDF/Excel)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="file"
+                  accept=".pdf,.xlsx,.xls"
+                  onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                />
               </div>
-            ) : piDocuments.length === 0 ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {t("orders.sendEmail.noPIsFound")}
-                  <br />
-                  <span className="text-sm text-muted-foreground">
-                    {t("orders.sendEmail.noPIsFoundDesc")}
-                  </span>
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="space-y-3">
-                <Select value={formData.selectedPI} onValueChange={handlePIChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("orders.sendEmail.selectPIPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {piDocuments.map((doc) => (
-                      <SelectItem key={doc.path} value={doc.path}>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          <span>{doc.name}</span>
-                          {doc.size && (
-                            <span className="text-xs text-muted-foreground">
-                              ({(doc.size / 1024).toFixed(1)} KB)
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {selectedPIDoc && (
-                  <div className="rounded-md bg-muted p-3 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Paperclip className="h-4 w-4" />
-                      <span>
-                        {t("orders.sendEmail.attachmentNote", { filename: selectedPIDoc.name })}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
@@ -476,7 +379,7 @@ Best regards`
               </Button>
               <Button
                 onClick={handleSend}
-                disabled={isSending || !formData.to || !formData.selectedPI}
+                disabled={isSending || !formData.to || !attachment}
               >
                 {isSending ? (
                   <>

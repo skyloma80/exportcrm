@@ -4,7 +4,6 @@
  * New Purchase Order Page
  * 新建采购订单页面
  * 
- * 按照销售订单同样的模式，不强制关联项目
  * Requirements: 1.4, 3.1
  */
 
@@ -16,7 +15,6 @@ import { useToast } from "@/hooks/use-toast"
 import { getPocketBase } from "@/lib/pocketbase/auth"
 import { PurchaseOrderForm } from "@/components/purchase-orders/purchase-order-form"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
-import { useProjectContext } from "@/hooks/use-project-context"
 import { ArrowLeft } from "lucide-react"
 import type { POCreateInput } from "@/lib/pocketbase/services/purchase-orders"
 import { purchaseOrderService } from "@/lib/pocketbase/services/purchase-orders"
@@ -28,13 +26,7 @@ export default function NewPurchaseOrderPage() {
   const { toast } = useToast()
   const { setItems: setBreadcrumbItems } = useBreadcrumb()
 
-  const projectIdFromUrl = searchParams.get("project")
-
-  // 项目上下文
-  const { returnUrl } = useProjectContext({
-    documentType: 'purchase-order',
-    currentPageLabel: locale === 'zh' ? '新建采购订单' : 'New Purchase Order'
-  })
+  const returnUrl = '/purchase-orders'
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -125,9 +117,6 @@ export default function NewPurchaseOrderPage() {
       </div>
 
       <PurchaseOrderForm
-        initialData={{
-          project: projectIdFromUrl || undefined,
-        }}
         onSubmit={handleSubmit}
         isLoading={isSubmitting}
       />

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPocketBase } from '@/lib/pocketbase/auth';
+import { createServerPocketBase } from '@/lib/pocketbase/server';
+import { setServerPB } from '@/lib/pocketbase/base-service';
 import { purchaseOrderService, purchaseOrderItemService } from '@/lib/pocketbase/services/purchase-orders';
 
 export async function POST(request: NextRequest) {
   try {
-    const pb = getPocketBase();
+    const pb = await createServerPocketBase();
     if (!pb.authStore.isValid) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
+
+    // Set server PB for services
+    setServerPB(pb);
 
     const body = await request.json();
     const { items, ...poData } = body;
@@ -45,10 +49,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const pb = getPocketBase();
+        const pb = await createServerPocketBase();
         if (!pb.authStore.isValid) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
+
+        // Set server PB for services
+        setServerPB(pb);
 
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');

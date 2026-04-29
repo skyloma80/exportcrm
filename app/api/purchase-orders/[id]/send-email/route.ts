@@ -18,7 +18,8 @@ interface SendEmailRequest {
   to: string;
   subject: string;
   message: string;
-  pdfBase64: string;
+  attachmentBase64: string;
+  attachmentName: string;
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -38,11 +39,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Parse request body
     const body: SendEmailRequest = await request.json();
-    const { to, subject, message, pdfBase64 } = body;
+    const { to, subject, message, attachmentBase64, attachmentName } = body;
 
-    if (!to || !subject || !pdfBase64) {
+    if (!to || !subject || !attachmentBase64 || !attachmentName) {
       return NextResponse.json(
-        { error: 'Missing required fields: to, subject, pdfBase64' },
+        { error: 'Missing required fields: to, subject, attachmentBase64, attachmentName' },
         { status: 400 }
       );
     }
@@ -69,8 +70,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Convert base64 to buffer
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+    const pdfBuffer = Buffer.from(attachmentBase64, 'base64');
 
     // Send email with PDF attachment
     const result = await emailService.sendEmail({
@@ -79,9 +79,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       html: `<pre style="font-family: sans-serif; white-space: pre-wrap;">${message}</pre>`,
       attachments: [
         {
-          filename: `${po.code}.pdf`,
+          filename: attachmentName,
           content: pdfBuffer,
-          contentType: 'application/pdf',
+          contentType: attachmentName.endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
       ],
     });
