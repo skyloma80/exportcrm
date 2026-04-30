@@ -92,7 +92,12 @@ export interface Order extends RecordModel {
 export interface OrderItem extends RecordModel {
   order: string;
   product: string;
+  product_name?: string;
+  product_code?: string;
+  part_number?: string;
+  description_en?: string;
   quantity: number;
+  unit?: string;
   unit_price: number;
   amount: number;
   shipped_quantity?: number;
@@ -201,7 +206,12 @@ export interface OrderUpdateInput extends Partial<Omit<OrderCreateInput, 'projec
 export interface OrderItemCreateInput {
   order: string;
   product: string;
+  product_name?: string;
+  product_code?: string;
+  part_number?: string;
+  description_en?: string;
   quantity: number;
+  unit?: string;
   unit_price: number;
   cost_price?: number;
 }

@@ -29,14 +29,19 @@ export async function POST(request: NextRequest) {
 
     // 2. Create order items
     if (items && Array.isArray(items)) {
+      const { orderItemService } = await import('@/lib/pocketbase/services/orders');
       for (const item of items) {
-        await pb.collection('order_items').create({
+        await orderItemService.createItem({
           order: order.id,
           product: item.product,
+          product_name: item.product_name,
+          product_code: item.product_code,
+          part_number: item.part_number,
+          description_en: item.description_en,
           quantity: item.quantity,
+          unit: item.unit,
           unit_price: item.unit_price,
           cost_price: item.cost_price,
-          amount: item.amount,
         });
       }
     }

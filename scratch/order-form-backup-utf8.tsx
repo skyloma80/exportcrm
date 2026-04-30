@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 /**
  * Order Form Component
@@ -32,10 +32,10 @@ import { getPocketBase } from "@/lib/pocketbase/auth"
 import { INCOTERMS, QUANTITY_UNITS } from "@/lib/constants/trade-standards"
 import { CURRENCIES, COMMON_CURRENCIES } from "@/lib/constants/currencies"
 import { getRate } from "@/lib/services/exchange-rate"
-import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so"
+import type { Order, OrderCreateInput, OrderItemWithExpand } from "@/lib/pocketbase/services/orders"
 import type { Product } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
-import { RefreshCw, Wand2 } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -45,50 +45,67 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+
+
 export interface OrderFormProps {
-  initialData?: Partial<FlatSO>
-  onSubmit: (data: SOCreateInput) => Promise<void>
+  initialData?: Partial<Order>
+  onSubmit: (data: OrderCreateInput, items: any[]) => Promise<void>
   isLoading?: boolean
   /** 是否锁定项目字段（从项目上下文进入时） */
   projectLocked?: boolean
+  /** 订单明细项（用于生成包装信息） */
+  items?: OrderItemWithExpand[]
 }
 
-export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) {
+export function OrderForm({ initialData, onSubmit, isLoading, items }: OrderFormProps) {
   const { t, locale } = useI18n()
   const { toast } = useToast()
 
   // 使用项目上下文 Hook (Requirements: 3.1, 3.2)
   const { project: contextProject, customer: contextCustomer, isWithinProject, projectId } = useProjectContext()
 
-  const [localItems, setLocalItems] = useState<SOItem[]>(initialData?.items || [])
+  const [localItems, setLocalItems] = useState<any[]>(items || [])
   const [showProductSearch, setShowProductSearch] = useState(false)
+
+  // 同步外部传入的items到内部状态（如果是只读状态或初次加载）
+  useEffect(() => {
+    if (items) {
+      setLocalItems(items)
+    }
+  }, [items])
 
   const handleAddProduct = (products: any[]) => {
     setLocalItems(prev => [
       ...prev,
       ...products.map(product => ({
-        id: Math.random().toString(36).substr(2, 9),
-        part_number: product.part_number || product.code || '',
+        id: undefined, // new item
+        product: product.id,
+        product_code: product.part_number || product.code || '',
         product_name: locale === 'zh' && product.name_cn ? product.name_cn : (product.name || ''),
-        description_en: product.description || '',
-        description_cn: product.description_cn || '',
         quantity: 1,
-        unit: product.unit || 'PCS',
         unit_price: product.unit_price || 0,
         amount: product.unit_price || 0,
+        expand: { product }
       }))
     ])
     setShowProductSearch(false)
   }
 
-  const updateLocalItem = (index: number, field: keyof SOItem, value: any) => {
+  const updateLocalItem = (index: number, field: string, value: number) => {
     setLocalItems(prev => {
       const newItems = [...prev]
-      const cur = { ...newItems[index], [field]: value }
-      if (field === 'quantity' || field === 'unit_price') {
-        cur.amount = (Number(cur.quantity) || 0) * (Number(cur.unit_price) || 0)
-      }
+      const cur = { ...newItems[index] }
+      cur[field] = value
+      cur.amount = (field === 'quantity' ? value : cur.quantity) * (field === 'unit_price' ? value : cur.unit_price)
       newItems[index] = cur
+      return newItems
+    })
+  }
+
+  const updateLocalItemString = (index: number, field: string, value: string) => {
+    setLocalItems(prev => {
+      const newItems = [...prev]
+      newItems[index] = { ...newItems[index], [field]: value }
       return newItems
     })
   }
@@ -103,64 +120,106 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
     return dateStr.split(" ")[0].split("T")[0]
   }
 
-  // 自动生成销售单号
-  const generateSoCode = () => {
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(-2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const newCode = `SO${year}${month}${day}-${random}`;
-    setFormData(prev => ({ ...prev, code: newCode }));
-    toast({ title: t("orders.columns.code") + " 已生成", description: newCode });
-  }
-
-  const [formData, setFormData] = useState({
-    code: initialData?.code || "",
-    project_id: initialData?.project_id || "",
-    customer_id: initialData?.customer_id || "",
-    customer_name: initialData?.customer_name || "",
-    customer_address: initialData?.customer_address || "",
-    customer_tax_id: initialData?.customer_tax_id || "",
+  const [formData, setFormData] = useState<{
+    project: string
+    customer: string
+    incoterm: string
+    port_of_loading: string
+    port_of_destination: string
+    payment_terms: string
+    currency: string
+    exchange_rate: number | undefined
+    expected_delivery_date: string
+    country_of_origin: string
+    country_of_destination: string
+    mode_of_shipment: string
+    bank_info: string  // 改为纯文本
+    shipping_marks: string
+    estimated_shipping_date: string
+    remarks: string
+    customer_po: string
+    vendor_code: string
+  }>({
+    project: initialData?.project || "",
+    customer: initialData?.customer || "",
     incoterm: initialData?.incoterm || "FOB",
     port_of_loading: initialData?.port_of_loading || "",
     port_of_destination: initialData?.port_of_destination || "",
     payment_terms: initialData?.payment_terms || "",
     currency: initialData?.currency || "USD",
+    exchange_rate: initialData?.exchange_rate || undefined,
     expected_delivery_date: formatDateForInput(initialData?.expected_delivery_date),
     country_of_origin: initialData?.country_of_origin || "CN",
     country_of_destination: initialData?.country_of_destination || "",
     mode_of_shipment: initialData?.mode_of_shipment || "",
-    bank_info: initialData?.bank_info || "",
+    bank_info: (() => {
+      const raw = initialData?.bank_info;
+      if (!raw) return '';
+      // 现在存的是 JSON 字符串，需要解析为数组再转回换行符分隔的字符串
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            return parsed.join('\n');
+          }
+        } catch (e) {
+          // 解析失败，可能是旧格式的直接换行字符串
+          return raw;
+        }
+      }
+      // 如果是数组（旧数据格式）
+      if (Array.isArray(raw)) {
+        return raw.join('\n');
+      }
+      return '';
+    })(),
     shipping_marks: initialData?.shipping_marks || "",
     estimated_shipping_date: formatDateForInput(initialData?.estimated_shipping_date),
     remarks: initialData?.remarks || "",
     customer_po: initialData?.customer_po || "",
     vendor_code: initialData?.vendor_code || "",
-    status: initialData?.status || "draft",
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [currentRate, setCurrentRate] = useState<number | null>(1)
+  const [currentRate, setCurrentRate] = useState<number | null>(null)
   const [rateLoading, setRateLoading] = useState(false)
   const [generatingPackaging, setGeneratingPackaging] = useState(false)
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string | undefined>(undefined)
 
   // 生成包装信息到备注字段
   const handleGeneratePackaging = async () => {
-    if (localItems.length === 0) return
+    if (!items || items.length === 0) {
+      return
+    }
 
     setGeneratingPackaging(true)
     try {
-      // 构建包装计算输入
-      const packagingItems: ProductPackaging[] = localItems.map(item => ({
-        product_id: item.id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        // 如果有更多规格信息可以从库中读取，这里简化处理
-      }))
+      const pb = getPocketBase()
 
+      // 获取所有产品的包装规格
+      const productIds = items.map(item => item.product)
+      const products = await pb.collection("products").getFullList<Product>({
+        filter: productIds.map(id => `id = "${id}"`).join(" || "),
+      })
+
+      // 构建包装计算输入 - 强制使用英文名（用于 PI 文档）
+      const packagingItems: ProductPackaging[] = localItems.map(item => {
+        const product = products.find(p => p.id === item.product)
+        return {
+          product_id: item.product,
+          product_name: product?.name || item.expand?.product?.name || 'Unknown',
+          quantity: item.quantity,
+          pcs_per_carton: product?.pcs_per_carton,
+          carton_dimensions: product?.carton_dimensions,
+          carton_gross_weight: product?.carton_gross_weight,
+          carton_net_weight: product?.carton_net_weight,
+        }
+      })
+
+      // 计算包装信息
       const summary = calculatePackaging(packagingItems)
+
+      // 更新备注字段
       setFormData(prev => ({ ...prev, remarks: summary.text }))
     } catch (err) {
       console.error("Error generating packaging:", err)
@@ -169,11 +228,14 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
     }
   }
 
+
+
   // Load exchange rate when currency changes
   useEffect(() => {
     const loadExchangeRate = async () => {
       if (formData.currency === 'CNY') {
         setCurrentRate(1)
+        setFormData(prev => ({ ...prev, exchange_rate: 1 }))
         return
       }
 
@@ -181,6 +243,7 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
       try {
         const rate = await getRate(formData.currency, 'CNY')
         setCurrentRate(rate)
+        setFormData(prev => ({ ...prev, exchange_rate: rate }))
       } catch (err) {
         console.error("Error loading exchange rate:", err)
         setCurrentRate(null)
@@ -191,25 +254,39 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
     loadExchangeRate()
   }, [formData.currency])
 
-  // 当项目上下文加载完成时，更新表单数据
+  // 当项目上下文加载完成时，更新表单数据 (Requirements: 3.1, 3.2)
   useEffect(() => {
-    if (isWithinProject && contextProject && !initialData?.code) {
+    if (isWithinProject && contextProject && !initialData?.project) {
       setFormData(prev => ({
         ...prev,
-        project_id: contextProject.id,
-        customer_id: contextProject.customer,
-        customer_name: contextCustomer?.name || "",
+        project: contextProject.id,
+        customer: contextProject.customer,
         currency: contextCustomer?.preferred_currency || prev.currency,
         country_of_destination: contextCustomer?.country || prev.country_of_destination,
       }))
+      // 项目上下文加载完成时，仅设置基础字段
     }
-  }, [isWithinProject, contextProject, contextCustomer, initialData?.code])
+  }, [isWithinProject, contextProject, contextCustomer, initialData?.project])
+
+  // 自动计算运输方式：仅在用户未选择时，有港口则为海运，否则为空
+  useEffect(() => {
+    // 只有当用户尚未选择运输方式时才自动设置
+    if (!formData.mode_of_shipment) {
+      const autoMode: 'Sea' | '' = (formData.port_of_loading || formData.port_of_destination) ? "Sea" : ""
+      if (autoMode) {
+        setFormData(prev => ({ ...prev, mode_of_shipment: autoMode }))
+      }
+    }
+  }, [formData.port_of_loading, formData.port_of_destination, formData.mode_of_shipment])
+
+
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-    if (!formData.code) newErrors.code = t("validation.required")
-    if (!formData.customer_name) newErrors.customer_name = t("validation.required")
-    
+    // 项目和客户改为可选字段
+    if (!formData.incoterm) newErrors.incoterm = t("validation.required")
+    if (!formData.currency) newErrors.currency = t("validation.required")
+    // 至少需要有一个产品
     if (localItems.length === 0) {
       toast({
         title: t("validation.error"),
@@ -226,86 +303,58 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
     e.preventDefault()
     if (!validate()) return
 
-    const totalAmount = localItems.reduce((sum, item) => sum + (item.amount || 0), 0)
+    // 项目和客户都改为可选，允许为空
+    const projectIdToUse = formData.project || projectId || undefined
+    const customerIdToUse = formData.customer || contextProject?.customer || undefined
 
     await onSubmit({
-      ...formData,
-      total_amount: totalAmount,
-      items: localItems,
-    })
+      project: projectIdToUse,
+      customer: customerIdToUse || '',
+      incoterm: formData.incoterm,
+      port_of_loading: formData.port_of_loading || undefined,
+      port_of_destination: formData.port_of_destination || undefined,
+      payment_terms: formData.payment_terms || undefined,
+      currency: formData.currency,
+      exchange_rate: formData.exchange_rate,
+      expected_delivery_date: formData.expected_delivery_date || undefined,
+      country_of_origin: formData.country_of_origin || undefined,
+      country_of_destination: formData.country_of_destination || undefined,
+      mode_of_shipment: formData.mode_of_shipment || undefined,
+      // 存为 JSON 字符串，PocketBase text 字段可以正确存储
+      bank_info: formData.bank_info ? JSON.stringify(formData.bank_info.split('\n').filter(l => l.trim())) : undefined,
+      shipping_marks: formData.shipping_marks || undefined,
+      estimated_shipping_date: formData.estimated_shipping_date || undefined,
+      remarks: formData.remarks || undefined,
+      customer_po: formData.customer_po || undefined,
+      vendor_code: formData.vendor_code || undefined,
+    }, localItems)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* ========== 0. 基本信息与客户 ========== */}
+      {/* ========== 0. 项目与客户（可选） ========== */}
       <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            {locale === 'zh' ? '基本信息' : 'Basic Information'}
-          </CardTitle>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={generateSoCode}>
-              <Wand2 className="w-4 h-4 mr-2" />
-              {t("orders.columns.code")}
-            </Button>
-          </div>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{locale === 'zh' ? '项目与客户' : 'Project & Customer'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t("orders.columns.code")} <span className="text-destructive">*</span></Label>
-              <Input
-                value={formData.code}
-                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                placeholder="SO2026-001"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
-              <CustomerSelect
-                value={formData.customer_id || contextProject?.customer || ""}
-                onChange={(c) => {
-                  if (c) {
-                    setFormData(prev => ({
-                      ...prev,
-                      customer_id: c.id,
-                      customer_name: c.name || "",
-                      customer_address: (c as any).address || "",
-                      customer_tax_id: (c as any).tax_id || ""
-                    }))
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '所属项目' : 'Related Project'}</Label>
+              <Label>{locale === 'zh' ? '项目（可选）' : 'Project (Optional)'}</Label>
               <ProjectSelect
-                value={formData.project_id || projectId || ""}
-                onChange={(p) => setFormData(prev => ({ 
-                  ...prev, 
-                  project_id: p?.id || "", 
-                  customer_id: p?.customer || prev.customer_id 
-                }))}
+                value={formData.project || projectId || ""}
+                onChange={(p) => setFormData(prev => ({ ...prev, project: p?.id || "", customer: p?.customer || prev.customer }))}
                 placeholder={locale === 'zh' ? '选择项目（可选）' : 'Select project (optional)'}
               />
             </div>
             <div className="space-y-2">
-              <Label>{t("orders.columns.status")}</Label>
-              <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["draft", "confirmed", "in_production", "ready_to_ship", "shipped", "delivered", "completed", "cancelled"].map(s => (
-                    <SelectItem key={s} value={s}>{t(`orders.status.${s}`) || s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>{locale === 'zh' ? '客户（可选）' : 'Customer (Optional)'}</Label>
+              <CustomerSelect
+                value={formData.customer || contextProject?.customer || ""}
+                onChange={(c) => setFormData(prev => ({ ...prev, customer: c?.id || "" }))}
+                placeholder={locale === 'zh' ? '选择客户（可选）' : 'Select customer (optional)'}
+              />
             </div>
           </div>
         </CardContent>
@@ -320,13 +369,12 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
               setLocalItems(prev => [
                 ...prev,
                 {
-                  id: Math.random().toString(36).substr(2, 9),
-                  part_number: '',
+                  id: undefined,
+                  product: '',
                   product_name: '',
                   quantity: 1,
                   unit_price: 0,
                   amount: 0,
-                  unit: 'PCS'
                 }
               ])
             }}>
@@ -368,8 +416,8 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                       <TableRow key={index}>
                         <TableCell>
                           <Input
-                            value={item.part_number || ''}
-                            onChange={(e) => updateLocalItem(index, 'part_number', e.target.value)}
+                            value={item.product_code || ''}
+                            onChange={(e) => updateLocalItemString(index, 'product_code', e.target.value)}
                             placeholder="Part No."
                             className="h-8 font-mono text-sm"
                           />
@@ -377,7 +425,7 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                         <TableCell>
                           <Textarea
                             value={item.product_name || ''}
-                            onChange={(e) => updateLocalItem(index, 'product_name', e.target.value)}
+                            onChange={(e) => updateLocalItemString(index, 'product_name', e.target.value)}
                             placeholder="Description"
                             className="min-h-[3rem] h-12 text-sm resize-y"
                             rows={2}
@@ -395,8 +443,8 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                         </TableCell>
                         <TableCell>
                           <Select 
-                            value={item.unit || 'PCS'} 
-                            onValueChange={(value) => updateLocalItem(index, 'unit', value)}
+                            value={item.unit || ''} 
+                            onValueChange={(value) => updateLocalItemString(index, 'unit', value)}
                           >
                             <SelectTrigger className="h-8 text-sm">
                               <SelectValue placeholder="PCS" />

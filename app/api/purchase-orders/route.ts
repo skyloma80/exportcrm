@@ -29,7 +29,13 @@ export async function POST(request: NextRequest) {
         purchaseOrderItemService.createItem({
           purchase_order: po.id,
           product: item.product,
+          product_name: item.product_name,
+          product_code: item.product_code,
+          part_number: item.part_number,
+          description_en: item.description_en,
+          description_cn: item.description_cn,
           quantity: item.quantity,
+          unit: item.unit,
           unit_price: item.unit_price,
           amount: item.amount,
         })

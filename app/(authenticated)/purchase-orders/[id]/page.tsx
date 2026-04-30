@@ -469,6 +469,9 @@ export default function PurchaseOrderDetailPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>{t("purchaseOrders.items.product")}</TableHead>
+                        <TableHead>{locale === 'zh' ? '零件号' : 'Part No.'}</TableHead>
+                        <TableHead>{locale === 'zh' ? '描述(英文)' : 'Description(EN)'}</TableHead>
+                        <TableHead>{locale === 'zh' ? '描述(中文)' : 'Description(CN)'}</TableHead>
                         <TableHead className="text-right">{t("purchaseOrders.items.quantity")}</TableHead>
                         <TableHead className="text-right">{t("purchaseOrders.items.unitPrice")}</TableHead>
                         <TableHead className="text-right">{t("purchaseOrders.items.amount")}</TableHead>
@@ -488,6 +491,9 @@ export default function PurchaseOrderDetailPage() {
                               </p>
                             </div>
                           </TableCell>
+                          <TableCell className="font-mono text-sm">{item.part_number || "-"}</TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={item.description_en}>{item.description_en || "-"}</TableCell>
+                          <TableCell className="max-w-[200px] truncate" title={item.description_cn}>{item.description_cn || "-"}</TableCell>
                           <TableCell className="text-right">{item.quantity}</TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(item.unit_price, po.currency)}

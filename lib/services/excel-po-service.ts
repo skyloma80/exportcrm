@@ -3,18 +3,36 @@ import JSZip from 'jszip';
 import path from 'path';
 import { format } from 'date-fns';
 import fs from 'fs';
-import type { PurchaseOrderWithExpand } from '@/lib/pocketbase/services/purchase-orders';
-import { purchaseOrderItemService } from '@/lib/pocketbase/services/purchase-orders';
+import type { FlatPO, POItem } from '@/lib/pocketbase/services/po';
 
+/**
+ * ExcelPoService - 基于 FlatPO 模型生成采购订单 Excel
+ *
+ * 模板列结构 (第9行开始为产品行):
+ *   A: 序号
+ *   B-C: 零件号 (合并单元格)
+ *   D: 英文描述
+ *   E: 中文描述
+ *   F: 数量
+ *   G: 单位
+ *   H: 单价
+ *   I: 金额 (= H * F)
+ *
+ * 头部单元格:
+ *   H2/I2: PO 订单号
+ *   I3: 日期
+ *   A6 (或 B6): 供应商名称
+ */
 export class ExcelPoService {
   private templatePath = path.join(process.cwd(), 'excel-template', 'PO-template.xlsx');
 
-  async generatePoExcel(po: PurchaseOrderWithExpand): Promise<Buffer> {
+  async generatePoExcel(po: FlatPO): Promise<Buffer> {
+    // 1. 预先保存模板中的图片和图形关系文件 (ExcelJS 会丢弃这些)
     const originalZip = await JSZip.loadAsync(fs.readFileSync(this.templatePath));
-    const originalMedia: { [key: string]: Buffer } = {};
-    const originalDrawings: { [key: string]: Buffer } = {};
-    const originalDrawingRels: { [key: string]: Buffer } = {};
-    const originalWorksheetRels: { [key: string]: Buffer } = {};
+    const originalMedia: Record<string, Buffer> = {};
+    const originalDrawings: Record<string, Buffer> = {};
+    const originalDrawingRels: Record<string, Buffer> = {};
+    const originalWorksheetRels: Record<string, Buffer> = {};
 
     for (const fileName of Object.keys(originalZip.files)) {
       const file = originalZip.file(fileName);
@@ -33,169 +51,148 @@ export class ExcelPoService {
       }
     }
 
+    // 2. 用 ExcelJS 读取模板并填充数据
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(this.templatePath);
     const worksheet = workbook.worksheets[0];
 
-    const items = await purchaseOrderItemService.getByPO(po.id);
-    const supplier = po.expand?.supplier;
+    const items: POItem[] = Array.isArray(po.items) ? po.items : [];
+    const TEMPLATE_DATA_ROW = 9; // 第一条产品数据行
 
-    const templateRow = 11;
-    const templateRowCount = 1;
+    // 填充头部信息
+    worksheet.getCell('H2').value = po.code || '';
+    worksheet.getCell('I2').value = po.code || '';
+    worksheet.getCell('I3').value = po.created
+      ? format(new Date(po.created), 'yyyy/M/d')
+      : format(new Date(), 'yyyy/M/d');
 
-    const row11 = worksheet.getRow(templateRow);
-    for (let c = 1; c <= 8; c++) {
-      row11.getCell(c).value = '';
-    }
+    // 供应商名称 (模板中在 A6，合并到多列)
+    worksheet.getCell('A6').value = po.supplier_name || '';
 
-    worksheet.getCell('G2').value = po.supplier_code || '';
-    worksheet.getCell('G3').value = po.our_po || '';
-    worksheet.getCell('G4').value = po.code || '';
-    worksheet.getCell('G5').value = format(new Date(po.created), 'MMM dd, yyyy');
+    // 3. 如果产品超过1条，插入额外行
+    const extraRows = items.length > 1 ? items.length - 1 : 0;
 
-    worksheet.getCell('B6').value = supplier?.name || supplier?.name_cn || '';
-    worksheet.getCell('B7').value = (supplier as any)?.address || (supplier as any)?.address_cn || '';
-    worksheet.getCell('B8').value = (supplier as any)?.tax_id || '';
+    if (extraRows > 0) {
+      // 先解除模板行 B9:C9 的合并 (如果有)
+      try { worksheet.unMergeCells('B9:C9'); } catch (_) {}
+      // 在模板行后插入空行，复制样式
+      worksheet.spliceRows(TEMPLATE_DATA_ROW + 1, 0, ...Array(extraRows).fill([]));
 
-    const rowsInserted = items.length > templateRowCount ? items.length - templateRowCount : 0;
-
-    if (rowsInserted > 0) {
-      worksheet.unMergeCells('B11:C11');
-      worksheet.spliceRows(templateRow + templateRowCount, 0, ...Array(rowsInserted).fill([]));
-
-      const sourceRow = worksheet.getRow(templateRow);
-      for (let i = 0; i < rowsInserted; i++) {
-        const newRowNumber = templateRow + templateRowCount + i;
-        const newRow = worksheet.getRow(newRowNumber);
+      const sourceRow = worksheet.getRow(TEMPLATE_DATA_ROW);
+      for (let i = 0; i < extraRows; i++) {
+        const newRowNum = TEMPLATE_DATA_ROW + 1 + i;
+        const newRow = worksheet.getRow(newRowNum);
         newRow.height = sourceRow.height;
-
         sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
           const targetCell = newRow.getCell(colNumber);
           targetCell.style = { ...cell.style };
         });
-
-        const merges = (worksheet as any)._merges;
-        if (merges) {
-          delete merges[`B${newRowNumber}`];
-          delete merges[`C${newRowNumber}`];
-        }
       }
-
-      worksheet.mergeCells('B11:C11');
+      // 重新合并第9行的 B:C
+      worksheet.mergeCells('B9:C9');
     }
 
+    // 4. 逐行填充产品数据
     items.forEach((item, index) => {
-      const rowNumber = templateRow + index;
-      const row = worksheet.getRow(rowNumber);
-      const product = item.expand?.product;
+      const rowNum = TEMPLATE_DATA_ROW + index;
+      const row = worksheet.getRow(rowNum);
 
-      let description = item.product_name || product?.name || '';
-      if ((product as any)?.hs_code) {
-        description += `\nHS code: ${(product as any).hs_code}`;
-      }
+      row.getCell(1).value = index + 1;                                  // A: 序号
+      row.getCell(2).value = item.part_number || item.product_code || ''; // B: 零件号
+      // C 是 B 的合并单元格，不单独写
+      row.getCell(4).value = item.description_en || item.product_name || ''; // D: 英文描述
+      row.getCell(5).value = item.description_cn || '';                   // E: 中文描述
+      row.getCell(6).value = item.quantity ?? 1;                          // F: 数量
+      row.getCell(7).value = item.unit || 'PCS';                          // G: 单位
+      row.getCell(8).value = item.unit_price ?? 0;                        // H: 单价
+      row.getCell(9).value = {                                            // I: 金额 (公式)
+        formula: `H${rowNum}*F${rowNum}`,
+        result: item.amount ?? 0,
+      };
 
-      row.getCell(1).value = index + 1;
-      row.getCell(2).value = item.product_code || (product as any)?.part_number || product?.code || '';
-      row.getCell(4).value = description;
-      row.getCell(5).value = item.quantity;
-      row.getCell(6).value = item.unit || (product as any)?.unit || 'PCS';
-      row.getCell(7).value = item.unit_price;
-      row.getCell(8).value = item.amount;
+      // 行高自适应
+      const lineCount = [item.description_en, item.description_cn].filter(Boolean).length;
+      row.height = Math.max(20, lineCount * 15);
     });
 
-    items.forEach((item, index) => {
-      const rowNumber = templateRow + index;
-      const row = worksheet.getRow(rowNumber);
-      const product = item.expand?.product;
-      let lines = 1;
-      if (item.product_name || product?.name) lines++;
-      if ((product as any)?.hs_code) lines++;
-      row.height = lines * 15;
+    // 5. 合计行 (在数据区后第4行位置)
+    const totalRowIndex = TEMPLATE_DATA_ROW + items.length + 3; // 原模板合计行偏移
+    try {
+      const totalCell = worksheet.getRow(totalRowIndex).getCell(9);
+      totalCell.value = {
+        formula: `SUM(I${TEMPLATE_DATA_ROW}:I${TEMPLATE_DATA_ROW + items.length - 1})`,
+        result: po.total_amount ?? 0,
+      };
+    } catch (_) {
+      // 若合计行位置不存在，忽略
+    }
+
+    // 6. 备注 — 每行文本插入一个 Excel 行，保留模板样式
+    const remarks = po.remarks || '';
+    const remarkLines = remarks.split('\n'); // 保留空行，维持格式感
+    // 备注区首行在模板中为第17行，随产品行数偏移
+    const REMARK_TEMPLATE_ROW = 17; // 模板中备注区首行（空行，带样式）
+    const remarkStartRow = REMARK_TEMPLATE_ROW + extraRows;
+    const TEMPLATE_REMARK_ROWS = 4; // 模板预留的备注行数
+
+    // 先读取模板第一条备注行的样式（用于复制到新行）
+    const remarkTemplateRow = worksheet.getRow(remarkStartRow);
+    const remarkRowStyleCache: { [col: number]: any } = {};
+    remarkTemplateRow.eachCell({ includeEmpty: true }, (cell, colNum) => {
+      if (colNum <= 9) {
+        remarkRowStyleCache[colNum] = JSON.parse(JSON.stringify(cell.style));
+      }
+    });
+    const remarkRowHeight = remarkTemplateRow.height || 24.9;
+
+    // 如果备注行数超过模板预留行数，先插入额外行（插在第1条备注行之后）
+    const extraRemarkRows = remarkLines.length > TEMPLATE_REMARK_ROWS
+      ? remarkLines.length - TEMPLATE_REMARK_ROWS
+      : 0;
+
+    if (extraRemarkRows > 0) {
+      // 先解除第一备注行合并，以免 spliceRows 破坏它
+      try { worksheet.unMergeCells(`A${remarkStartRow}:I${remarkStartRow}`); } catch (_) {}
+      worksheet.spliceRows(remarkStartRow + 1, 0, ...Array(extraRemarkRows).fill([]));
+      // 重新合并第一备注行
+      worksheet.mergeCells(`A${remarkStartRow}:I${remarkStartRow}`);
+      // 为新插入的行复制样式并恢复合并单元格（模板备注行是 A:I 全行合并）
+      for (let i = 0; i < extraRemarkRows; i++) {
+        const newRowNum = remarkStartRow + 1 + i;
+        const newRow = worksheet.getRow(newRowNum);
+        newRow.height = remarkRowHeight;
+        for (let c = 1; c <= 9; c++) {
+          if (remarkRowStyleCache[c]) {
+            newRow.getCell(c).style = { ...remarkRowStyleCache[c] };
+          }
+        }
+        // 清除 spliceRows 可能留下的旧合并状态，再重新合并整行
+        try { worksheet.unMergeCells(`A${newRowNum}:I${newRowNum}`); } catch (_) {}
+        worksheet.mergeCells(`A${newRowNum}:I${newRowNum}`);
+      }
+    }
+
+    // 逐行填写备注内容（A列，保留原有样式）
+    remarkLines.forEach((line, index) => {
+      const rowNum = remarkStartRow + index;
+      const cell = worksheet.getRow(rowNum).getCell(1);
+      // 保留原样式，只写入文本值
+      const origStyle = remarkRowStyleCache[1] || {};
+      cell.style = { ...origStyle };
+      cell.value = line;
     });
 
-    for (let i = 0; i < items.length; i++) {
-      const rowNumber = templateRow + i;
-      if (rowNumber === templateRow) continue;
-      
-      try {
-        worksheet.mergeCells(`B${rowNumber}:C${rowNumber}`);
-      } catch (e) {
-      }
+    // 若备注行比模板少，清空多余的模板备注行内容（但保留行和样式）
+    for (let i = remarkLines.length; i < TEMPLATE_REMARK_ROWS; i++) {
+      const rowNum = remarkStartRow + i;
+      worksheet.getRow(rowNum).getCell(1).value = '';
     }
 
-    const totalRowIndex = 15 + rowsInserted;
-    const totalCell = worksheet.getRow(totalRowIndex).getCell(8);
-    totalCell.value = {
-      formula: `SUM(H${templateRow}:H${templateRow + items.length - 1})`,
-      result: po.total_amount,
-    };
-
-    const termsStartRow = 17 + rowsInserted;
-    worksheet.getRow(termsStartRow + 1).getCell(3).value = po.payment_terms || '';
-    worksheet.getRow(termsStartRow + 2).getCell(3).value = po.incoterm || '';
-    worksheet.getRow(termsStartRow + 3).getCell(3).value = po.country_of_origin || 'China';
-    worksheet.getRow(termsStartRow + 4).getCell(3).value = po.country_of_destination || '';
-    worksheet.getRow(termsStartRow + 5).getCell(3).value = po.port_of_loading || '';
-    worksheet.getRow(termsStartRow + 6).getCell(3).value = po.port_of_destination || '';
-    worksheet.getRow(termsStartRow + 7).getCell(3).value = po.mode_of_shipment || '';
-    worksheet.getRow(termsStartRow + 8).getCell(3).value = po.estimated_shipping_date
-      ? format(new Date(po.estimated_shipping_date), 'yyyy-MM-dd')
-      : '';
-
-    const remittanceTemplateRow = 28 + rowsInserted;
-
-    for (let c = 1; c <= 8; c++) {
-      worksheet.getRow(remittanceTemplateRow).getCell(c).value = '';
-    }
-
-    let bankInfoList: string[] = [];
-    const rawBankInfo = po.bank_info as any;
-    if (rawBankInfo) {
-      if (Array.isArray(rawBankInfo)) {
-        bankInfoList = rawBankInfo;
-      } else if (typeof rawBankInfo === 'string' && rawBankInfo.trim()) {
-        try {
-          const parsed = JSON.parse(rawBankInfo);
-          if (Array.isArray(parsed)) {
-            bankInfoList = parsed;
-          }
-        } catch (e) {
-          console.warn('Failed to parse bank_info:', e);
-        }
-      }
-    }
-    
-    if (bankInfoList.length) {
-      console.log('bankInfoList:', bankInfoList);
-      const rowsToInsert = bankInfoList.length - 1;
-      if (rowsToInsert > 0) {
-        worksheet.spliceRows(remittanceTemplateRow + 1, 0, ...Array(rowsToInsert).fill([]));
-
-        const sourceRow = worksheet.getRow(remittanceTemplateRow);
-        for (let i = 0; i < rowsToInsert; i++) {
-          const newRowNumber = remittanceTemplateRow + 1 + i;
-          const newRow = worksheet.getRow(newRowNumber);
-          newRow.height = sourceRow.height;
-          sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-            const targetCell = newRow.getCell(colNumber);
-            targetCell.style = { ...cell.style };
-          });
-          try {
-            worksheet.mergeCells(`A${newRowNumber}:H${newRowNumber}`);
-          } catch (e) {
-          }
-        }
-      }
-
-      bankInfoList.forEach((line: string, index: number) => {
-        const row = worksheet.getRow(remittanceTemplateRow + index);
-        row.getCell(1).value = `${index + 1}. ${line}`;
-      });
-    }
-
-    const tempPath = path.join(process.cwd(), 'excel-template', 'PO-temp.xlsx');
+    // 7. 写临时文件
+    const tempPath = path.join(process.cwd(), 'excel-template', `PO-temp-${Date.now()}.xlsx`);
     await workbook.xlsx.writeFile(tempPath);
 
+    // 8. 用 JSZip 把图片、图形关系还原到输出文件
     const newZip = await JSZip.loadAsync(fs.readFileSync(tempPath));
 
     for (const [fileName, data] of Object.entries(originalMedia)) {
@@ -208,16 +205,19 @@ export class ExcelPoService {
       newZip.file(fileName, data);
     }
 
+    // 修复 worksheet 与图形文件的关联
     const workbookXmlFile = newZip.file('xl/workbook.xml');
     if (workbookXmlFile) {
       const workbookXml = await workbookXmlFile.async('string');
-      const piSheetMatch = workbookXml.match(/<sheet[^>]*name="PO"[^>]*r:id="(rId\d+)"/);
+      const poSheetMatch = workbookXml.match(/<sheet[^>]*name="PO"[^>]*r:id="(rId\d+)"/);
 
-      if (piSheetMatch) {
+      if (poSheetMatch) {
         const workbookRelsFile = newZip.file('xl/_rels/workbook.xml.rels');
         if (workbookRelsFile) {
           const workbookRels = await workbookRelsFile.async('string');
-          const sheetRelMatch = workbookRels.match(new RegExp(`Id="${piSheetMatch[1]}"[^>]*Target="worksheets/(sheet\\d+\\.xml)"`));
+          const sheetRelMatch = workbookRels.match(
+            new RegExp(`Id="${poSheetMatch[1]}"[^>]*Target="worksheets/(sheet\\d+\\.xml)"`)
+          );
 
           if (sheetRelMatch) {
             const sheetFileName = sheetRelMatch[1];
@@ -225,21 +225,22 @@ export class ExcelPoService {
             if (sheetNumMatch) {
               const sheetNum = sheetNumMatch[1];
 
+              // 还原 worksheet rels (包含图形引用)
               const originalSheetRels = originalWorksheetRels[`xl/worksheets/_rels/sheet1.xml.rels`];
               if (originalSheetRels) {
                 newZip.file(`xl/worksheets/_rels/sheet${sheetNum}.xml.rels`, originalSheetRels);
               }
 
+              // 确保 worksheet XML 中有 <drawing> 引用
               const sheetFile = newZip.file(`xl/worksheets/${sheetFileName}`);
               if (sheetFile) {
-                const sheetXml = await sheetFile.async('string');
+                let sheetXml = await sheetFile.async('string');
                 if (!sheetXml.includes('<drawing')) {
-                  const sheetWithDrawing = sheetXml.replace('</worksheet>', '<drawing r:id="rId3"/></worksheet>');
-                  newZip.file(`xl/worksheets/${sheetFileName}`, sheetWithDrawing);
+                  sheetXml = sheetXml.replace('</worksheet>', '<drawing r:id="rId3"/></worksheet>');
                 } else {
-                  const fixedSheetXml = sheetXml.replace(/<drawing[^>]*r:id="rId\d+"[^>]*\/>/, '<drawing r:id="rId3"/>');
-                  newZip.file(`xl/worksheets/${sheetFileName}`, fixedSheetXml);
+                  sheetXml = sheetXml.replace(/<drawing[^>]*r:id="rId\d+"[^>]*\/>/, '<drawing r:id="rId3"/>');
                 }
+                newZip.file(`xl/worksheets/${sheetFileName}`, sheetXml);
               }
             }
           }
@@ -249,7 +250,8 @@ export class ExcelPoService {
 
     const outputBuffer = await newZip.generateAsync({ type: 'nodebuffer' });
 
-    fs.unlinkSync(tempPath);
+    // 清理临时文件
+    try { fs.unlinkSync(tempPath); } catch (_) {}
 
     return outputBuffer as unknown as Buffer;
   }

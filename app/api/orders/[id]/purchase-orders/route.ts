@@ -53,7 +53,6 @@ export async function POST(
     // 2. 获取项目成本表
     const costTableResult = await pb.collection("project_cost_tables").getList(1, 1, {
       filter: `project = "${order.project}" && status = "confirmed"`,
-      sort: "-created",
     })
 
     console.log("[PO Generation] Cost table query result:", {

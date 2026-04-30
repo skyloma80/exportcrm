@@ -91,7 +91,6 @@ export default function OrderShipmentsPage({ params }: PageProps) {
       // Load shipments
       const shipmentsData = await pb.collection("shipments").getFullList<Shipment>({
         filter: `order = "${id}"`,
-        sort: "-created",
       })
       setShipments(shipmentsData)
       

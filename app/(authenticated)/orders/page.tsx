@@ -10,12 +10,10 @@ import {
   Download, 
   Eye, 
   MoreHorizontal,
-  ArrowLeftRight,
-  FolderKanban,
   Building2,
   Calendar,
-  DollarSign,
-  Loader2
+  Loader2,
+  RefreshCw
 } from "lucide-react"
 import { format } from "date-fns"
 
@@ -27,9 +25,8 @@ import {
   DataTableColumnHeader,
   DataTableRowActions,
 } from "@/components/data-table"
-import { ProjectSelect } from "@/components/ui/project-select"
 import { useI18n } from "@/lib/i18n/use-i18n"
-import { orderService, OrderWithExpand } from "@/lib/pocketbase/services/orders"
+import { soService, type FlatSO } from "@/lib/pocketbase/services/so"
 import { useToast } from "@/hooks/use-toast"
 
 export default function OrdersPage() {
@@ -37,24 +34,18 @@ export default function OrdersPage() {
   const router = useRouter()
   const { toast } = useToast()
   
-  const [data, setData] = useState<OrderWithExpand[]>([])
+  const [data, setData] = useState<FlatSO[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedProject, setSelectedProject] = useState<string>("")
   const [totalItems, setTotalItems] = useState(0)
 
   useEffect(() => {
     loadOrders()
-  }, [selectedProject])
+  }, [])
 
   const loadOrders = async () => {
     setLoading(true)
     try {
-      let filter = ""
-      if (selectedProject) {
-        filter = `project = "${selectedProject}"`
-      }
-      
-      const result = await orderService.getListWithExpand(1, 100, filter)
+      const result = await soService.getList({ page: 1, perPage: 100, sort: '-code' })
       setData(result.items)
       setTotalItems(result.totalItems)
     } catch (error: any) {
@@ -69,20 +60,19 @@ export default function OrdersPage() {
   }
 
   const getStatusVariant = (status: string) => {
-    const variants: Record<string, any> = {
-      draft: "secondary",
-      confirmed: "default",
-      in_production: "warning",
-      ready_to_ship: "info",
-      shipped: "success",
-      delivered: "success",
-      completed: "success",
-      cancelled: "destructive",
+    switch (status) {
+      case 'completed': return 'default'
+      case 'cancelled': return 'destructive'
+      case 'confirmed':
+      case 'in_production': return 'secondary'
+      case 'ready_to_ship': return 'outline'
+      case 'shipped':
+      case 'delivered': return 'outline'
+      default: return 'outline'
     }
-    return variants[status] || "secondary"
   }
 
-  const columns: ColumnDef<OrderWithExpand>[] = useMemo(() => [
+  const columns: ColumnDef<FlatSO>[] = useMemo(() => [
     {
       accessorKey: "code",
       header: ({ column }) => (
@@ -95,7 +85,7 @@ export default function OrdersPage() {
       ),
     },
     {
-      accessorKey: "customer",
+      accessorKey: "customer_name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("orders.columns.customer")} />
       ),
@@ -103,31 +93,9 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">
-                {locale === 'zh' && row.original.expand?.customer?.name_cn 
-                    ? row.original.expand.customer.name_cn 
-                    : row.original.expand?.customer?.name || t("common.independent") || "Independent"}
+                {row.original.customer_name || "-"}
             </span>
         </div>
-      ),
-    },
-    {
-      accessorKey: "project",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("orders.columns.project")} />
-      ),
-      cell: ({ row }) => (
-        row.original.expand?.project ? (
-            <div className="flex items-center gap-2">
-                <FolderKanban className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">
-                    {locale === 'zh' && row.original.expand.project.name_cn 
-                        ? row.original.expand.project.name_cn 
-                        : row.original.expand.project.name}
-                </span>
-            </div>
-        ) : (
-            <span className="text-muted-foreground italic text-xs">-</span>
-        )
       ),
     },
     {
@@ -150,10 +118,21 @@ export default function OrdersPage() {
         const status = row.getValue("status") as string
         return (
           <Badge variant={getStatusVariant(status)}>
-            {t(`orders.status.${status}`)}
+            {t(`orders.status.${status}`) || status}
           </Badge>
         )
       },
+    },
+    {
+        accessorKey: "created",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t("orders.columns.date")} />
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-xs">
+            {row.original.created ? format(new Date(row.original.created), 'yyyy-MM-dd') : "-"}
+          </span>
+        ),
     },
     {
       id: "actions",
@@ -166,7 +145,7 @@ export default function OrdersPage() {
             {
                 label: "Export PI (Excel)",
                 icon: Download,
-                onClick: (item) => window.open(`/api/orders/${item.id}/export-pi`, '_blank'),
+                onClick: (item) => window.open(`/api/so/${item.id}/export-pi`, '_blank'),
                 className: "text-blue-600"
             }
           ]}
@@ -216,15 +195,8 @@ export default function OrdersPage() {
         <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{t("orders.listTitle")}</CardTitle>
             <div className="flex gap-2">
-                <div className="w-64">
-                    <ProjectSelect 
-                        value={selectedProject}
-                        onChange={(p) => setSelectedProject(p?.id || "")}
-                        placeholder={t("orders.placeholders.project") || "Filter by Project"}
-                    />
-                </div>
                 <Button variant="outline" onClick={loadOrders} size="icon">
-                    <Filter className="h-4 w-4" />
+                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 </Button>
             </div>
         </CardHeader>

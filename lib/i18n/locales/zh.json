@@ -16,7 +16,8 @@
     "sourcingPlans": "采购成本表",
     "purchaseOrders": "采购订单",
     "quotations": "报价给客户",
-    "orders": "销售订单",
+    "orders": "旧版销售订单",
+    "soOrders": "销售订单",
     "invoices": "形式发票",
     "proformaInvoices": "形式发票",
     "shipments": "发货管理",
@@ -1208,6 +1209,7 @@
       "currency": "货币",
       "totalAmount": "总金额",
       "paidAmount": "已付金额",
+      "date": "日期",
       "expectedDelivery": "预计交货日期"
     },
     "status": {
@@ -1366,7 +1368,12 @@
       "exchangeRate": "汇率",
       "totalAmount": "总金额",
       "paidAmount": "已付金额",
-      "expectedDelivery": "预计交货日期"
+      "date": "日期",
+      "expectedDelivery": "预计交货日期",
+      "partNo": "零件号",
+      "description": "描述",
+      "quantity": "数量",
+      "unitPrice": "单价"
     },
     "status": {
       "draft": "草稿",

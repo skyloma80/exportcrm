@@ -24,25 +24,12 @@ export interface PurchaseOrder extends RecordModel {
   rfq?: string;
   status: POStatus;
   currency: string;
+
+
   total_amount: number;
   paid_amount?: number;
   expected_delivery_date?: string;
-  
-  // Trade fields (mirroring Sales Orders)
-  incoterm?: string;
-  port_of_loading?: string;
-  port_of_destination?: string;
-  payment_terms?: string;
-  exchange_rate?: number;
-  country_of_origin?: string;
-  country_of_destination?: string;
-  mode_of_shipment?: string;
-  bank_info?: string; // JSON string
-  shipping_marks?: string;
-  estimated_shipping_date?: string;
   remarks?: string;
-  supplier_code?: string; // Similar to vendor_code in SO
-  our_po?: string; // Similar to customer_po in SO
 }
 
 export interface PurchaseOrderItem extends RecordModel {
@@ -50,6 +37,9 @@ export interface PurchaseOrderItem extends RecordModel {
   product?: string; // Optional for free-text items
   product_name?: string;
   product_code?: string;
+  part_number?: string;
+  description_en?: string;
+  description_cn?: string;
   unit?: string;
   quantity: number;
   unit_price: number;
@@ -103,22 +93,9 @@ export interface POCreateInput {
   total_amount: number;
   paid_amount?: number;
   expected_delivery_date?: string;
-  
+
   // Trade fields
-  incoterm?: string;
-  port_of_loading?: string;
-  port_of_destination?: string;
-  payment_terms?: string;
-  exchange_rate?: number;
-  country_of_origin?: string;
-  country_of_destination?: string;
-  mode_of_shipment?: string;
-  bank_info?: string;
-  shipping_marks?: string;
-  estimated_shipping_date?: string;
   remarks?: string;
-  supplier_code?: string;
-  our_po?: string;
 }
 
 export interface POItemCreateInput {
@@ -126,6 +103,9 @@ export interface POItemCreateInput {
   product?: string;
   product_name?: string;
   product_code?: string;
+  part_number?: string;
+  description_en?: string;
+  description_cn?: string;
   unit?: string;
   quantity: number;
   unit_price: number;
@@ -287,7 +267,7 @@ class PurchaseOrderItemService extends BaseCollectionService<PurchaseOrderItem> 
   }
 }
 
- 
+
 
 // ============================================================================
 // Purchase Order Payment Service
@@ -322,6 +302,6 @@ class PurchaseOrderPaymentService extends BaseCollectionService<PurchaseOrderPay
 
 export const purchaseOrderService = new PurchaseOrderService();
 export const purchaseOrderItemService = new PurchaseOrderItemService();
- export const purchaseOrderPaymentService = new PurchaseOrderPaymentService();
+export const purchaseOrderPaymentService = new PurchaseOrderPaymentService();
 
 export default purchaseOrderService;

@@ -71,8 +71,11 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
       ...products.map(product => ({
         id: undefined,
         product: product.id,
-        product_code: product.part_number || product.code || '',
-        product_name: locale === 'zh' && product.name_cn ? product.name_cn : (product.name || ''),
+        product_code: product.code || '',
+        product_name: product.name || '',
+        part_number: product.part_number || product.code || '',
+        description_en: product.description || product.name || '',
+        description_cn: product.description_cn || product.name_cn || '',
         quantity: 1,
         unit: product.unit || 'PCS',
         unit_price: product.unit_price || 0,
@@ -114,22 +117,12 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
   const [formData, setFormData] = useState({
     project: initialData?.project || "",
     supplier: initialData?.supplier || "",
-    incoterm: initialData?.incoterm || "FOB",
-    port_of_loading: initialData?.port_of_loading || "",
-    port_of_destination: initialData?.port_of_destination || "",
-    payment_terms: initialData?.payment_terms || "",
+    order: (initialData as any)?.order || "",
+    rfq: (initialData as any)?.rfq || "",
+    status: initialData?.status || "draft",
     currency: initialData?.currency || "CNY",
-    exchange_rate: initialData?.exchange_rate || 1,
     expected_delivery_date: formatDateForInput(initialData?.expected_delivery_date),
-    country_of_origin: initialData?.country_of_origin || "CN",
-    country_of_destination: initialData?.country_of_destination || "",
-    mode_of_shipment: initialData?.mode_of_shipment || "",
-    bank_info: initialData?.bank_info || "",
-    shipping_marks: initialData?.shipping_marks || "",
-    estimated_shipping_date: formatDateForInput(initialData?.estimated_shipping_date),
     remarks: initialData?.remarks || "",
-    our_po: initialData?.our_po || "",
-    supplier_code: initialData?.supplier_code || "",
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -198,8 +191,10 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
         ...formData,
         project: projectIdToUse as any,
         supplier: supplierIdToUse as any,
+        order: formData.order || null,
+        rfq: formData.rfq || null,
         total_amount: localItems.reduce((sum, item) => sum + item.amount, 0),
-      }, localItems)
+      } as any, localItems)
     } catch (err: any) {
       console.error("Form submission error:", err)
       if (err.response?.data) {
@@ -234,6 +229,17 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
                 placeholder={locale === 'zh' ? '选择项目' : 'Select project'}
               />
             </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '币种' : 'Currency'} *</Label>
+              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {COMMON_CURRENCIES.map(code => (
+                    <SelectItem key={code} value={code}>{code}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -250,6 +256,9 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
                   product: '',
                   product_name: '',
                   product_code: '',
+                  part_number: '',
+                  description_en: '',
+                  description_cn: '',
                   quantity: 1,
                   unit: 'PCS',
                   unit_price: 0,
@@ -270,13 +279,14 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{locale === 'zh' ? '零件号' : 'Part No.'}</TableHead>
-                <TableHead>{locale === 'zh' ? '描述' : 'Description'}</TableHead>
-                <TableHead className="w-[100px]">{locale === 'zh' ? '数量' : 'Qty'}</TableHead>
-                <TableHead className="w-[100px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
-                <TableHead className="w-[150px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
-                <TableHead className="text-right">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableHead className="w-[120px]">{locale === 'zh' ? '零件号' : 'Part No.'}</TableHead>
+                <TableHead>{locale === 'zh' ? '描述(英文)' : 'Description(EN)'}</TableHead>
+                <TableHead>{locale === 'zh' ? '描述(中文)' : 'Description(CN)'}</TableHead>
+                <TableHead className="w-[80px]">{locale === 'zh' ? '数量' : 'Qty'}</TableHead>
+                <TableHead className="w-[80px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
+                <TableHead className="w-[120px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
+                <TableHead className="text-right w-[100px]">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -284,15 +294,23 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
                 <TableRow key={index}>
                   <TableCell>
                     <Input
-                      value={item.product_code || ''}
-                      onChange={(e) => updateLocalItemString(index, 'product_code', e.target.value)}
+                      value={item.part_number || ''}
+                      onChange={(e) => updateLocalItemString(index, 'part_number', e.target.value)}
                       className="h-8 text-sm"
                     />
                   </TableCell>
                   <TableCell>
                     <Textarea
-                      value={item.product_name || ''}
-                      onChange={(e) => updateLocalItemString(index, 'product_name', e.target.value)}
+                      value={item.description_en || ''}
+                      onChange={(e) => updateLocalItemString(index, 'description_en', e.target.value)}
+                      className="min-h-[2rem] h-8 text-sm resize-y"
+                      rows={1}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Textarea
+                      value={item.description_cn || ''}
+                      onChange={(e) => updateLocalItemString(index, 'description_cn', e.target.value)}
                       className="min-h-[2rem] h-8 text-sm resize-y"
                       rows={1}
                     />
@@ -338,49 +356,9 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{locale === 'zh' ? '贸易与物流' : 'Trade & Shipping'}</CardTitle>
+          <CardTitle className="text-base">{locale === 'zh' ? '交货与备注' : 'Delivery & Remarks'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '我们的 PO 号' : 'Our PO Number'}</Label>
-              <Input
-                value={formData.our_po}
-                onChange={(e) => setFormData(prev => ({ ...prev, our_po: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '币种' : 'Currency'} *</Label>
-              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {COMMON_CURRENCIES.map(code => (
-                    <SelectItem key={code} value={code}>{code}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '贸易术语' : 'Incoterm'}</Label>
-              <Select value={formData.incoterm} onValueChange={(v) => setFormData(prev => ({ ...prev, incoterm: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.keys(INCOTERMS).map(code => (
-                    <SelectItem key={code} value={code}>{code}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '付款条款' : 'Payment Terms'}</Label>
-              <PaymentTermsSelect
-                value={formData.payment_terms}
-                onChange={(v) => setFormData(prev => ({ ...prev, payment_terms: v }))}
-              />
-            </div>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '交货日期' : 'Delivery Date'}</Label>
@@ -390,27 +368,15 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
                 onChange={(e) => setFormData(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
               />
             </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '运输方式' : 'Shipping Mode'}</Label>
-              <Input
-                value={formData.mode_of_shipment}
-                onChange={(e) => setFormData(prev => ({ ...prev, mode_of_shipment: e.target.value }))}
-              />
-            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{locale === 'zh' ? '备注' : 'Remarks'}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={formData.remarks}
-            onChange={(e) => setFormData(prev => ({ ...prev, remarks: e.target.value }))}
-            rows={4}
-          />
+          <div className="space-y-2">
+            <Label>{locale === 'zh' ? '备注' : 'Remarks'}</Label>
+            <Textarea
+              value={formData.remarks}
+              onChange={(e) => setFormData(prev => ({ ...prev, remarks: e.target.value }))}
+              rows={4}
+            />
+          </div>
         </CardContent>
       </Card>
 

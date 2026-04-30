@@ -38,7 +38,7 @@ const baseNavGroups: NavGroup[] = [
     items: [
       { titleKey: "nav.dashboard", url: "/dashboard", icon: LayoutDashboard },
       { titleKey: "nav.projects", url: "/projects", icon: FolderKanban },
-      { titleKey: "nav.orders", url: "/orders", icon: ArrowLeftRight },
+      { titleKey: "nav.soOrders", url: "/orders", icon: ShoppingCart },
     ],
   },
   {
@@ -52,7 +52,7 @@ const baseNavGroups: NavGroup[] = [
     labelKey: "nav.supplierServiceProvider",
     items: [
       { titleKey: "nav.suppliers", url: "/suppliers", icon: Factory },
-      { titleKey: "nav.purchaseOrders", url: "/purchase-orders", icon: ShoppingCart },
+      { titleKey: "nav.purchaseOrders", url: "/po", icon: ShoppingCart },
       { titleKey: "nav.serviceProviders", url: "/service-providers", icon: Truck },
     ],
   },

@@ -3,13 +3,13 @@ import JSZip from 'jszip';
 import path from 'path';
 import { format } from 'date-fns';
 import fs from 'fs';
-import type { OrderWithExpand } from '@/lib/pocketbase/services/orders';
+import type { FlatSO } from '@/lib/pocketbase/services/so';
 
 export class ExcelPiService {
   private templatePath = path.join(process.cwd(), 'excel-template', 'PI-template.xlsx');
 
-  async generatePiExcel(order: OrderWithExpand): Promise<Buffer> {
-    // 保存原始模板的媒体资源（logo图片等）
+  async generatePiExcel(order: FlatSO): Promise<Buffer> {
+    // 1. 预先保存模板中的图片和图形关系文件
     const originalZip = await JSZip.loadAsync(fs.readFileSync(this.templatePath));
     const originalMedia: { [key: string]: Buffer } = {};
     const originalDrawings: { [key: string]: Buffer } = {};
@@ -37,26 +37,28 @@ export class ExcelPiService {
     await workbook.xlsx.readFile(this.templatePath);
     const worksheet = workbook.worksheets[0];
 
-    const items = order.expand?.order_items_via_order || [];
-    const customer = order.expand?.customer;
-
+    const items = Array.isArray(order.items) ? order.items : [];
     const templateRow = 11;
     const templateRowCount = 1;
-
+    // 清空模板行占位符
     const row11 = worksheet.getRow(templateRow);
     for (let c = 1; c <= 8; c++) {
       row11.getCell(c).value = '';
     }
 
+    // 填充头部信息
     worksheet.getCell('G2').value = order.vendor_code || '';
     worksheet.getCell('G3').value = order.customer_po || '';
     worksheet.getCell('G4').value = order.code || '';
-    worksheet.getCell('G5').value = format(new Date(order.created), 'MMM dd, yyyy');
+    worksheet.getCell('G5').value = order.created
+      ? format(new Date(order.created), 'MMM dd, yyyy')
+      : format(new Date(), 'MMM dd, yyyy');
 
-    worksheet.getCell('B6').value = customer?.name || '';
-    worksheet.getCell('B7').value = (customer as any)?.address || '';
-    worksheet.getCell('B8').value = (customer as any)?.tax_id || '';
+    worksheet.getCell('B6').value = order.customer_name || '';
+    worksheet.getCell('B7').value = order.customer_address || '';
+    worksheet.getCell('B8').value = order.customer_tax_id || '';
 
+    // 2. 产品行处理：处理多行合并
     const rowsInserted = items.length > templateRowCount ? items.length - templateRowCount : 0;
 
     if (rowsInserted > 0) {
@@ -84,39 +86,32 @@ export class ExcelPiService {
       worksheet.mergeCells('B11:C11');
     }
 
+    // 3. 填充产品数据
     items.forEach((item, index) => {
       const rowNumber = templateRow + index;
       const row = worksheet.getRow(rowNumber);
-      const product = item.expand?.product;
 
-      let description = item.product_name || product?.name || '';
-      if ((product as any)?.hs_code) {
-        description += `\nHS code: ${(product as any).hs_code}`;
-      }
+      const partNumber = item.part_number || (item as any).product_code || '';
+      const description = item.product_name || item.description_en || '';
 
       row.getCell(1).value = index + 1;
-      row.getCell(2).value = item.product_code || (product as any)?.part_number || product?.code || '';
+      row.getCell(2).value = partNumber;
       row.getCell(4).value = description;
       row.getCell(5).value = item.quantity;
-      row.getCell(6).value = (product as any)?.unit || 'PCS';
+      row.getCell(6).value = item.unit || 'PCS';
       row.getCell(7).value = item.unit_price;
       row.getCell(8).value = item.amount;
-    });
 
-    items.forEach((item, index) => {
-      const rowNumber = templateRow + index;
-      const row = worksheet.getRow(rowNumber);
-      const product = item.expand?.product;
+      // 行高调整
       let lines = 1;
-      if (item.product_name || product?.name) lines++;
-      if ((product as any)?.hs_code) lines++;
-      row.height = lines * 15;
+      if (description) lines = Math.ceil(description.length / 40) + 1;
+      row.height = Math.max(20, lines * 15);
     });
 
     for (let i = 0; i < items.length; i++) {
       const rowNumber = templateRow + i;
       if (rowNumber === templateRow) continue;
-      
+
       try {
         worksheet.mergeCells(`B${rowNumber}:C${rowNumber}`);
       } catch (e) {
@@ -131,6 +126,7 @@ export class ExcelPiService {
       result: order.total_amount,
     };
 
+    // 5. 贸易条款
     const termsStartRow = 17 + rowsInserted;
     worksheet.getRow(termsStartRow + 1).getCell(3).value = order.payment_terms || '';
     worksheet.getRow(termsStartRow + 2).getCell(3).value = order.incoterm || '';
@@ -143,111 +139,67 @@ export class ExcelPiService {
       ? format(new Date(order.estimated_shipping_date), 'yyyy-MM-dd')
       : '';
 
+    // 6. 汇款信息 (Remittance)：保持单行样式，内容带序号和换行
     const remittanceTemplateRow = 28 + rowsInserted;
 
-    for (let c = 1; c <= 8; c++) {
-      worksheet.getRow(remittanceTemplateRow).getCell(c).value = '';
-    }
+    // 获取模板样式：即使行移动了，我们也需要确保样式被正确应用
+    // 我们可以从偏移后的行重新获取样式，或者在操作前备份
+    const bankInfo = order.bank_info || '';
+    const bankLines = typeof bankInfo === 'string' ? bankInfo.split('\n').filter(l => l.trim()) : [];
 
-    // bank_info 可能是 string (JSON) 或 string[]
-    let bankInfoList: string[] = [];
-    const rawBankInfo = order.bank_info as any;
-    if (rawBankInfo) {
-      if (Array.isArray(rawBankInfo)) {
-        bankInfoList = rawBankInfo;
-      } else if (typeof rawBankInfo === 'string' && rawBankInfo.trim()) {
-        try {
-          const parsed = JSON.parse(rawBankInfo);
-          if (Array.isArray(parsed)) {
-            bankInfoList = parsed;
-          }
-        } catch (e) {
-          console.warn('Failed to parse bank_info:', e);
-        }
+    if (bankLines.length > 0) {
+      // 将所有行合并成带序号的单行文本，使用换行符，并在行首添加4个空格
+      const formattedBankInfo = bankLines.map((line, idx) => `    ${idx + 1}. ${line}`).join('\n');
+      const row = worksheet.getRow(remittanceTemplateRow);
+      const cell = row.getCell(1);
+
+      // 直接写入值，ExcelJS 会保留该位置原有的 style (字体、边框、背景)
+      cell.value = formattedBankInfo;
+
+      // 增量修改对齐属性，不覆盖整个 style 对象
+      if (!cell.alignment) {
+        cell.alignment = { horizontal: 'left', vertical: 'top' };
       }
-    }
-    
-    // 填充 bank_info
-    if (bankInfoList.length) {
-      console.log('bankInfoList:', bankInfoList);
-      const rowsToInsert = bankInfoList.length - 1;
-      if (rowsToInsert > 0) {
-        worksheet.spliceRows(remittanceTemplateRow + 1, 0, ...Array(rowsToInsert).fill([]));
+      cell.alignment.wrapText = true;
+      cell.alignment.vertical = 'top';
+      cell.alignment.horizontal = 'left';
 
-        const sourceRow = worksheet.getRow(remittanceTemplateRow);
-        for (let i = 0; i < rowsToInsert; i++) {
-          const newRowNumber = remittanceTemplateRow + 1 + i;
-          const newRow = worksheet.getRow(newRowNumber);
-          newRow.height = sourceRow.height;
-          sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-            const targetCell = newRow.getCell(colNumber);
-            targetCell.style = { ...cell.style };
-          });
-          try {
-            worksheet.mergeCells(`A${newRowNumber}:H${newRowNumber}`);
-          } catch (e) {
-            // 可能已经存在
-          }
-        }
-      }
-
-      bankInfoList.forEach((line: string, index: number) => {
-        const row = worksheet.getRow(remittanceTemplateRow + index);
-        row.getCell(1).value = `${index + 1}. ${line}`;
-      });
+      // 调整行高
+      row.height = Math.max(25, bankLines.length * 15);
     }
 
-    // 写入临时文件
-    const tempPath = path.join(process.cwd(), 'excel-template', 'PI-temp.xlsx');
+    // 7. 生成并导出
+    const tempPath = path.join(process.cwd(), 'excel-template', `PI-temp-${Date.now()}.xlsx`);
     await workbook.xlsx.writeFile(tempPath);
 
-    // 用 JSZip 恢复原始媒体资源（logo图片等）
     const newZip = await JSZip.loadAsync(fs.readFileSync(tempPath));
+    for (const [fileName, data] of Object.entries(originalMedia)) newZip.file(fileName, data);
+    for (const [fileName, data] of Object.entries(originalDrawings)) newZip.file(fileName, data);
+    for (const [fileName, data] of Object.entries(originalDrawingRels)) newZip.file(fileName, data);
 
-    for (const [fileName, data] of Object.entries(originalMedia)) {
-      newZip.file(fileName, data);
-    }
-    for (const [fileName, data] of Object.entries(originalDrawings)) {
-      newZip.file(fileName, data);
-    }
-    for (const [fileName, data] of Object.entries(originalDrawingRels)) {
-      newZip.file(fileName, data);
-    }
-
-    // 恢复 sheet 关系
+    // 关系修复逻辑
     const workbookXmlFile = newZip.file('xl/workbook.xml');
     if (workbookXmlFile) {
       const workbookXml = await workbookXmlFile.async('string');
       const piSheetMatch = workbookXml.match(/<sheet[^>]*name="PI"[^>]*r:id="(rId\d+)"/);
-
       if (piSheetMatch) {
         const workbookRelsFile = newZip.file('xl/_rels/workbook.xml.rels');
         if (workbookRelsFile) {
           const workbookRels = await workbookRelsFile.async('string');
           const sheetRelMatch = workbookRels.match(new RegExp(`Id="${piSheetMatch[1]}"[^>]*Target="worksheets/(sheet\\d+\\.xml)"`));
-
           if (sheetRelMatch) {
             const sheetFileName = sheetRelMatch[1];
-            const sheetNumMatch = sheetFileName.match(/sheet(\d+)\.xml/);
-            if (sheetNumMatch) {
-              const sheetNum = sheetNumMatch[1];
-
-              const originalSheetRels = originalWorksheetRels[`xl/worksheets/_rels/sheet1.xml.rels`];
-              if (originalSheetRels) {
-                newZip.file(`xl/worksheets/_rels/sheet${sheetNum}.xml.rels`, originalSheetRels);
-              }
-
-              const sheetFile = newZip.file(`xl/worksheets/${sheetFileName}`);
-              if (sheetFile) {
-                const sheetXml = await sheetFile.async('string');
-                if (!sheetXml.includes('<drawing')) {
-                  const sheetWithDrawing = sheetXml.replace('</worksheet>', '<drawing r:id="rId3"/></worksheet>');
-                  newZip.file(`xl/worksheets/${sheetFileName}`, sheetWithDrawing);
-                } else {
-                  const fixedSheetXml = sheetXml.replace(/<drawing[^>]*r:id="rId\d+"[^>]*\/>/, '<drawing r:id="rId3"/>');
-                  newZip.file(`xl/worksheets/${sheetFileName}`, fixedSheetXml);
-                }
-              }
+            const originalSheetRels = originalWorksheetRels[`xl/worksheets/_rels/sheet1.xml.rels`];
+            if (originalSheetRels) {
+              const sheetNum = sheetFileName.match(/\d+/)?.[0];
+              newZip.file(`xl/worksheets/_rels/sheet${sheetNum}.xml.rels`, originalSheetRels);
+            }
+            const sheetFile = newZip.file(`xl/worksheets/${sheetFileName}`);
+            if (sheetFile) {
+              let sheetXml = await sheetFile.async('string');
+              if (!sheetXml.includes('<drawing')) sheetXml = sheetXml.replace('</worksheet>', '<drawing r:id="rId3"/></worksheet>');
+              else sheetXml = sheetXml.replace(/<drawing[^>]*r:id="rId\d+"[^>]*\/>/, '<drawing r:id="rId3"/>');
+              newZip.file(`xl/worksheets/${sheetFileName}`, sheetXml);
             }
           }
         }
@@ -255,9 +207,7 @@ export class ExcelPiService {
     }
 
     const outputBuffer = await newZip.generateAsync({ type: 'nodebuffer' });
-
     fs.unlinkSync(tempPath);
-
     return outputBuffer as unknown as Buffer;
   }
 }

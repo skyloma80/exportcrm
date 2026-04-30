@@ -1,21 +1,19 @@
 "use client"
 
 /**
- * Order Management Page (V2) - Function Entry Point
- * 订单管理页面（功能入口）
+ * Order Management Page (Professional)
+ * 销售订单详情页（专业版）
  * 
- * Requirements: 需求1.1-1.7, 需求3.1-3.7, 需求7.1-7.2
+ * Requirements: 1.1-1.7, 3.1-3.7, 7.1-7.2
  */
 
 import { useState, useEffect, use } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { useToast } from "@/hooks/use-toast"
-import { getPocketBase } from "@/lib/pocketbase/auth"
 import {
   Edit,
   Mail,
@@ -26,49 +24,49 @@ import {
   ShoppingCart,
   DollarSign,
   RefreshCw,
+  ChevronLeft,
+  Package,
+  Building2,
+  Ship,
 } from "lucide-react"
-import type { OrderWithExpand, OrderStatus } from "@/lib/pocketbase/services/orders"
+import { soService, type FlatSO, type SOStatus } from "@/lib/pocketbase/services/so"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { useProjectContext } from "@/hooks/use-project-context"
-import { usePdfGenerator } from "@/hooks/use-pdf-generator"
-import { InvoicePDF, type InvoicePDFData } from "@/lib/pdf/invoice-template"
-import { ensureFolderExists, navigateToDisk } from "@/lib/disk/ensure-folder"
-import { brandingService } from "@/lib/services/branding-service"
 import { format } from "date-fns"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface PageProps {
   params: Promise<{ id: string }>
 }
 
-export default function OrderManagementPage({ params }: PageProps) {
+export default function OrderDetailPage({ params }: PageProps) {
   const { id } = use(params)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { t, locale } = useI18n()
   const { toast } = useToast()
   const { setItems: setBreadcrumbItems } = useBreadcrumb()
-  const { uploadPdfToDisk } = usePdfGenerator()
 
   // Get project context
   const projectIdFromUrl = searchParams.get("project")
 
-  // Project context is optional for independent orders
-  // if (!projectIdFromUrl) {
-  //   notFound()
-  // }
-
-  // Use project context hook to get return URL
   const { returnUrl } = useProjectContext({
     documentType: 'order'
   })
 
-  const [order, setOrder] = useState<OrderWithExpand | null>(null)
+  const [order, setOrder] = useState<FlatSO | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [generatingPI, setGeneratingPI] = useState(false)
   const [showManualStatusDialog, setShowManualStatusDialog] = useState(false)
-  const [newStatus, setNewStatus] = useState<OrderStatus>('draft')
-  const [statusChangeReason, setStatusChangeReason] = useState('')
+  const [newStatus, setNewStatus] = useState<SOStatus>('draft')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
 
   // Set breadcrumb
@@ -82,7 +80,7 @@ export default function OrderManagementPage({ params }: PageProps) {
       ])
     }
     return () => setBreadcrumbItems([])
-  }, [order, setBreadcrumbItems])
+  }, [order, setBreadcrumbItems, projectIdFromUrl])
 
   useEffect(() => {
     loadData()
@@ -92,11 +90,13 @@ export default function OrderManagementPage({ params }: PageProps) {
     setLoading(true)
     setError(null)
     try {
-      const pb = getPocketBase()
-      const result = await pb.collection("orders").getOne<OrderWithExpand>(id, {
-        expand: "project,customer,created_by,order_items_via_order,order_items_via_order.product,shipments_via_order,order_purchase_orders_via_order,order_payments_via_order",
+      const result = await soService.getOne(id, {
+        expand: "project_id,customer_id,created_by",
       })
       setOrder(result)
+      if (result) {
+        setNewStatus(result.status)
+      }
     } catch (err: any) {
       console.error("Error loading order:", err)
       setError(err)
@@ -105,7 +105,7 @@ export default function OrderManagementPage({ params }: PageProps) {
     }
   }
 
-  const getStatusVariant = (status: OrderStatus) => {
+  const getStatusVariant = (status: SOStatus) => {
     switch (status) {
       case 'completed': return 'default'
       case 'cancelled': return 'destructive'
@@ -117,30 +117,13 @@ export default function OrderManagementPage({ params }: PageProps) {
     }
   }
 
-  const getDisplayName = (item?: { name: string; name_cn?: string }) => {
-    if (!item) return "-"
-    return locale === 'zh' && item.name_cn ? item.name_cn : item.name
-  }
-
   const handleManualStatusUpdate = async () => {
     if (!order) return;
 
     try {
-      const { orderService } = await import('@/lib/pocketbase/services/orders');
-
-      // Update status directly using the service
-      const updatedOrder = await orderService.update(order.id, {
+      await soService.update(order.id, {
         status: newStatus,
-        // Optionally, we could add a field to track manual status changes
-        // This would require adding a field to the schema
       });
-
-      // Reload the order to reflect changes with all related data
-      const pb = getPocketBase();
-      const updatedOrderWithExpand = await pb.collection("orders").getOne<OrderWithExpand>(order.id, {
-        expand: "project,customer,created_by,order_items_via_order,order_items_via_order.product,shipments_via_order,order_purchase_orders_via_order,order_payments_via_order",
-      });
-      setOrder(updatedOrderWithExpand);
 
       toast({
         title: t('orders.statusUpdateSuccess'),
@@ -148,13 +131,12 @@ export default function OrderManagementPage({ params }: PageProps) {
       });
 
       setShowManualStatusDialog(false);
-      setNewStatus(order.status); // Reset to current status
-      setStatusChangeReason(''); // Clear reason
+      loadData();
     } catch (error: any) {
       console.error('Manual status update error:', error);
       toast({
         title: t('orders.statusUpdateError'),
-        description: error.message || t('orders.statusUpdateErrorDesc'),
+        description: error.message,
         variant: 'destructive',
       });
     }
@@ -179,58 +161,12 @@ export default function OrderManagementPage({ params }: PageProps) {
     }
   }
 
-  const canDeleteOrder = (): boolean => {
-    if (!order) return false; // If order hasn't loaded yet, don't show button
-    if (order.status !== 'draft') {
-      console.log('Order status is not draft:', order.status);
-      return false;
-    }
-    if (!order.expand?.created_by) {
-      console.log('Order has no created_by info');
-      return false;
-    }
-
-    // Check if current user is the creator
-    const pb = getPocketBase();
-    const isCreator = pb.authStore.model?.id === order.expand.created_by.id;
-    if (!isCreator) {
-      console.log('Current user is not the creator');
-      return false;
-    }
-
-    // Check if order has any related records that would prevent deletion
-    // Check for shipments associated with this order
-    const hasShipments = order.expand?.shipments_via_order && Array.isArray(order.expand.shipments_via_order) && order.expand.shipments_via_order.length > 0;
-    if (hasShipments) {
-      console.log('Order has shipments, cannot delete');
-      return false;
-    }
-
-    // Check for purchase orders associated with this order
-    const hasPurchaseOrders = order.expand?.order_purchase_orders_via_order && Array.isArray(order.expand.order_purchase_orders_via_order) && order.expand.order_purchase_orders_via_order.length > 0;
-    if (hasPurchaseOrders) {
-      console.log('Order has purchase orders, cannot delete');
-      return false;
-    }
-
-    // Check for payments associated with this order
-    const hasPayments = order.expand?.order_payments_via_order && Array.isArray(order.expand.order_payments_via_order) && order.expand.order_payments_via_order.length > 0;
-    if (hasPayments) {
-      console.log('Order has payments, cannot delete');
-      return false;
-    }
-
-    console.log('All conditions met, can delete order');
-    return true;
-  }
-
   const handleGeneratePI = async () => {
     if (!order) return
 
     setGeneratingPI(true)
     try {
-      // Direct download from API
-      const response = await fetch(`/api/orders/${order.id}/export-pi`);
+      const response = await fetch(`/api/so/${order.id}/export-pi`);
       
       if (!response.ok) {
         throw new Error('Failed to generate PI Excel');
@@ -278,7 +214,7 @@ export default function OrderManagementPage({ params }: PageProps) {
           <CardContent className="pt-6">
             <div className="text-center">
               <h2 className="text-xl font-semibold">{t("orders.notFound")}</h2>
-              <Button variant="outline" onClick={() => router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=orders`)} className="mt-4">
+              <Button variant="outline" onClick={() => router.push("/orders")} className="mt-4">
                 {t("common.back")}
               </Button>
             </div>
@@ -289,391 +225,276 @@ export default function OrderManagementPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">{order.code}</h1>
-              <div className="flex items-center gap-2">
-                <Badge variant={getStatusVariant(order.status)}>
-                  {t(`orders.status.${order.status}`)}
-                </Badge>
-                {/* Manual status update button for admin/creator - placed next to status badge */}
-                {(() => {
-                  const pb = getPocketBase();
-                  return (pb.authStore.model?.role === 'admin' || pb.authStore.model?.id === order.expand?.created_by?.id) ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowManualStatusDialog(true)}
-                      className="border border-blue-500 hover:bg-blue-50"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      {t('orders.manualStatusUpdate')}
-                    </Button>
-                  ) : null;
-                })()}
-              </div>
-            </div>
-            <p className="text-muted-foreground mt-1">
-              {getDisplayName(order.expand?.project)} • {getDisplayName(order.expand?.customer)}
-            </p>
-            {order.expand?.created_by && (
-              <p className="text-sm text-muted-foreground">
-                {t('orders.createdBy')} {order.expand.created_by.name || order.expand.created_by.email}
-              </p>
-            )}
-          </div>
-          {/* Delete button for draft orders by creator */}
-          {canDeleteOrder() && (
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setShowDeleteConfirmation(true);
-              }}
-            >
-              {t('common.delete')}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => router.push("/orders")}>
+              <ChevronLeft className="w-5 h-5" />
             </Button>
-          )}
-
-
-          {/* Delete Confirmation Dialog */}
-          {showDeleteConfirmation && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg w-96">
-                <h3 className="text-lg font-semibold mb-2">{t('orders.deleteConfirmTitle')}</h3>
-                <p className="text-gray-600 mb-6">{t('orders.deleteConfirmMessage')}</p>
-
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowDeleteConfirmation(false)}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={async () => {
-                      try {
-                        const { orderService } = await import('@/lib/pocketbase/services/orders');
-                        await orderService.deleteOrder(order.id);
-                        toast({
-                          title: t('orders.deleteSuccess') || t('orders.createSuccess'),
-                          description: t('orders.deleteSuccessDesc') || t('orders.createSuccessDesc'),
-                        });
-                        router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=orders`);
-                      } catch (error: any) {
-                        toast({
-                          title: t('orders.deleteError'),
-                          description: error.message || t('orders.deleteError'),
-                          variant: 'destructive',
-                        });
-                      } finally {
-                        setShowDeleteConfirmation(false);
-                      }
-                    }}
-                  >
-                    {t('common.delete')}
-                  </Button>
-                </div>
-              </div>
+            <h1 className="text-3xl font-bold">{order.code}</h1>
+            <div className="flex items-center gap-2">
+              <Badge variant={getStatusVariant(order.status as SOStatus)}>
+                {t(`orders.status.${order.status}`) || order.status}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowManualStatusDialog(true)}
+                className="border border-blue-500 hover:bg-blue-50 h-8"
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                {t('orders.manualStatusUpdate')}
+              </Button>
             </div>
-          )}
-
-          {/* Manual Status Update Dialog */}
-          {showManualStatusDialog && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg w-96">
-                <h3 className="text-lg font-semibold mb-4">{t('orders.manualStatusUpdate')}</h3>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    {t('orders.currentStatus')}
-                  </label>
-                  <p className="p-2 bg-gray-100 rounded">{t(`orders.status.${order.status}`)}</p>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    {t('orders.newStatus')}
-                  </label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as OrderStatus)}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="draft">{t('orders.status.draft')}</option>
-                    <option value="confirmed">{t('orders.status.confirmed')}</option>
-                    <option value="in_production">{t('orders.status.in_production')}</option>
-                    <option value="ready_to_ship">{t('orders.status.ready_to_ship')}</option>
-                    <option value="shipped">{t('orders.status.shipped')}</option>
-                    <option value="delivered">{t('orders.status.delivered')}</option>
-                    <option value="completed">{t('orders.status.completed')}</option>
-                    <option value="cancelled">{t('orders.status.cancelled')}</option>
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
-                    {t('orders.reasonForChange')}
-                  </label>
-                  <input
-                    type="text"
-                    value={statusChangeReason}
-                    onChange={(e) => setStatusChangeReason(e.target.value)}
-                    className="w-full p-2 border rounded"
-                    placeholder={t('orders.reasonPlaceholder')}
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowManualStatusDialog(false)}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                  <Button
-                    onClick={handleManualStatusUpdate}
-                  >
-                    {t('common.update')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
+          <p className="text-muted-foreground mt-1 ml-12">
+            {(order as any).expand?.customer_id?.name || order.customer_name} • {(order as any).expand?.project_id?.name || order.project_id || '-'}
+          </p>
+        </div>
+        <div className="flex gap-2 ml-12 md:ml-0">
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteConfirmation(true)}
+            disabled={order.status !== 'draft'}
+          >
+            {t('common.delete')}
+          </Button>
+          <Button variant="outline" onClick={() => router.push(`/orders/${order.id}/edit`)}>
+            <Edit className="w-4 h-4 mr-2" />
+            {t("common.edit")}
+          </Button>
         </div>
       </div>
 
-      {/* Order Summary Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('orders.management.orderSummary')}</CardTitle>
-          <CardDescription>{t('orders.management.orderSummaryDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">{t('orders.columns.totalAmount')}</p>
-              <p className="text-lg font-semibold">{formatCurrency(order.total_amount)}</p>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <DollarSign className="w-4 h-4" />
+              <span className="text-sm">{t('orders.columns.totalAmount')}</span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{t('orders.columns.currency')}</p>
-              <p className="text-lg font-semibold">{order.currency}</p>
+            <p className="text-2xl font-bold">{formatCurrency(order.total_amount)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Ship className="w-4 h-4" />
+              <span className="text-sm">{t('orders.columns.incoterm')}</span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{t('orders.columns.incoterm')}</p>
-              <p className="text-lg font-semibold">{order.incoterm || '-'}</p>
+            <p className="text-xl font-semibold">{order.incoterm || '-'}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <Truck className="w-4 h-4" />
+              <span className="text-sm">{t('orders.columns.expectedDelivery')}</span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{t('orders.columns.expectedDelivery')}</p>
-              <p className="text-lg font-semibold">{formatDate(order.estimated_shipping_date)}</p>
+            <p className="text-xl font-semibold">{formatDate(order.expected_delivery_date)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <RefreshCw className="w-4 h-4" />
+              <span className="text-sm">{t('orders.columns.status')}</span>
+            </div>
+            <p className="text-xl font-semibold">{t(`orders.status.${order.status}`) || order.status}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Order Items */}
+          <Card>
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-500" />
+                {t("orders.listTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px] pl-6">{t("orders.columns.partNo")}</TableHead>
+                    <TableHead>{t("orders.columns.description")}</TableHead>
+                    <TableHead className="text-right w-[100px]">{t("orders.columns.quantity")}</TableHead>
+                    <TableHead className="text-right w-[120px]">{t("orders.columns.unitPrice")}</TableHead>
+                    <TableHead className="text-right pr-6 w-[120px]">{t("orders.columns.totalAmount")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {order.items.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="pl-6 font-mono text-xs">{item.part_number}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{item.product_name}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-2">{item.description_en}</div>
+                      </TableCell>
+                      <TableCell className="text-right">{item.quantity} {item.unit}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                      <TableCell className="text-right pr-6 font-bold">{formatCurrency(item.amount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Remarks & Bank Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4" />
+                  {t('orders.columns.remarks')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-muted-foreground leading-relaxed">
+                  {order.remarks || '-'}
+                </pre>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  {locale === 'zh' ? '银行信息' : 'Bank Info'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <pre className="whitespace-pre-wrap font-mono text-[11px] bg-muted/50 p-3 rounded leading-tight">
+                  {order.bank_info || '-'}
+                </pre>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Sidebar Actions & Info */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-base">{t('orders.management.actions')}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-2">
+              <Button onClick={handleGeneratePI} disabled={generatingPI} className="w-full justify-start">
+                {generatingPI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                {t('orders.management.generatePI')}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" disabled>
+                <Mail className="mr-2 h-4 w-4" />
+                {t('orders.management.sendEmail')}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/shipments`)}>
+                <Truck className="mr-2 h-4 w-4" />
+                {t('orders.management.viewShipments')}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/purchase-orders`)}>
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                {t('orders.management.viewPurchaseOrders')}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Ship className="w-4 h-4 text-cyan-600" />
+                {locale === 'zh' ? '物流信息' : 'Logistics'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">POL</label>
+                  <p className="text-sm font-medium">{order.port_of_loading || "-"}</p>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">POD</label>
+                  <p className="text-sm font-medium">{order.port_of_destination || "-"}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{locale === 'zh' ? '运输方式' : 'Shipment Mode'}</label>
+                <p className="text-sm font-medium">{order.mode_of_shipment || "-"}</p>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Marks</label>
+                <p className="text-xs font-mono line-clamp-3">{order.shipping_marks || "-"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Manual Status Update Dialog */}
+      {showManualStatusDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96 shadow-xl border">
+            <h3 className="text-lg font-semibold mb-4">{t('orders.manualStatusUpdate')}</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">{t('orders.currentStatus')}</label>
+              <div className="p-2 bg-gray-50 rounded border text-sm">{t(`orders.status.${order.status}`)}</div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">{t('orders.newStatus')}</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value as SOStatus)}
+                className="w-full p-2 border rounded text-sm bg-white"
+              >
+                <option value="draft">{t('orders.status.draft')}</option>
+                <option value="confirmed">{t('orders.status.confirmed')}</option>
+                <option value="in_production">{t('orders.status.in_production')}</option>
+                <option value="ready_to_ship">{t('orders.status.ready_to_ship')}</option>
+                <option value="shipped">{t('orders.status.shipped')}</option>
+                <option value="delivered">{t('orders.status.delivered')}</option>
+                <option value="completed">{t('orders.status.completed')}</option>
+                <option value="cancelled">{t('orders.status.cancelled')}</option>
+              </select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowManualStatusDialog(false)}>{t('common.cancel')}</Button>
+              <Button onClick={handleManualStatusUpdate}>{t('common.update')}</Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Action Buttons */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('orders.management.actions')}</CardTitle>
-          <CardDescription>{t('orders.management.actionsDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Upload Customer PO */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={async () => {
-                // Create hidden file input
-                const fileInput = document.createElement('input')
-                fileInput.type = 'file'
-                fileInput.accept = '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png'
-                fileInput.onchange = async (e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0]
-                  if (!file) return
-
+      {/* Delete Confirmation */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96 shadow-xl border">
+            <h3 className="text-lg font-semibold mb-2">{locale === 'zh' ? '确定删除？' : 'Confirm Delete?'}</h3>
+            <p className="text-sm text-gray-500 mb-6">{locale === 'zh' ? '删除后无法恢复。' : 'This action cannot be undone.'}</p>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>{t('common.cancel')}</Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
                   try {
-                    const customer = order.expand?.customer
-                    const project = order.expand?.project
-                    if (!customer || !project) {
-                      toast({
-                        title: t('common.error'),
-                        description: 'Missing customer or project information',
-                        variant: 'destructive',
-                      })
-                      return
-                    }
-
-                    // Build folder path: Customers/{客户名}/{项目名}/orders/{订单号}/CustomerPO/
-                    const folderPath = `Customers/${customer.name}/${project.name}/orders/${order.code}/CustomerPO`
-                    
-                    // Create form data
-                    const formData = new FormData()
-                    formData.append('file', file)
-                    formData.append('path', `${folderPath}/${file.name}`)
-
-                    // Upload file
-                    const response = await fetch('/api/disk/upload', {
-                      method: 'POST',
-                      body: formData,
-                    })
-
-                    if (!response.ok) {
-                      const error = await response.json()
-                      throw new Error(error.error || 'Upload failed')
-                    }
-
-                    toast({
-                      title: t('orders.management.customerPOUploadSuccess'),
-                      description: t('orders.management.customerPOUploadSuccessDesc'),
-                    })
-
-                    // Navigate to the CustomerPO directory
-                    await navigateToDisk(folderPath, router)
-                  } catch (error: any) {
-                    console.error('Upload customer PO error:', error)
-                    toast({
-                      title: t('orders.management.customerPOUploadError'),
-                      description: error.message,
-                      variant: 'destructive',
-                    })
+                    await soService.delete(order.id);
+                    toast({ title: t('common.success') });
+                    router.push("/orders");
+                  } catch (e: any) {
+                    toast({ title: t('common.error'), description: e.message, variant: 'destructive' });
                   }
-                }
-                fileInput.click()
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <FolderOpen className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.uploadCustomerPO')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.uploadCustomerPODesc')}
-              </span>
-            </Button>
-
-            {/* Edit Order */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={() => router.push(`/orders/${id}/edit?project=${projectIdFromUrl}`)}
-            >
-              <div className="flex items-center gap-2">
-                <Edit className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.editOrder')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.editOrderDesc')}
-              </span>
-            </Button>
-
-            {/* Generate PI */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={handleGeneratePI}
-              disabled={generatingPI}
-            >
-              <div className="flex items-center gap-2">
-                {generatingPI ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <FileDown className="h-5 w-5" />
-                )}
-                <span className="font-semibold">{t('orders.management.generatePI')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.generatePIDesc')}
-              </span>
-            </Button>
-
-            {/* Send Email */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={() => router.push(`/orders/${id}/send-email?project=${projectIdFromUrl}`)}
-            >
-              <div className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.sendEmail')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.sendEmailDesc')}
-              </span>
-            </Button>
-
-            {/* Payment Management */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={() => router.push(`/orders/${id}/payments?project=${projectIdFromUrl}`)}
-            >
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.viewPayments')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.viewPaymentsDesc')}
-              </span>
-            </Button>
-
-            {/* View Purchase Orders */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={() => router.push(`/orders/${id}/purchase-orders?project=${projectIdFromUrl}`)}
-            >
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.viewPurchaseOrders')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.viewPurchaseOrdersDesc')}
-              </span>
-            </Button>
-
-            {/* View Shipments */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={() => router.push(`/orders/${id}/shipments?project=${projectIdFromUrl}`)}
-            >
-              <div className="flex items-center gap-2">
-                <Truck className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.viewShipments')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.viewShipmentsDesc')}
-              </span>
-            </Button>
-
-            {/* View Documents */}
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-start gap-2"
-              onClick={async () => {
-                const customer = order.expand?.customer
-                const project = order.expand?.project
-                if (customer && project) {
-                  const path = `Customers/${customer.name}/${project.name}/orders/${order.code}`
-                  await navigateToDisk(path, router)
-                }
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <FolderOpen className="h-5 w-5" />
-                <span className="font-semibold">{t('orders.management.viewDocuments')}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">
-                {t('orders.management.viewDocumentsDesc')}
-              </span>
-            </Button>
+                }}
+              >
+                {t('common.delete')}
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   )
 }

@@ -461,9 +461,9 @@ export default function ProjectDetailPage() {
 
       // Load business summary
       const [rfqsData, quotationsData, ordersData, shipments] = await Promise.all([
-        pb.collection("rfqs").getFullList<RFQData>({ filter: `project = "${id}"`, sort: "-created" }),
-        pb.collection("quotations").getFullList<QuotationData>({ filter: `project = "${id}"`, sort: "-created" }),
-        pb.collection("orders").getFullList<OrderData>({ filter: `project = "${id}"`, sort: "-created" }),
+        pb.collection("rfqs").getFullList<RFQData>({ filter: `project = "${id}"` }),
+        pb.collection("quotations").getFullList<QuotationData>({ filter: `project = "${id}"` }),
+        pb.collection("so").getFullList<OrderData>({ filter: `project = "${id}"`, sort: "-code" }),
         pb.collection("shipments").getFullList({ filter: `order.project = "${id}"` }).catch(() => []),
       ])
 
