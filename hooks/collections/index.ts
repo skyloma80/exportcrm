@@ -21,7 +21,6 @@ export * from './suppliers';
 export * from './products';
 export * from './projects';
 export * from './rfqs';
-export * from './purchase-orders';
 export * from './quotations';
 export * from './orders';
 export * from './shipments';

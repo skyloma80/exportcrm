@@ -106,6 +106,8 @@ export interface OrderItem extends RecordModel {
 
 export interface OrderPayment extends RecordModel {
   order: string;
+  customer_id?: string;
+  project_id?: string;
   type: PaymentType;
   amount: number;
   currency: string;
@@ -218,6 +220,8 @@ export interface OrderItemCreateInput {
 
 export interface OrderPaymentCreateInput {
   order: string;
+  customer_id?: string;
+  project_id?: string;
   type: PaymentType;
   amount: number;
   currency: string;
@@ -233,7 +237,7 @@ export interface OrderPaymentCreateInput {
 
 class OrderService extends BaseCollectionService<Order> {
   constructor() {
-    super('orders');
+    super('so');
   }
 
   /**
@@ -255,7 +259,7 @@ class OrderService extends BaseCollectionService<Order> {
    */
   async getWithDetails(id: string): Promise<OrderWithExpand | null> {
     try {
-      const order = await this.pb.collection('orders').getOne<OrderWithExpand>(id, {
+      const order = await this.pb.collection('so').getOne<OrderWithExpand>(id, {
         expand: 'project,customer,quotation,order_items_via_order,order_items_via_order.product,order_payments_via_order',
       });
       return order;
@@ -269,9 +273,9 @@ class OrderService extends BaseCollectionService<Order> {
    * Get paginated orders with expand
    */
   async getListWithExpand(page: number = 1, perPage: number = 50, filter: string = ''): Promise<{ items: OrderWithExpand[], totalItems: number }> {
-    const result = await this.pb.collection('orders').getList<OrderWithExpand>(page, perPage, {
+    const result = await this.pb.collection('so').getList<OrderWithExpand>(page, perPage, {
       filter,
-      sort: '-created',
+      sort: '-id',
       expand: 'customer,project',
     });
     return {
@@ -681,7 +685,7 @@ class OrderService extends BaseCollectionService<Order> {
 
 class OrderItemService extends BaseCollectionService<OrderItem> {
   constructor() {
-    super('order_items', { sort: 'created' });
+    super('order_items', { sort: 'id' });
   }
 
   /**

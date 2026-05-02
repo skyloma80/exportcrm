@@ -74,7 +74,7 @@ export async function POST(
     }
 
     // Check if quotation has already been converted to an order
-    const existingOrders = await pb.collection('orders').getList(1, 1, {
+    const existingOrders = await pb.collection('so').getList(1, 1, {
       filter: `quotation = "${id}"`,
     });
 

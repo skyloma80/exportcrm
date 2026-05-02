@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
     }
 
-    const buffer = await excelPoService.generatePoExcel(po);
+    const buffer = await excelPoService.generatePoExcel(po as any);
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

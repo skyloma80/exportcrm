@@ -29,8 +29,8 @@ export async function GET(
     const storage = createStorage()
 
     // Load order with expand
-    const order = await pb.collection("orders").getOne<OrderWithExpand>(id, {
-      expand: "project,customer",
+    const order = await pb.collection("so").getOne<any>(id, {
+      expand: "project_id,customer_id",
     })
 
     const pathInfo = extractOrderPathInfo(order)
@@ -58,7 +58,7 @@ export async function GET(
 
     if (type === "po" && poId) {
       // Load purchase order documents
-      const po = await pb.collection("purchase_orders").getOne<PurchaseOrder>(poId, {
+      const po = await pb.collection("po").getOne<PurchaseOrder>(poId, {
         expand: "supplier",
       })
       
@@ -79,7 +79,7 @@ export async function GET(
       // Load shipment documents
       const shipments = await pb.collection("shipments").getFullList<Shipment>({
         filter: `order = "${id}"`,
-        sort: "created",
+        sort: "id",
       })
       
       const shipmentIndex = shipments.findIndex(s => s.id === shipmentId)
@@ -102,9 +102,11 @@ export async function GET(
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   } catch (error: any) {
     console.error("Error loading documents:", error)
+    const status = error.status || 500
+    const message = error.message || "Failed to load documents"
     return NextResponse.json(
-      { error: error.message || "Failed to load documents" },
-      { status: 500 }
+      { error: message, details: error.data || {} },
+      { status }
     )
   }
 }
@@ -130,8 +132,8 @@ export async function POST(
     const storage = createStorage()
 
     // Load order with expand
-    const order = await pb.collection("orders").getOne<OrderWithExpand>(id, {
-      expand: "project,customer",
+    const order = await pb.collection("so").getOne<any>(id, {
+      expand: "project_id,customer_id",
     })
 
     const pathInfo = extractOrderPathInfo(order)

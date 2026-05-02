@@ -5,9 +5,9 @@
 
 import { useMemo } from 'react'
 import { getOrderDocumentPath, extractOrderPathInfo, type OrderDocumentType } from '@/lib/services/shipment-document-path'
-import type { OrderWithExpand } from '@/lib/pocketbase/services/orders'
+import type { FlatSO } from '@/lib/pocketbase/services/so'
 
-export function useOrderDocumentPath(order: OrderWithExpand | null) {
+export function useOrderDocumentPath(order: FlatSO | null) {
   const pathInfo = useMemo(() => {
     if (!order) return null
     return extractOrderPathInfo(order)

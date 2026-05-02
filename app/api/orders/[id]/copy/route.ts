@@ -15,7 +15,7 @@ export async function POST(
     const pb = await createServerPocketBase();
 
     // Get original order
-    const order = await pb.collection('orders').getOne(id);
+    const order = await pb.collection('so').getOne(id);
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
@@ -52,7 +52,7 @@ export async function POST(
     // Ensure total_amount is not 0 to avoid PocketBase validation error
     const totalAmount = order.total_amount || 0.01;
     
-    const newOrder = await pb.collection('orders').create({
+    const newOrder = await pb.collection('so').create({
       code: newOrderCode,
       project: order.project,
       customer: order.customer,

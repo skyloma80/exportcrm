@@ -41,6 +41,7 @@ import { Plus, DollarSign, Loader2, CheckCircle, XCircle, Clock, Upload, ImageIc
 import { useToast } from '@/hooks/use-toast';
 import { getPocketBase } from '@/lib/pocketbase/auth';
 import { CURRENCY_LIST } from '@/lib/constants/currencies';
+import { orderPaymentService, orderService } from '@/lib/pocketbase/services/orders';
 
 interface Payment {
   id: string;
@@ -72,6 +73,8 @@ interface FilesByType {
 interface PaymentManagerProps {
   orderId: string;
   orderCode: string;
+  customerId?: string;
+  projectId?: string;
   totalAmount: number;
   currency: string;
   onPaymentAdded?: () => void;
@@ -80,7 +83,7 @@ interface PaymentManagerProps {
 const PAYMENT_TYPES = ['deposit', 'progress', 'final'] as const;
 const PAYMENT_METHODS = ['bank_transfer', 'letter_of_credit', 'paypal', 'other'] as const;
 
-export function PaymentManager({ orderId, orderCode, currency, onPaymentAdded }: PaymentManagerProps) {
+export function PaymentManager({ orderId, orderCode, customerId, projectId, totalAmount, currency, onPaymentAdded }: PaymentManagerProps) {
   const { t, locale } = useI18n();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -211,16 +214,29 @@ export function PaymentManager({ orderId, orderCode, currency, onPaymentAdded }:
       const pb = getPocketBase();
       
       // 1. 创建收款记录
-      await pb.collection('order_payments').create({
+      const dateObj = new Date(formData.payment_date);
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const pbDate = `${year}-${month}-${day} 12:00:00`;
+
+      const paymentData: any = {
         order: orderId,
+        customer_id: customerId,
+        project_id: projectId,
         amount: parseFloat(formData.amount),
         currency: formData.currency,
         type: formData.type,
         payment_method: formData.payment_method,
-        payment_date: formData.payment_date,
-        bank_reference: formData.bank_reference || undefined,
-        status: 'pending',
-      });
+        payment_date: pbDate,
+        bank_reference: formData.bank_reference || '',
+      };
+
+      console.log('Submitting payment data via service:', paymentData);
+      
+      const result = await orderPaymentService.createPayment(paymentData);
+      
+      console.log('Payment created:', result);
 
       // 2. 如果有选择文件，上传到对应类型目录
       if (selectedFile) {
@@ -269,9 +285,23 @@ export function PaymentManager({ orderId, orderCode, currency, onPaymentAdded }:
       loadReceiptFiles();
       onPaymentAdded?.();
     } catch (error: any) {
+      console.error('Failed to add payment:', error);
+      console.log('Error as JSON:', error.toJSON?.() || 'no toJSON');
+      console.error('Error data:', error.data);
+      console.error('Error response:', error.response);
+      
+      let errorMsg = error.message;
+      if (error.data && Object.keys(error.data).length > 0) {
+        errorMsg = `${error.message}: ${JSON.stringify(error.data)}`;
+      } else if (error.response?.data && Object.keys(error.response.data).length > 0) {
+        errorMsg = `${error.message}: ${JSON.stringify(error.response.data)}`;
+      } else if (error.originalError) {
+        errorMsg = `${error.message} (Original: ${JSON.stringify(error.originalError)})`;
+      }
+        
       toast({
         title: t('common.error'),
-        description: error.message,
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
@@ -312,30 +342,15 @@ export function PaymentManager({ orderId, orderCode, currency, onPaymentAdded }:
     try {
       const pb = getPocketBase();
       const currentUser = pb.authStore.record;
-      await pb.collection('order_payments').update(paymentId, {
-        status: 'approved',
-        approved_by: currentUser?.id,
-        approved_at: new Date().toISOString(),
-      });
       
-      // Recalculate order paid amount
-      const updatedPayments = await pb.collection('order_payments').getFullList<Payment>({
-        filter: `order = "${orderId}" && status = "approved"`,
-      });
-      const newPaidAmount = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+      // Use service for approval (it also recalculates order paid amount)
+      await orderPaymentService.approvePayment(paymentId, currentUser?.id || '');
       
-      // Get current order to check status
-      const order = await pb.collection('orders').getOne(orderId);
-      
-      // Update order: paid amount and status
-      const updateData: any = { paid_amount: newPaidAmount };
-      
-      // If order is still in draft status, change to confirmed when payment is approved
-      if (order.status === 'draft') {
-        updateData.status = 'confirmed';
+      // Get current order to check status and potentially update it
+      const order = await orderService.getOne(orderId);
+      if (order && order.status === 'draft') {
+        await orderService.update(orderId, { status: 'confirmed' });
       }
-      
-      await pb.collection('orders').update(orderId, updateData);
       
       toast({
         title: t('common.success'),
@@ -362,11 +377,7 @@ export function PaymentManager({ orderId, orderCode, currency, onPaymentAdded }:
     if (!rejectingPaymentId) return;
     
     try {
-      const pb = getPocketBase();
-      await pb.collection('order_payments').update(rejectingPaymentId, {
-        status: 'rejected',
-        rejection_reason: rejectReason || undefined,
-      });
+      await orderPaymentService.rejectPayment(rejectingPaymentId, rejectReason);
       toast({
         title: t('common.success'),
         description: locale === 'zh' ? '收款已拒绝' : 'Payment rejected',
@@ -394,8 +405,11 @@ export function PaymentManager({ orderId, orderCode, currency, onPaymentAdded }:
     if (!deletingPayment) return;
     
     try {
-      const pb = getPocketBase();
-      await pb.collection('order_payments').delete(deletingPayment.id);
+      await orderPaymentService.delete(deletingPayment.id);
+      
+      // Also recalculate order paid amount after deletion
+      await orderService.recalculatePaidAmount(orderId);
+      
       toast({
         title: t('common.success'),
         description: locale === 'zh' ? '收款记录已删除' : 'Payment deleted',

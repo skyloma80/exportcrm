@@ -68,7 +68,7 @@ export async function POST(
     }
 
     // Check if POs already exist for this RFQ
-    const existingPOs = await pb.collection('purchase_orders').getList(1, 1, {
+    const existingPOs = await pb.collection('po').getList(1, 1, {
       filter: `rfq = "${rfqId}"`,
     });
 
@@ -245,7 +245,7 @@ export async function POST(
         : undefined;
 
       // Create PO
-      const po = await pb.collection('purchase_orders').create({
+      const po = await pb.collection('po').create({
         code: poCode,
         project: rfq.project || undefined,
         supplier: supplierId,

@@ -54,13 +54,6 @@ export default function OrderDetailPage({ params }: PageProps) {
   const { toast } = useToast()
   const { setItems: setBreadcrumbItems } = useBreadcrumb()
 
-  // Get project context
-  const projectIdFromUrl = searchParams.get("project")
-
-  const { returnUrl } = useProjectContext({
-    documentType: 'order'
-  })
-
   const [order, setOrder] = useState<FlatSO | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -73,14 +66,15 @@ export default function OrderDetailPage({ params }: PageProps) {
   useEffect(() => {
     if (order) {
       setBreadcrumbItems([
+        { label: t("nav.orders"), href: "/orders" },
         {
           label: order.code,
-          href: `/orders/${order.id}?project=${projectIdFromUrl}`
+          href: `/orders/${order.id}`
         },
       ])
     }
     return () => setBreadcrumbItems([])
-  }, [order, setBreadcrumbItems, projectIdFromUrl])
+  }, [order, setBreadcrumbItems, t])
 
   useEffect(() => {
     loadData()
@@ -167,7 +161,7 @@ export default function OrderDetailPage({ params }: PageProps) {
     setGeneratingPI(true)
     try {
       const response = await fetch(`/api/so/${order.id}/export-pi`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to generate PI Excel');
       }
@@ -228,7 +222,7 @@ export default function OrderDetailPage({ params }: PageProps) {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="flex flex-col">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => router.push("/orders")}>
               <ChevronLeft className="w-5 h-5" />
@@ -249,9 +243,7 @@ export default function OrderDetailPage({ params }: PageProps) {
               </Button>
             </div>
           </div>
-          <p className="text-muted-foreground mt-1 ml-12">
-            {(order as any).expand?.customer_id?.name || order.customer_name} • {(order as any).expand?.project_id?.name || order.project_id || '-'}
-          </p>
+
         </div>
         <div className="flex gap-2 ml-12 md:ml-0">
           <Button
@@ -269,41 +261,41 @@ export default function OrderDetailPage({ params }: PageProps) {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <DollarSign className="w-4 h-4" />
-              <span className="text-sm">{t('orders.columns.totalAmount')}</span>
+              <DollarSign className="w-4 h-4 text-blue-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('orders.columns.totalAmount')}</span>
             </div>
-            <p className="text-2xl font-bold">{formatCurrency(order.total_amount)}</p>
+            <p className="text-2xl font-bold text-blue-600">{formatCurrency(order.total_amount)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Ship className="w-4 h-4" />
-              <span className="text-sm">{t('orders.columns.incoterm')}</span>
+              <Ship className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('orders.columns.incoterm')}</span>
             </div>
-            <p className="text-xl font-semibold">{order.incoterm || '-'}</p>
+            <p className="text-2xl font-bold text-emerald-600">{order.incoterm || '-'}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Truck className="w-4 h-4" />
-              <span className="text-sm">{t('orders.columns.expectedDelivery')}</span>
+              <Truck className="w-4 h-4 text-orange-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('orders.columns.expectedDelivery')}</span>
             </div>
-            <p className="text-xl font-semibold">{formatDate(order.expected_delivery_date)}</p>
+            <p className="text-2xl font-bold text-orange-600">{formatDate(order.expected_delivery_date)}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <RefreshCw className="w-4 h-4" />
-              <span className="text-sm">{t('orders.columns.status')}</span>
+              <RefreshCw className="w-4 h-4 text-purple-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('orders.columns.status')}</span>
             </div>
-            <p className="text-xl font-semibold">{t(`orders.status.${order.status}`) || order.status}</p>
+            <p className="text-2xl font-bold text-purple-600">{t(`orders.status.${order.status}`) || order.status}</p>
           </CardContent>
         </Card>
       </div>
@@ -349,32 +341,8 @@ export default function OrderDetailPage({ params }: PageProps) {
 
           {/* Remarks & Bank Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3 border-b">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FolderOpen className="w-4 h-4" />
-                  {t('orders.columns.remarks')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <pre className="whitespace-pre-wrap font-sans text-sm text-muted-foreground leading-relaxed">
-                  {order.remarks || '-'}
-                </pre>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-3 border-b">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  {locale === 'zh' ? '银行信息' : 'Bank Info'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <pre className="whitespace-pre-wrap font-mono text-[11px] bg-muted/50 p-3 rounded leading-tight">
-                  {order.bank_info || '-'}
-                </pre>
-              </CardContent>
-            </Card>
+
+
           </div>
         </div>
 
@@ -389,49 +357,26 @@ export default function OrderDetailPage({ params }: PageProps) {
                 {generatingPI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                 {t('orders.management.generatePI')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" disabled>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/send-email`)}>
                 <Mail className="mr-2 h-4 w-4" />
                 {t('orders.management.sendEmail')}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/documents`)}>
+                <FolderOpen className="mr-2 h-4 w-4" />
+                {t('orders.management.viewDocuments')}
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/payments`)}>
+                <DollarSign className="mr-2 h-4 w-4" />
+                {t('orders.management.viewPayments')}
               </Button>
               <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/shipments`)}>
                 <Truck className="mr-2 h-4 w-4" />
                 {t('orders.management.viewShipments')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/purchase-orders`)}>
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                {t('orders.management.viewPurchaseOrders')}
-              </Button>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3 border-b">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Ship className="w-4 h-4 text-cyan-600" />
-                {locale === 'zh' ? '物流信息' : 'Logistics'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">POL</label>
-                  <p className="text-sm font-medium">{order.port_of_loading || "-"}</p>
-                </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">POD</label>
-                  <p className="text-sm font-medium">{order.port_of_destination || "-"}</p>
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{locale === 'zh' ? '运输方式' : 'Shipment Mode'}</label>
-                <p className="text-sm font-medium">{order.mode_of_shipment || "-"}</p>
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Marks</label>
-                <p className="text-xs font-mono line-clamp-3">{order.shipping_marks || "-"}</p>
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
       </div>
 

@@ -1624,6 +1624,30 @@
       "missingData": "Missing customer or project data",
       "attachmentNote": "Attachment: {{filename}}",
       "loadError": "Failed to load order data"
+    },
+    "documents": {
+      "title": "View Documents",
+      "orderDocuments": "Order Documents",
+      "shipmentDocuments": "Shipment Document Records",
+      "upload": "Upload File",
+      "noFiles": "No files",
+      "openDirectory": "Open Directory",
+      "types": {
+        "PI": "Proforma Invoice (PI)",
+        "contracts": "Contracts/Agreements",
+        "payment_receipts": "Payment Receipts",
+        "other": "Other Documents"
+      },
+      "shipmentTypes": {
+        "transport_docs": "Domestic Transport Docs",
+        "CI": "Commercial Invoice (CI)",
+        "PL": "Packing List (PL)",
+        "BL": "Bill of Lading (B/L)",
+        "customs_dec": "Customs Declaration",
+        "tax_refund": "Tax Refund Doc",
+        "pod": "Proof of Delivery (POD)",
+        "other": "Other Shipment Docs"
+      }
     }
   },
   "suppliers": {

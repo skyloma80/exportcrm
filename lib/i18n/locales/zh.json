@@ -16,7 +16,7 @@
     "sourcingPlans": "采购成本表",
     "purchaseOrders": "采购订单",
     "quotations": "报价给客户",
-    "orders": "旧版销售订单",
+    "orders": "销售订单",
     "soOrders": "销售订单",
     "invoices": "形式发票",
     "proformaInvoices": "形式发票",
@@ -1579,6 +1579,30 @@
       "missingData": "缺少客户或项目数据",
       "attachmentNote": "附件: {{filename}}",
       "loadError": "加载订单数据失败"
+    },
+    "documents": {
+      "title": "查看文档",
+      "orderDocuments": "订单文档",
+      "shipmentDocuments": "发货文档记录",
+      "upload": "上传文件",
+      "noFiles": "暂无文件",
+      "openDirectory": "打开目录",
+      "types": {
+        "PI": "形式发票 (PI)",
+        "contracts": "合同/协议",
+        "payment_receipts": "付款凭证",
+        "other": "其他文档"
+      },
+      "shipmentTypes": {
+        "transport_docs": "国内运输单据",
+        "CI": "商业发票 (CI)",
+        "PL": "装箱单 (PL)",
+        "BL": "提单 (B/L)",
+        "customs_dec": "报关单",
+        "tax_refund": "退税单",
+        "pod": "签收单 (POD)",
+        "other": "其他发货文档"
+      }
     }
   },
   "suppliers": {

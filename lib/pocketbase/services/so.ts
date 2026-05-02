@@ -38,7 +38,9 @@ export interface SOCreateInput {
   expected_delivery_date?: string;
   estimated_shipping_date?: string;
   remarks?: string;
+  project_id?: string;
   total_amount: number;
+  paid_amount?: number;
   status: SOStatus;
   items: SOItem[];
 }

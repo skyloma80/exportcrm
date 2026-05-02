@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 /**
  * View Order Document Directory Button
@@ -13,11 +13,11 @@ import { navigateToDisk } from "@/lib/disk/ensure-folder"
 import { useOrderDocumentPath } from "@/hooks/use-order-document-path"
 import { useToast } from "@/hooks/use-toast"
 import { useI18n } from "@/lib/i18n/use-i18n"
-import type { OrderWithExpand } from "@/lib/pocketbase/services/orders"
+import type { FlatSO } from "@/lib/pocketbase/services/so"
 import type { OrderDocumentType } from "@/lib/services/shipment-document-path"
 
 interface ViewOrderDocumentButtonProps {
-  order: OrderWithExpand | null
+  order: FlatSO | null
   docType: OrderDocumentType
   label?: string
   variant?: "default" | "outline" | "ghost" | "link" | "destructive" | "secondary"

@@ -92,7 +92,7 @@ class CustomerActivityService extends BaseCollectionService<CustomerActivity> {
     try {
       return await this.getFullList({
         filter: `customer_tracking_id = "${trackingId}"`,
-        sort: '-created',  // 按创建时间倒序排列
+        sort: '-id',  // 按创建时间倒序排列
       });
     } catch (e) {
       console.error('Error getting customer activities:', e);

@@ -27,7 +27,7 @@ export default function POListPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await poService.getList({ page: 1, perPage: 50, sort: '-created' })
+        const data = await poService.getList({ page: 1, perPage: 50, sort: '-id' })
         setPos(data.items as FlatPO[])
       } catch (err: any) {
         toast({

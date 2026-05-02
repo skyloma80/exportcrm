@@ -25,7 +25,7 @@ export async function GET(
     }
     
     // Load order with expand
-    const order = await pb.collection('orders').getOne(id, {
+    const order = await pb.collection('so').getOne(id, {
       expand: 'customer,project'
     }) as any
     

@@ -12,7 +12,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createStorage } from '@/lib/s3/storage';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 import { extractOrderPathInfo, getOrderDocumentPath } from '@/lib/services/shipment-document-path';
-import type { OrderWithExpand } from '@/lib/pocketbase/services/orders';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -31,10 +30,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     
     // 获取订单详情
     const pb = await createServerPocketBase();
-    let order: OrderWithExpand | null = null;
+    let order: any = null;
     try {
-      order = await pb.collection('orders').getOne<OrderWithExpand>(id, {
-        expand: 'project,customer',
+      order = await pb.collection('so').getOne(id, {
+        expand: 'project_id,customer_id',
       });
     } catch (e: any) {
       if (e.status === 404) {
@@ -117,10 +116,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // 获取订单详情
     const pb = await createServerPocketBase();
-    let order: OrderWithExpand | null = null;
+    let order: any = null;
     try {
-      order = await pb.collection('orders').getOne<OrderWithExpand>(id, {
-        expand: 'project,customer',
+      order = await pb.collection('so').getOne(id, {
+        expand: 'project_id,customer_id',
       });
     } catch (e: any) {
       if (e.status === 404) {

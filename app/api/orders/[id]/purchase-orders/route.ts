@@ -32,7 +32,7 @@ export async function POST(
     console.log("[PO Generation] Starting for order:", orderId)
 
     // 1. 获取订单信息
-    const order = await pb.collection("orders").getOne(orderId, {
+    const order = await pb.collection('so').getOne(orderId, {
       expand: "project,order_items_via_order,order_items_via_order.product",
     })
 
@@ -203,7 +203,7 @@ export async function POST(
       })
 
       // 创建采购订单
-      const purchaseOrder = await pb.collection("purchase_orders").create({
+      const purchaseOrder = await pb.collection("po").create({
         code: poCode,
         project: order.project,
         supplier: supplierId,

@@ -106,7 +106,7 @@ export default function PaymentsPage() {
       });
       setPayables(poPayments);
 
-      const orders = await pb.collection('orders').getFullList({
+      const orders = await pb.collection('so').getFullList({
         filter: 'status != "cancelled"',
       });
       const totalReceivable = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
@@ -115,7 +115,7 @@ export default function PaymentsPage() {
         .reduce((sum, p) => sum + p.amount, 0);
       setOrderStats({ totalReceivable, totalReceived });
 
-      const pos = await pb.collection('purchase_orders').getFullList({
+      const pos = await pb.collection('po').getFullList({
         filter: 'status != "cancelled"',
       });
       const totalPayable = pos.reduce((sum: number, p: any) => sum + (p.total_amount || 0), 0);
@@ -164,7 +164,7 @@ export default function PaymentsPage() {
         filter: `order = "${payment.order}" && status = "approved"`,
       });
       const newPaidAmount = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
-      await pb.collection('orders').update(payment.order, { paid_amount: newPaidAmount });
+      await pb.collection('so').update(payment.order, { paid_amount: newPaidAmount });
       
       toast({
         title: t('common.success'),
@@ -370,7 +370,7 @@ export default function PaymentsPage() {
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => router.push(`/purchase-orders/${row.original.purchase_order}`)}
+          onClick={() => router.push(`/po/${row.original.purchase_order}`)}
           title={locale === 'zh' ? '查看采购单' : 'View PO'}
         >
           <Eye className="h-4 w-4" />

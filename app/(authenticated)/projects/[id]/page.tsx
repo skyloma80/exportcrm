@@ -62,24 +62,6 @@ interface OrderData {
   created: string
 }
 
-interface PurchaseOrderData {
-  id: string
-  code: string
-  supplier: string
-  status: string
-  total_amount: number
-  paid_amount: number
-  currency: string
-  created: string
-  expand?: {
-    supplier?: {
-      id: string
-      name: string
-      name_cn?: string
-    }
-  }
-}
-
 interface BusinessSummary {
   rfqs: { total: number; completed: number };
   quotations: { total: number; accepted: number };
@@ -359,68 +341,6 @@ export default function ProjectDetailPage() {
           row={row}
           onView={(item) => router.push(`/orders/${item.id}?project=${id}`)}
           onEdit={(item) => router.push(`/orders/${item.id}/edit?project=${id}`)}
-        />
-      ),
-    },
-  ], [t, router, locale, id])
-
-  // Purchase Order table columns
-  const purchaseOrderColumns: ColumnDef<PurchaseOrderData>[] = useMemo(() => [
-    {
-      accessorKey: "code",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("purchaseOrders.columns.code")} />,
-      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("code")}</span>,
-    },
-    {
-      accessorKey: "supplier",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("purchaseOrders.columns.supplier")} />,
-      cell: ({ row }) => {
-        const supplier = row.original.expand?.supplier
-        if (!supplier) return "-"
-        const name = locale === 'zh' && supplier.name_cn ? supplier.name_cn : supplier.name
-        return <span>{name}</span>
-      },
-    },
-    {
-      accessorKey: "status",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("purchaseOrders.columns.status")} />,
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string
-        const variant = status === 'completed' ? 'default' : status === 'cancelled' ? 'destructive' : 'outline'
-        return <Badge variant={variant}>{t(`purchaseOrders.status.${status}`)}</Badge>
-      },
-    },
-    {
-      accessorKey: "total_amount",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("purchaseOrders.columns.totalAmount")} />,
-      cell: ({ row }) => (
-        <span className="font-medium">{formatCurrency(row.original.total_amount, row.original.currency)}</span>
-      ),
-    },
-    {
-      accessorKey: "paid_amount",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("purchaseOrders.columns.paidAmount")} />,
-      cell: ({ row }) => {
-        const progress = row.original.total_amount ? Math.round((row.original.paid_amount / row.original.total_amount) * 100) : 0
-        return (
-          <span className={progress >= 100 ? "text-green-600" : ""}>
-            {formatCurrency(row.original.paid_amount, row.original.currency)} ({progress}%)
-          </span>
-        )
-      },
-    },
-    {
-      accessorKey: "created",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("common.created")} />,
-      cell: ({ row }) => new Date(row.getValue("created")).toLocaleDateString(),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DataTableRowActions
-          row={row}
-          onView={(item) => router.push(`/purchase-orders/${item.id}?project=${id}`)}
-          onEdit={(item) => router.push(`/purchase-orders/${item.id}/edit?project=${id}`)}
         />
       ),
     },

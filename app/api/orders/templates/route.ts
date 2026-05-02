@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the source order with items
-    const order = await pb.collection('orders').getOne(order_id, {
+    const order = await pb.collection('so').getOne(order_id, {
       expand: 'order_items_via_order',
     });
 

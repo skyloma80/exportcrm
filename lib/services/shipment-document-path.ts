@@ -132,18 +132,24 @@ function sanitizeFilename(filename: string): string {
 
 /**
  * 从订单数据中提取路径信息
+ * 仅支持新版 FlatSO
  */
 export function extractOrderPathInfo(order: {
   code: string;
+  customer_name?: string;
+  project_name?: string;
   expand?: {
-    customer?: { name: string };
-    project?: { name: string };
+    customer_id?: { name: string };
+    project_id?: { name: string };
   };
 }): OrderPathInfo | null {
-  const customerName = order.expand?.customer?.name;
-  const projectName = order.expand?.project?.name;
+  // 优先从 expand 获取，回退到直接字段
+  const customerName = order.expand?.customer_id?.name || order.customer_name;
   
-  if (!customerName || !projectName) {
+  // 优先从 expand 获取，回退到直接字段，最后回退到 'General'
+  const projectName = order.expand?.project_id?.name || order.project_name || 'General';
+  
+  if (!customerName) {
     return null;
   }
   

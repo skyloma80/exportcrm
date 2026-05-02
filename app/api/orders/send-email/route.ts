@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Load order data
-    const order = await pb.collection('orders').getOne(orderId, {
-      expand: 'project,customer',
+    // Load order data from so collection (FlatSO)
+    const order = await pb.collection('so').getOne(orderId, {
+      expand: 'project_id,customer_id',
     })
     
     if (!order) {

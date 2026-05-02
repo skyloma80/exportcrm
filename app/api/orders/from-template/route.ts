@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       total_amount: 0,
     };
 
-    const newOrder = await pb.collection('orders').create(orderData);
+    const newOrder = await pb.collection('so').create(orderData);
 
     // Create order items from template
     const templateItems = template.template_items || [];
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update order total
-    await pb.collection('orders').update(newOrder.id, {
+    await pb.collection('so').update(newOrder.id, {
       total_amount: totalAmount,
     });
 

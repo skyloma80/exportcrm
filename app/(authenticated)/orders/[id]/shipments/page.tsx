@@ -25,8 +25,9 @@ import {
   Calendar,
   MapPin,
   Loader2,
+  ArrowLeft,
 } from "lucide-react"
-import type { OrderWithExpand } from "@/lib/pocketbase/services/orders"
+import { soService, type FlatSO } from "@/lib/pocketbase/services/so"
 import type { Shipment } from "@/lib/pocketbase/services/shipments"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { useProjectContext } from "@/hooks/use-project-context"
@@ -47,16 +48,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
   // Get project context
   const projectIdFromUrl = searchParams.get("project")
   
-  // Enforce project context: return 404 if no project parameter
-  if (!projectIdFromUrl) {
-    notFound()
-  }
-  
-  const { returnUrl } = useProjectContext({
-    documentType: 'order'
-  })
-  
-  const [order, setOrder] = useState<OrderWithExpand | null>(null)
+  const [order, setOrder] = useState<FlatSO | null>(null)
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -65,7 +57,8 @@ export default function OrderShipmentsPage({ params }: PageProps) {
   useEffect(() => {
     if (order) {
       setBreadcrumbItems([
-        { label: order.code, href: `/orders/${id}?project=${projectIdFromUrl}` },
+        { label: t("nav.orders"), href: "/orders" },
+        { label: order.code, href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
         { label: t('shipments.title') },
       ])
     }
@@ -83,8 +76,8 @@ export default function OrderShipmentsPage({ params }: PageProps) {
       const pb = getPocketBase()
       
       // Load order
-      const orderData = await pb.collection("orders").getOne<OrderWithExpand>(id, {
-        expand: "project,customer",
+      const orderData = await pb.collection("so").getOne<FlatSO>(id, {
+        expand: "project_id,customer_id",
       })
       setOrder(orderData)
       
@@ -104,7 +97,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
 
   const handleCreateShipment = () => {
     // Navigate to new shipment page with order and project context
-    router.push(`/shipments/new?order=${id}&project=${projectIdFromUrl}`)
+    router.push(`/shipments/new?order=${id}${projectIdFromUrl ? `&project=${projectIdFromUrl}` : ''}`)
   }
 
   const getShippingIcon = (method: string) => {
@@ -140,7 +133,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
           <CardContent className="pt-6">
             <div className="text-center">
               <h2 className="text-xl font-semibold">{t("orders.notFound")}</h2>
-              <Button variant="outline" onClick={() => router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=orders`)} className="mt-4">
+              <Button variant="outline" onClick={() => router.push("/orders")} className="mt-4">
                 {t("common.back")}
               </Button>
             </div>
@@ -153,11 +146,16 @@ export default function OrderShipmentsPage({ params }: PageProps) {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">{t('shipments.title')}</h1>
-        <p className="text-muted-foreground mt-1">
-          {t('shipments.subtitle', { orderCode: order.code })}
-        </p>
+      <div className="flex items-center gap-4">
+         <Button variant="ghost" size="icon" onClick={() => router.push(`/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}`)}>
+            <ArrowLeft className="w-5 h-5" />
+         </Button>
+         <div>
+            <h1 className="text-3xl font-bold">{t('shipments.title')}</h1>
+            <p className="text-muted-foreground mt-1">
+               {order.code}
+            </p>
+         </div>
       </div>
 
       {/* Shipments List */}
@@ -201,7 +199,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
                     <TableRow 
                       key={shipment.id}
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => router.push(`/shipments/${shipment.id}?order=${id}&project=${projectIdFromUrl}`)}
+                      onClick={() => router.push(`/shipments/${shipment.id}?order=${id}${projectIdFromUrl ? `&project=${projectIdFromUrl}` : ''}`)}
                     >
                       <TableCell className="font-mono font-medium">{shipment.code}</TableCell>
                       <TableCell>

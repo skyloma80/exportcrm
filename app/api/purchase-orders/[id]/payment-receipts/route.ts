@@ -37,7 +37,7 @@ export async function POST(
     const pb = await createServerPocketBase();
 
     // 获取采购订单信息（包含关联的订单、项目、客户）
-    const po = await pb.collection('purchase_orders').getOne(poId, {
+    const po = await pb.collection('po').getOne(poId, {
       expand: 'order,order.project,order.customer',
     });
     
@@ -70,7 +70,7 @@ export async function POST(
     }
 
     // 提取路径信息
-    const pathInfo = extractOrderPathInfo(order);
+    const pathInfo = extractOrderPathInfo(order as any);
     if (!pathInfo) {
       return NextResponse.json({ error: 'Missing customer or project info' }, { status: 400 });
     }

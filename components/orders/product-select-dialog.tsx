@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
 interface ProductWithProjects extends Product {
-    projectIds: string[]
+  projectIds: string[]
 }
 
 interface ProductSelectDialogProps {
@@ -41,7 +41,7 @@ export function ProductSelectDialog({
   const [products, setProducts] = useState<ProductWithProjects[]>([])
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [projects, setProjects] = useState<Project[]>([])
-  
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -60,17 +60,17 @@ export function ProductSelectDialog({
         projectService.getFullList(),
         productProjectService.getFullList(), // Get all project-product mappings for filtering
       ])
-      
+
       // Map project IDs to products
       const productMap: Record<string, string[]> = {}
       allProjectProducts.forEach(pp => {
-          if (!productMap[pp.product]) productMap[pp.product] = []
-          productMap[pp.product].push(pp.project)
+        if (!productMap[pp.product]) productMap[pp.product] = []
+        productMap[pp.product].push(pp.project)
       })
 
       const productsWithProjects = allProducts.map(p => ({
-          ...p,
-          projectIds: productMap[p.id] || []
+        ...p,
+        projectIds: productMap[p.id] || []
       }))
 
       setProducts(productsWithProjects)
@@ -94,9 +94,9 @@ export function ProductSelectDialog({
             const newIds = new Set(selectedIds)
             const rows = table.getRowModel().rows
             if (value) {
-                rows.forEach(row => newIds.add(row.original.id))
+              rows.forEach(row => newIds.add(row.original.id))
             } else {
-                rows.forEach(row => newIds.delete(row.original.id))
+              rows.forEach(row => newIds.delete(row.original.id))
             }
             setSelectedIds(newIds)
           }}
@@ -139,28 +139,28 @@ export function ProductSelectDialog({
       },
     },
     {
-        accessorKey: "category",
-        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.category")} />,
-        cell: ({ row }) => {
-            const cat = categories.find(c => c.id === row.original.category)
-            return <span className="text-slate-500 text-[11px]">{cat ? (locale === 'zh' ? cat.name_cn : cat.name) : "-"}</span>
-        },
-        filterFn: (row, id, value) => {
-            return value.includes(row.getValue(id))
-        },
+      accessorKey: "category",
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.category")} />,
+      cell: ({ row }) => {
+        const cat = categories.find(c => c.id === row.original.category)
+        return <span className="text-slate-500 text-[11px]">{cat ? (locale === 'zh' ? cat.name_cn : cat.name) : "-"}</span>
+      },
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id))
+      },
     },
     {
-        id: "project",
-        accessorKey: "projectIds",
-        header: ({ column }) => <DataTableColumnHeader column={column} title={t("projects.title")} />,
-        cell: ({ row }) => {
-            const count = row.original.projectIds.length
-            return <span className="text-slate-400 text-[10px]">{count > 0 ? `${count} Projects` : "-"}</span>
-        },
-        filterFn: (row, id, value) => {
-            const pIds = row.getValue(id) as string[]
-            return value.some((v: string) => pIds.includes(v))
-        },
+      id: "project",
+      accessorKey: "projectIds",
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t("projects.title")} />,
+      cell: ({ row }) => {
+        const count = row.original.projectIds.length
+        return <span className="text-slate-400 text-[10px]">{count > 0 ? `${count} Projects` : "-"}</span>
+      },
+      filterFn: (row, id, value) => {
+        const pIds = row.getValue(id) as string[]
+        return value.some((v: string) => pIds.includes(v))
+      },
     },
     {
       accessorKey: "part_number",
@@ -168,13 +168,13 @@ export function ProductSelectDialog({
       cell: ({ row }) => <span className="text-slate-500 text-[11px] font-medium">{row.getValue("part_number") || "-"}</span>,
     },
     {
-        accessorKey: "unit",
-        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
-        cell: ({ row }) => (
-            <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
-                {row.getValue("unit")}
-            </div>
-        ),
+      accessorKey: "unit",
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
+      cell: ({ row }) => (
+        <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+          {row.getValue("unit")}
+        </div>
+      ),
     }
   ], [t, locale, selectedIds, categories])
 
@@ -185,22 +185,22 @@ export function ProductSelectDialog({
   }
 
   const filterableColumns = useMemo(() => [
-      {
-          id: "project",
-          title: "Project",
-          options: projects.map(p => ({
-              label: locale === 'zh' && p.name_cn ? p.name_cn : p.name,
-              value: p.id,
-          }))
-      },
-      {
-          id: "category",
-          title: "Category",
-          options: categories.map(c => ({
-              label: locale === 'zh' && c.name_cn ? c.name_cn : c.name,
-              value: c.id,
-          }))
-      }
+    {
+      id: "project",
+      title: "Project",
+      options: projects.map(p => ({
+        label: locale === 'zh' && p.name_cn ? p.name_cn : p.name,
+        value: p.id,
+      }))
+    },
+    {
+      id: "category",
+      title: "Category",
+      options: categories.map(c => ({
+        label: locale === 'zh' && c.name_cn ? c.name_cn : c.name,
+        value: c.id,
+      }))
+    }
   ], [projects, categories, locale])
 
   return (
@@ -223,8 +223,8 @@ export function ProductSelectDialog({
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full border border-green-100">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span className="text-[11px] font-bold uppercase tracking-wider">{selectedIds.size} Items Selected</span>
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">{selectedIds.size} Items Selected</span>
             </div>
           </div>
         </div>
@@ -235,18 +235,18 @@ export function ProductSelectDialog({
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
                 <div className="relative">
-                    <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Package className="h-5 w-5 text-blue-200" />
-                    </div>
+                  <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Package className="h-5 w-5 text-blue-200" />
+                  </div>
                 </div>
                 <span className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">Synchronizing Library...</span>
               </div>
             ) : (
               <div className="h-full flex flex-col">
-                <DataTable 
-                  columns={columns} 
-                  data={products} 
+                <DataTable
+                  columns={columns}
+                  data={products}
                   searchKey="name"
                   filterableColumns={filterableColumns}
                 />
@@ -260,30 +260,30 @@ export function ProductSelectDialog({
           <div className="flex flex-col">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</span>
             <span className="text-sm font-bold text-slate-600">
-                {selectedIds.size > 0 
-                    ? `Ready to add ${selectedIds.size} products` 
-                    : "No products selected"}
+              {selectedIds.size > 0
+                ? `Ready to add ${selectedIds.size} products`
+                : "No products selected"}
             </span>
           </div>
           <div className="flex gap-4">
-            <Button 
-                variant="outline" 
-                onClick={() => onOpenChange(false)} 
-                className="h-12 px-6 rounded-xl border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="h-12 px-6 rounded-xl border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
             >
               Cancel
             </Button>
-            <Button 
-                onClick={handleConfirm} 
-                disabled={selectedIds.size === 0}
-                className={cn(
-                    "h-12 px-10 rounded-xl font-black text-xs uppercase tracking-[0.15em] transition-all shadow-xl",
-                    selectedIds.size > 0 
-                        ? "bg-slate-900 hover:bg-black text-white shadow-slate-200" 
-                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                )}
+            <Button
+              onClick={handleConfirm}
+              disabled={selectedIds.size === 0}
+              className={cn(
+                "h-12 px-10 rounded-xl font-black text-xs uppercase tracking-[0.15em] transition-all shadow-xl",
+                selectedIds.size > 0
+                  ? "bg-slate-900 hover:bg-black text-white shadow-slate-200"
+                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
+              )}
             >
-              Apply Selection
+              Confirm Selection
             </Button>
           </div>
         </div>

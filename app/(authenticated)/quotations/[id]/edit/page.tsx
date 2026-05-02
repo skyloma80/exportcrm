@@ -183,7 +183,7 @@ export default function EditQuotationPage({ params }: PageProps) {
         const itemsRes = await pb.collection('quotation_items').getFullList<QuotationItem>({
           filter: `quotation = "${id}"`,
           expand: 'product',
-          sort: 'created',
+          sort: 'id',
         })
 
         // 设置客户信息

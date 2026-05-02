@@ -74,7 +74,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     // 获取该发货记录在订单中的序号
     const allShipments = await pb.collection('shipments').getFullList({
       filter: `order = "${order.id}"`,
-      sort: 'created',
+      sort: 'id',
     });
     const shipmentIndex = allShipments.findIndex(s => s.id === id) + 1;
 
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 获取发货序号
     const allShipments = await pb.collection('shipments').getFullList({
       filter: `order = "${order.id}"`,
-      sort: 'created',
+      sort: 'id',
     });
     const shipmentIndex = allShipments.findIndex(s => s.id === id) + 1;
 
@@ -343,7 +343,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // 获取发货序号
     const allShipments = await pb.collection('shipments').getFullList({
       filter: `order = "${order.id}"`,
-      sort: 'created',
+      sort: 'id',
     });
     const shipmentIndex = allShipments.findIndex(s => s.id === id) + 1;
 

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get PO details
     let po;
     try {
-      po = await pb.collection('purchase_orders').getOne(poId);
+      po = await pb.collection('po').getOne(poId);
     } catch (e: any) {
       if (e.status === 404) {
         return NextResponse.json({ error: 'Purchase order not found' }, { status: 404 });
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Update PO status to 'sent' if currently draft
     if (po.status === 'draft') {
-      await pb.collection('purchase_orders').update(poId, { status: 'sent' });
+      await pb.collection('po').update(poId, { status: 'sent' });
     }
 
     return NextResponse.json({

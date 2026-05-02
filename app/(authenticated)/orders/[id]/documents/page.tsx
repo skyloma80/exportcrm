@@ -1,13 +1,12 @@
 "use client"
 
 /**
- * Order Documents Page (V2) - Simplified
- * 订单文档列表页面 - 简化版
+ * Order Documents Page (V3) - FlatSO
+ * 订单文档列表页面 - 新版 FlatSO
  */
 
 import { useState, useEffect, use } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useI18n } from "@/lib/i18n/use-i18n"
@@ -22,10 +21,9 @@ import {
   ChevronRight,
   Eye,
   Download,
+  ArrowLeft
 } from "lucide-react"
-import type { OrderWithExpand } from "@/lib/pocketbase/services/orders"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
-import { useProjectContext } from "@/hooks/use-project-context"
 import { ViewOrderDocumentButton } from "@/components/orders/view-order-document-button"
 import { 
   ORDER_DOCUMENT_TYPES, 
@@ -38,6 +36,7 @@ import {
   extractOrderPathInfo,
   type OrderPathInfo,
 } from "@/lib/services/shipment-document-path"
+import type { FlatSO } from "@/lib/pocketbase/services/so"
 import type { PurchaseOrder } from "@/lib/pocketbase/services/purchase-orders"
 import type { Shipment } from "@/lib/pocketbase/services/shipments"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -71,24 +70,12 @@ export default function OrderDocumentsPage({ params }: PageProps) {
   
   const projectIdFromUrl = searchParams.get("project")
   
-  if (!projectIdFromUrl) {
-    notFound()
-  }
-  
-  const { returnUrl } = useProjectContext({
-    documentType: 'order'
-  })
-  
-  const [order, setOrder] = useState<OrderWithExpand | null>(null)
+  const [order, setOrder] = useState<FlatSO | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [pathInfo, setPathInfo] = useState<OrderPathInfo | null>(null)
   
   const [orderDocs, setOrderDocs] = useState<Record<string, DocumentSection>>({})
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
-  const [poDocs, setPoDocs] = useState<Record<string, DocumentFile[]>>({})
-  const [poExpanded, setPoExpanded] = useState<Record<string, boolean>>({})
-  const [poLoading, setPoLoading] = useState<Record<string, boolean>>({})
   
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [shipmentDocs, setShipmentDocs] = useState<Record<string, Record<string, DocumentFile[]>>>({})
@@ -100,7 +87,8 @@ export default function OrderDocumentsPage({ params }: PageProps) {
   useEffect(() => {
     if (order) {
       setBreadcrumbItems([
-        { label: order.code, href: `/orders/${id}?project=${projectIdFromUrl}` },
+        { label: t("nav.orders"), href: "/orders" },
+        { label: order.code, href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
         { label: t('orders.documents.title') },
       ])
     }
@@ -117,29 +105,22 @@ export default function OrderDocumentsPage({ params }: PageProps) {
     try {
       const pb = getPocketBase()
       
-      const result = await pb.collection("orders").getOne<OrderWithExpand>(id, {
-        expand: "project,customer,order_items_via_order,order_items_via_order.product",
+      const result = await pb.collection("so").getOne<FlatSO>(id, {
+        expand: "project_id,customer_id",
       })
       setOrder(result)
       
       const info = extractOrderPathInfo(result)
       if (!info) {
-        throw new Error("Missing customer or project information")
+        throw new Error("Missing customer information")
       }
       setPathInfo(info)
       
       await loadOrderDocuments(info)
       
-      const pos = await pb.collection("purchase_orders").getFullList<PurchaseOrder>({
-        filter: `order = "${id}"`,
-        expand: "supplier",
-        sort: "created",
-      })
-      setPurchaseOrders(pos)
-      
       const ships = await pb.collection("shipments").getFullList<Shipment>({
         filter: `order = "${id}"`,
-        sort: "created",
+        sort: "id",
       })
       setShipments(ships)
       
@@ -166,7 +147,10 @@ export default function OrderDocumentsPage({ params }: PageProps) {
     
     try {
       const response = await fetch(`/api/orders/${id}/documents?type=order`)
-      if (!response.ok) throw new Error("Failed to load documents")
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to load documents")
+      }
       
       const { documents } = await response.json()
       
@@ -191,28 +175,6 @@ export default function OrderDocumentsPage({ params }: PageProps) {
           }
         }))
       }
-    }
-  }
-
-  const loadPODocuments = async (po: PurchaseOrder, info: OrderPathInfo) => {
-    if (!po.expand?.supplier) return
-    
-    setPoLoading(prev => ({ ...prev, [po.id]: true }))
-    
-    try {
-      const response = await fetch(`/api/orders/${id}/documents?type=po&poId=${po.id}`)
-      if (!response.ok) throw new Error("Failed to load PO documents")
-      
-      const { documents } = await response.json()
-      
-      setPoDocs(prev => ({
-        ...prev,
-        [po.id]: documents,
-      }))
-    } catch (error) {
-      console.error("Error loading PO documents:", error)
-    } finally {
-      setPoLoading(prev => ({ ...prev, [po.id]: false }))
     }
   }
 
@@ -280,31 +242,11 @@ export default function OrderDocumentsPage({ params }: PageProps) {
     window.open(`/api/disk/file?path=${encodeURIComponent(filePath)}`, '_blank')
   }
 
-  const handleOpenPODirectory = async (po: PurchaseOrder) => {
-    if (!pathInfo || !po.expand?.supplier) return
-    
-    const supplierName = po.expand.supplier.name
-    const path = getPODocumentPath(pathInfo, supplierName)
-    await navigateToDisk(path, router)
-  }
-
   const handleOpenShipmentDirectory = async (shipment: Shipment, shipmentIndex: number, docType: ShipmentDocumentType) => {
     if (!pathInfo) return
     
     const path = getShipmentDocumentPath(pathInfo, shipmentIndex, docType)
     await navigateToDisk(path, router)
-  }
-
-  const togglePO = (poId: string) => {
-    const isExpanding = !poExpanded[poId]
-    setPoExpanded(prev => ({ ...prev, [poId]: isExpanding }))
-    
-    if (isExpanding && !poDocs[poId] && pathInfo) {
-      const po = purchaseOrders.find(p => p.id === poId)
-      if (po) {
-        loadPODocuments(po, pathInfo)
-      }
-    }
   }
 
   const toggleShipment = (shipmentId: string) => {
@@ -341,7 +283,7 @@ export default function OrderDocumentsPage({ params }: PageProps) {
       <div className="p-6">
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold">{t("orders.notFound")}</h2>
-          <Button variant="outline" onClick={() => router.push(returnUrl || `/projects/${projectIdFromUrl}?tab=orders`)} className="mt-4">
+          <Button variant="outline" onClick={() => router.push(`/orders/${id}`)} className="mt-4">
             {t("common.back")}
           </Button>
         </div>
@@ -352,11 +294,16 @@ export default function OrderDocumentsPage({ params }: PageProps) {
   return (
     <div className="p-6 space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">{t('orders.documents.title')}</h1>
-        <p className="text-muted-foreground mt-1">
-          {order.code}
-        </p>
+      <div className="flex items-center gap-4">
+         <Button variant="ghost" size="icon" onClick={() => router.push(`/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}`)}>
+            <ArrowLeft className="w-5 h-5" />
+         </Button>
+         <div>
+            <h1 className="text-2xl font-bold">{t('orders.documents.title')}</h1>
+            <p className="text-muted-foreground mt-1">
+               {order.code}
+            </p>
+         </div>
       </div>
 
       {/* Order Documents */}
@@ -446,80 +393,6 @@ export default function OrderDocumentsPage({ params }: PageProps) {
         })}
       </div>
 
-      {/* Purchase Order Documents */}
-      {purchaseOrders.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">{t('orders.documents.purchaseOrderDocuments')}</h2>
-          
-          {purchaseOrders.map(po => {
-            const supplierName = po.expand?.supplier?.name || 'Unknown'
-            const isExpanded = poExpanded[po.id]
-            const isLoading = poLoading[po.id]
-            const files = poDocs[po.id] || []
-            
-            return (
-              <Collapsible key={po.id} open={isExpanded} onOpenChange={() => togglePO(po.id)}>
-                <div className="border-b">
-                  <div className="flex items-center justify-between py-3">
-                    <CollapsibleTrigger className="flex items-center gap-2 flex-1">
-                      {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      <span className="font-medium">{po.code}</span>
-                      <span className="text-muted-foreground">• {supplierName}</span>
-                      {files.length > 0 && (
-                        <span className="text-sm text-muted-foreground">({files.length})</span>
-                      )}
-                    </CollapsibleTrigger>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOpenPODirectory(po)
-                      }}
-                    >
-                      <FolderOpen className="h-4 w-4 mr-2" />
-                      {t('orders.documents.openDirectory')}
-                    </Button>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="pb-3">
-                      {isLoading ? (
-                        <div className="text-sm text-muted-foreground">{t('common.loading')}</div>
-                      ) : files.length > 0 ? (
-                        <div className="space-y-1">
-                          {files.map(file => (
-                            <div key={file.path} className="flex items-center justify-between py-2 px-2 rounded hover:bg-muted/50 transition-colors group">
-                              <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <span className="text-sm truncate" title={file.name}>{file.name}</span>
-                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                  {formatFileSize(file.size)}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handlePreview(file.path)}>
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" asChild>
-                                  <a href={`/api/disk/download?path=${encodeURIComponent(file.path)}`} download>
-                                    <Download className="h-3.5 w-3.5" />
-                                  </a>
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">{t('orders.documents.noFiles')}</p>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </div>
-              </Collapsible>
-            )
-          })}
-        </div>
-      )}
 
       {/* Shipment Documents */}
       {shipments.length > 0 && (
@@ -536,12 +409,12 @@ export default function OrderDocumentsPage({ params }: PageProps) {
               <Collapsible key={shipment.id} open={isExpanded} onOpenChange={() => toggleShipment(shipment.id)}>
                 <div className="border-b">
                   <div className="flex items-center justify-between py-3">
-                    <CollapsibleTrigger className="flex items-center gap-2 flex-1">
+                    <CollapsibleTrigger className="flex items-center gap-2 flex-1 text-left">
                       {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       <span className="font-medium">{shipment.code}</span>
                       <span className="text-muted-foreground">• {t(`shipments.status.${shipment.status}`)}</span>
                       {totalFiles > 0 && (
-                        <span className="text-sm text-muted-foreground">({totalFiles})</span>
+                        <Badge variant="secondary" className="ml-2 font-normal">{totalFiles}</Badge>
                       )}
                     </CollapsibleTrigger>
                   </div>
@@ -563,7 +436,7 @@ export default function OrderDocumentsPage({ params }: PageProps) {
                                   onClick={() => handleOpenShipmentDirectory(shipment, index + 1, docType)}
                                 >
                                   <FolderOpen className="h-3 w-3 mr-1" />
-                                  {t('orders.documents.open')}
+                                  {t('orders.documents.openDirectory')}
                                 </Button>
                               </div>
                               {files.length > 0 ? (

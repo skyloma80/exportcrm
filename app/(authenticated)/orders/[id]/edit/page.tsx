@@ -8,6 +8,7 @@ import { useI18n } from "@/lib/i18n/use-i18n"
 import { useToast } from "@/hooks/use-toast"
 import { OrderForm } from "@/components/orders/order-form"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { soService, type FlatSO, type SOCreateInput } from "@/lib/pocketbase/services/so"
 
 interface PageProps {
@@ -29,6 +30,7 @@ export default function EditOrderPage({ params }: PageProps) {
   useEffect(() => {
     if (order) {
       setBreadcrumbItems([
+        { label: t("nav.orders"), href: "/orders" },
         { label: order.code, href: `/orders/${order.id}` },
         { label: t("common.edit") },
       ])
@@ -83,7 +85,7 @@ export default function EditOrderPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -110,11 +112,23 @@ export default function EditOrderPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push(`/orders/${id}`)}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t("common.back")}
+        </Button>
+        
         <div>
           <h1 className="text-3xl font-bold">{t("common.edit")}</h1>
-          <p className="text-muted-foreground mt-1 font-mono">{order.code}</p>
+          <p className="text-muted-foreground mt-1">
+            {order.code}
+          </p>
         </div>
       </div>
 
