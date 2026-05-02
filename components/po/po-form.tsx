@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, Package } from "lucide-react"
+import { Plus, Trash2, Package, Wand2 } from "lucide-react"
 import type { FlatPO, POCreateInput, POItem } from "@/lib/pocketbase/services/po"
 import { SupplierSelect } from "@/components/ui/supplier-select"
+import { useToast } from "@/hooks/use-toast"
+import { codeGenerator } from "@/lib/services/code-generator"
 
 const COMMON_CURRENCIES = ["USD", "CNY", "EUR", "GBP", "JPY", "AUD", "CAD"]
 
@@ -32,6 +34,7 @@ export interface POFormProps {
 
 export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
   const [showProductSearch, setShowProductSearch] = useState(false)
+  const { toast } = useToast()
 
   const formatDateForInput = (dateStr?: string): string => {
     if (!dateStr) return ""
@@ -49,6 +52,18 @@ export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
   })
 
   const [items, setItems] = useState<POItem[]>(initialData?.items || [])
+
+  // 生成采购单号
+  const generatePoCode = async () => {
+    try {
+      const newCode = await codeGenerator.generatePOCode();
+      setFormData(prev => ({ ...prev, code: newCode }));
+      toast({ title: "订单号已生成", description: newCode });
+    } catch (error) {
+      console.error('Failed to generate PO code:', error);
+      toast({ title: "生成失败", description: "无法生成订单号", variant: "destructive" });
+    }
+  }
 
   const handleAddItem = () => {
     setItems(prev => [
@@ -144,12 +159,19 @@ export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>订单号 (PO Code) *</Label>
-              <Input
-                value={formData.code}
-                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                placeholder="例如: PO-2026-01"
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={formData.code}
+                  onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                  placeholder="PO-2026-001"
+                  required
+                  className="flex-1"
+                />
+                <Button type="button" variant="outline" size="sm" onClick={generatePoCode}>
+                  <Wand2 className="w-4 h-4 mr-1" />
+                  生成
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">

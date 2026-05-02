@@ -43,9 +43,16 @@ export default function DashboardPage() {
   const [kpiStats, setKpiStats] = useState<KPIStats | null>(null)
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
+  const [activeTab, setActiveTab] = useState<TabType>('tasks')
 
   const [kpiError, setKpiError] = useState(false)
   const [chartLoading, setChartLoading] = useState(false)
+
+  // Tab data state
+  const [tasks, setTasks] = useState<TaskSummary[]>([])
+  const [orders, setOrders] = useState<OrderSummary[]>([])
+  const [payments, setPayments] = useState<PaymentSummary[]>([])
+  const [shipments, setShipments] = useState<ShipmentSummary[]>([])
 
   // Load KPI stats
   const loadKPIStats = async () => {
@@ -73,16 +80,38 @@ export default function DashboardPage() {
     }
   }
 
-
+  // Load tab data
+  const loadTabData = async () => {
+    try {
+      const [tasksData, ordersData, paymentsData, shipmentsData] = await Promise.all([
+        dashboardService.getRecentTasks(),
+        dashboardService.getRecentOrders(),
+        dashboardService.getPendingPayments(),
+        dashboardService.getUpcomingShipments(),
+      ])
+      setTasks(tasksData)
+      setOrders(ordersData)
+      setPayments(paymentsData)
+      setShipments(shipmentsData)
+    } catch (e) {
+      console.error('Failed to load tab data:', e)
+    }
+  }
 
   // Load all data
   const loadAllData = async () => {
     setLoading(true)
-    await Promise.all([
-      loadKPIStats(),
-      loadChartData(timeRange),
-    ])
-    setLoading(false)
+    try {
+      await Promise.all([
+        loadKPIStats(),
+        loadChartData(timeRange),
+        loadTabData(),
+      ])
+    } catch (e) {
+      console.error('Error loading data:', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Initial load
@@ -183,6 +212,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Dashboard Tabs */}
+      <DashboardTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tasks={tasks}
+        orders={orders}
+        payments={payments}
+        shipments={shipments}
+        loading={loading}
+      />
 
     </div>
   )

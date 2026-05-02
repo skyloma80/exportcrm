@@ -36,6 +36,7 @@ import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so
 import type { Product } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
 import { RefreshCw, Wand2 } from "lucide-react"
+import { codeGenerator } from "@/lib/services/code-generator"
 import {
   Table,
   TableBody,
@@ -104,15 +105,15 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
   }
 
   // 自动生成销售单号
-  const generateSoCode = () => {
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(-2);
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const newCode = `SO${year}${month}${day}-${random}`;
-    setFormData(prev => ({ ...prev, code: newCode }));
-    toast({ title: t("orders.columns.code") + " 已生成", description: newCode });
+  const generateSoCode = async () => {
+    try {
+      const newCode = await codeGenerator.generateOrderCode();
+      setFormData(prev => ({ ...prev, code: newCode }));
+      toast({ title: t("orders.columns.code") + " 已生成", description: newCode });
+    } catch (error) {
+      console.error('Failed to generate order code:', error);
+      toast({ title: "生成失败", description: "无法生成订单号", variant: "destructive" });
+    }
   }
 
   const [formData, setFormData] = useState({
@@ -209,7 +210,7 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
     const newErrors: Record<string, string> = {}
     if (!formData.code) newErrors.code = t("validation.required")
     if (!formData.customer_name) newErrors.customer_name = t("validation.required")
-    
+
     if (localItems.length === 0) {
       toast({
         title: t("validation.error"),
@@ -240,28 +241,29 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
 
       {/* ========== 0. 基本信息与客户 ========== */}
       <Card>
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             {locale === 'zh' ? '基本信息' : 'Basic Information'}
           </CardTitle>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={generateSoCode}>
-              <Wand2 className="w-4 h-4 mr-2" />
-              {t("orders.columns.code")}
-            </Button>
-          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("orders.columns.code")} <span className="text-destructive">*</span></Label>
-              <Input
-                value={formData.code}
-                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                placeholder="SO2026-001"
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={formData.code}
+                  onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                  placeholder="A2604-001"
+                  required
+                  className="flex-1"
+                />
+                <Button type="button" variant="outline" size="sm" onClick={generateSoCode}>
+                  <Wand2 className="w-4 h-4 mr-1" />
+                  {locale === 'zh' ? '生成' : 'Generate'}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
@@ -286,10 +288,10 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
               <Label>{locale === 'zh' ? '所属项目' : 'Related Project'}</Label>
               <ProjectSelect
                 value={formData.project_id || projectId || ""}
-                onChange={(p) => setFormData(prev => ({ 
-                  ...prev, 
-                  project_id: p?.id || "", 
-                  customer_id: p?.customer || prev.customer_id 
+                onChange={(p) => setFormData(prev => ({
+                  ...prev,
+                  project_id: p?.id || "",
+                  customer_id: p?.customer || prev.customer_id
                 }))}
                 placeholder={locale === 'zh' ? '选择项目（可选）' : 'Select project (optional)'}
               />
@@ -331,7 +333,7 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
               ])
             }}>
               <Plus className="mr-2 h-4 w-4" />
-              {locale === 'zh' ? '添加自由产品' : 'Add Custom'}
+              {locale === 'zh' ? '添加产品' : 'Add Custom'}
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => setShowProductSearch(true)}>
               <Package className="mr-2 h-4 w-4" />
@@ -384,18 +386,18 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                           />
                         </TableCell>
                         <TableCell>
-                          <Input 
-                            type="number" 
-                            min="0" 
+                          <Input
+                            type="number"
+                            min="0"
                             step="any"
                             className="h-8"
-                            value={item.quantity || ''} 
+                            value={item.quantity || ''}
                             onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
                           />
                         </TableCell>
                         <TableCell>
-                          <Select 
-                            value={item.unit || 'PCS'} 
+                          <Select
+                            value={item.unit || 'PCS'}
                             onValueChange={(value) => updateLocalItem(index, 'unit', value)}
                           >
                             <SelectTrigger className="h-8 text-sm">
@@ -413,12 +415,12 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <span className="text-xs text-muted-foreground">{formData.currency}</span>
-                            <Input 
-                              type="number" 
-                              min="0" 
+                            <Input
+                              type="number"
+                              min="0"
                               step="any"
                               className="h-8"
-                              value={item.unit_price || ''} 
+                              value={item.unit_price || ''}
                               onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
                             />
                           </div>
@@ -742,20 +744,20 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
             <div className="space-y-2">
               <div className="flex items-center justify-between h-9">
                 <Label>{locale === 'zh' ? '备注（包装信息等）' : 'Remarks (Packaging, etc.)'}</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGeneratePackaging}
-                    disabled={generatingPackaging || localItems.length === 0}
-                  >
-                    {generatingPackaging ? (
-                      <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
-                    ) : (
-                      <Package className="mr-2 h-3 w-3" />
-                    )}
-                    {locale === 'zh' ? '生成包装信息' : 'Generate Packaging'}
-                  </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeneratePackaging}
+                  disabled={generatingPackaging || localItems.length === 0}
+                >
+                  {generatingPackaging ? (
+                    <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
+                  ) : (
+                    <Package className="mr-2 h-3 w-3" />
+                  )}
+                  {locale === 'zh' ? '生成包装信息' : 'Generate Packaging'}
+                </Button>
               </div>
               <Textarea
                 value={formData.remarks}

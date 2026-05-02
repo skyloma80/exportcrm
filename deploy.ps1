@@ -2,7 +2,7 @@
 # Usage: .\deploy.ps1 [-ServerIP "42.194.150.84"] [-SkipBuild]
 
 param(
-    [string]$ServerIP = "42.194.150.84",
+    [string]$ServerIP = "69.5.23.121",
     [string]$ServerUser = "ubuntu",
     [string]$ServerPath = "/home/ubuntu/exportcrm",
     [switch]$SkipBuild
@@ -46,7 +46,8 @@ if (-not $SkipBuild) {
     $sizeMB = [math]::Round($sizeBytes / 1048576, 2)
     Write-Host "OK: Image exported ($sizeMB MB)" -ForegroundColor Green
     Write-Host ""
-} else {
+}
+else {
     Write-Host "[1/5] Skipping build (-SkipBuild)" -ForegroundColor Gray
     Write-Host "[2/5] Skipping export" -ForegroundColor Gray
     Write-Host ""

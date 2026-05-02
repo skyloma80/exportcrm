@@ -1,39 +1,9 @@
-/**
- * Business Code Generator Service
- * 
- * Generates unique business codes in format: {PREFIX}-{YYYY}-{XXXX}
- * Examples: CUS-2025-0001, RFQ-2025-0001 
- */
-
 import PocketBase from 'pocketbase';
-
-// Lazy initialization of PocketBase client to avoid issues during testing
-let _pb: PocketBase | null = null;
-
-function getPb() {
-  if (!_pb) {
-    const { getPocketBase } = require('@/lib/pocketbase/auth');
-    _pb = getPocketBase();
-  }
-  return _pb!;
-}
+import { getPocketBase } from '../pocketbase/auth';
 
 /**
- * Set the PocketBase instance to use for code generation
- * This allows API routes to pass in a server-side authenticated instance
+ * Code Prefixes
  */
-export function setCodeGeneratorPb(pb: PocketBase) {
-  _pb = pb;
-}
-
-/**
- * Reset the PocketBase instance (useful for testing or switching contexts)
- */
-export function resetCodeGeneratorPb() {
-  _pb = null;
-}
-
-// Valid prefixes for different entity types
 export const CODE_PREFIXES = {
   CUSTOMER: 'CUS',
   SUPPLIER: 'SUP',
@@ -53,9 +23,279 @@ export const CODE_PREFIXES = {
 
 export type CodePrefix = typeof CODE_PREFIXES[keyof typeof CODE_PREFIXES];
 
-// Code format regex pattern (4 digits)
-const CODE_PATTERN = /^([A-Z]+)-(\d{4})-(\d{3,4})$/;
+/**
+ * Collection name mapping
+ */
+const COLLECTION_MAP: Record<string, string> = {
+  CUS: 'customers',
+  SUP: 'suppliers',
+  PRJ: 'projects',
+  PRD: 'products',
+  RFQ: 'rfqs',
+  QUO: 'quotations',
+  ORD: 'so',
+  PO: 'po',
+  PI: 'proforma_invoices',
+  CI: 'commercial_invoices',
+  SHP: 'shipments',
+  MLD: 'molds',
+  SP: 'service_providers',
+  TSK: 'tasks',
+};
 
+/**
+ * Code format patterns for each type
+ * Format: {PREFIX}{pattern}-{sequence}
+ */
+const CODE_PATTERNS: Record<string, { pattern: string; seqDigits: number; useYear: boolean; useMonth: boolean }> = {
+  // Order (SO): A{YY}{MM}-XXX, e.g., A2604-001
+  ORD: { pattern: 'A', seqDigits: 3, useYear: false, useMonth: true },
+  // PO: PO-A{YY}{MM}-XXX, e.g., PO-A2603-001
+  PO: { pattern: 'PO-A', seqDigits: 3, useYear: false, useMonth: true },
+  // Others: PREFIX-{YYYY}-XXXX
+  CUS: { pattern: 'CUS-', seqDigits: 4, useYear: true, useMonth: false },
+  SUP: { pattern: 'SUP-', seqDigits: 4, useYear: true, useMonth: false },
+  PRJ: { pattern: 'PRJ-', seqDigits: 4, useYear: true, useMonth: false },
+  PRD: { pattern: 'PRD-', seqDigits: 4, useYear: true, useMonth: false },
+  RFQ: { pattern: 'RFQ-', seqDigits: 4, useYear: true, useMonth: false },
+  QUO: { pattern: 'QUO-', seqDigits: 4, useYear: true, useMonth: false },
+  PI: { pattern: 'PI-', seqDigits: 4, useYear: true, useMonth: false },
+  CI: { pattern: 'CI-', seqDigits: 4, useYear: true, useMonth: false },
+  SHP: { pattern: 'SHP-', seqDigits: 4, useYear: true, useMonth: false },
+  MLD: { pattern: 'MLD-', seqDigits: 4, useYear: true, useMonth: false },
+  SP: { pattern: 'SP-', seqDigits: 4, useYear: true, useMonth: false },
+  TSK: { pattern: 'TSK-', seqDigits: 4, useYear: true, useMonth: false },
+};
+
+/**
+ * Format a code based on type
+ */
+function formatCodeByType(prefix: string, sequence: number, year?: number, month?: number): string {
+  const config = CODE_PATTERNS[prefix];
+  if (!config) return `${prefix}-${sequence}`;
+
+  const seqStr = sequence.toString().padStart(config.seqDigits, '0');
+
+  if (prefix === 'ORD') {
+    // Order format: A{YY}{MM}-XXX
+    const yearSuffix = year ? year.toString().slice(-2) : new Date().getFullYear().toString().slice(-2);
+    const monthValue = month || new Date().getMonth() + 1;
+    const monthStr = monthValue.toString().padStart(2, '0');
+    return `A${yearSuffix}${monthStr}-${seqStr}`;
+  } else if (prefix === 'PO') {
+    // PO format: PO-A{YY}{MM}-XXX
+    const yearSuffix = year ? year.toString().slice(-2) : new Date().getFullYear().toString().slice(-2);
+    const monthValue = month || new Date().getMonth() + 1;
+    const monthStr = monthValue.toString().padStart(2, '0');
+    return `PO-A${yearSuffix}${monthStr}-${seqStr}`;
+  } else {
+    // Default format: PREFIX-{YYYY}-XXXX
+    const yearStr = year || new Date().getFullYear();
+    return `${config.pattern}${yearStr}-${seqStr}`;
+  }
+}
+
+/**
+ * Build filter for finding max sequence
+ */
+function buildFilter(prefix: string, year?: number, month?: number): string {
+  const currentYear = year || new Date().getFullYear();
+  const currentMonth = month || new Date().getMonth() + 1;
+  const config = CODE_PATTERNS[prefix];
+
+  if (prefix === 'ORD') {
+    const yearSuffix = currentYear.toString().slice(-2);
+    const monthStr = currentMonth.toString().padStart(2, '0');
+    return `code >= "A${yearSuffix}${monthStr}000" && code < "A${yearSuffix}${monthStr}999"`;
+  } else if (prefix === 'PO') {
+    const yearSuffix = currentYear.toString().slice(-2);
+    const monthStr = currentMonth.toString().padStart(2, '0');
+    return `code >= "PO-A${yearSuffix}${monthStr}000" && code < "PO-A${yearSuffix}${monthStr}999"`;
+  } else {
+    return `code ~ "^${config?.pattern || prefix}${currentYear}"`;
+  }
+}
+
+/**
+ * Extract sequence number from code
+ */
+function extractSequence(code: string, prefix: string, year?: number, month?: number): number {
+  const currentYear = year || new Date().getFullYear();
+  const currentMonth = month || new Date().getMonth() + 1;
+  const config = CODE_PATTERNS[prefix];
+
+  if (prefix === 'ORD') {
+    const yearSuffix = currentYear.toString().slice(-2);
+    const monthStr = currentMonth.toString().padStart(2, '0');
+    const match = code.match(new RegExp(`^A${yearSuffix}${monthStr}(\\d{3})$`));
+    return match ? parseInt(match[1], 10) : 0;
+  } else if (prefix === 'PO') {
+    const yearSuffix = currentYear.toString().slice(-2);
+    const monthStr = currentMonth.toString().padStart(2, '0');
+    const match = code.match(new RegExp(`^PO-A${yearSuffix}${monthStr}(\\d{3})$`));
+    return match ? parseInt(match[1], 10) : 0;
+  } else {
+    const yearStr = currentYear.toString();
+    const pattern = `^${config?.pattern || prefix}${yearStr}-(\\d{${config?.seqDigits || 4}})$`;
+    const match = code.match(new RegExp(pattern));
+    return match ? parseInt(match[1], 10) : 0;
+  }
+}
+
+/**
+ * Generic code generator - queries the collection to find max sequence
+ */
+async function generateCodeByPrefix(prefix: string, pbInstance?: PocketBase): Promise<string> {
+  const pb = pbInstance || getPocketBase();
+  const collectionName = COLLECTION_MAP[prefix];
+
+  if (!collectionName) {
+    throw new Error(`Unknown prefix: ${prefix}`);
+  }
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const filter = buildFilter(prefix, currentYear, currentMonth);
+
+  try {
+    const records = await pb.collection(collectionName).getFullList({
+      filter,
+      sort: '-code',
+    });
+
+    let maxSequence = 0;
+    for (const record of records) {
+      const seq = extractSequence(record.code, prefix, currentYear, currentMonth);
+      if (seq > maxSequence) {
+        maxSequence = seq;
+      }
+    }
+
+    const newSequence = maxSequence + 1;
+    return formatCodeByType(prefix, newSequence, currentYear, currentMonth);
+  } catch (error) {
+    console.error(`Error generating code for ${prefix}:`, error);
+    throw new Error(`Failed to generate code for ${prefix}`);
+  }
+}
+
+// ============================================================================
+// Specialized generators for each type
+// ============================================================================
+
+/**
+ * Generates a new unique order code (SO): A{YY}{MM}-XXX
+ */
+export async function generateOrderCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('ORD', pbInstance);
+}
+
+/**
+ * Generates a new unique PO code: PO-{YYYY}-XXX
+ */
+export async function generatePOCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('PO', pbInstance);
+}
+
+/**
+ * Generates a new unique customer code: CUS-{YYYY}-XXXX
+ */
+export async function generateCustomerCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('CUS', pbInstance);
+}
+
+/**
+ * Generates a new unique supplier code: SUP-{YYYY}-XXXX
+ */
+export async function generateSupplierCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('SUP', pbInstance);
+}
+
+/**
+ * Generates a new unique project code: PRJ-{YYYY}-XXXX
+ */
+export async function generateProjectCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('PRJ', pbInstance);
+}
+
+/**
+ * Generates a new unique product code: PRD-{YYYY}-XXXX
+ */
+export async function generateProductCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('PRD', pbInstance);
+}
+
+/**
+ * Generates a new unique RFQ code: RFQ-{YYYY}-XXXX
+ */
+export async function generateRFQCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('RFQ', pbInstance);
+}
+
+/**
+ * Generates a new unique quotation code: QUO-{YYYY}-XXXX
+ */
+export async function generateQuotationCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('QUO', pbInstance);
+}
+
+/**
+ * Generates a new unique shipment code: SHP-{YYYY}-XXXX
+ */
+export async function generateShipmentCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('SHP', pbInstance);
+}
+
+/**
+ * Generates a new unique task code: TSK-{YYYY}-XXXX
+ */
+export async function generateTaskCode(pbInstance?: PocketBase): Promise<string> {
+  return generateCodeByPrefix('TSK', pbInstance);
+}
+
+/**
+ * Main generate function - routes to appropriate generator
+ */
+export async function generateCode(prefix: CodePrefix | string, pbInstance?: PocketBase): Promise<string> {
+  // Map prefix to generator
+  const prefixMap: Record<string, () => Promise<string>> = {
+    ORD: () => generateOrderCode(pbInstance),
+    PO: () => generatePOCode(pbInstance),
+    CUS: () => generateCustomerCode(pbInstance),
+    SUP: () => generateSupplierCode(pbInstance),
+    PRJ: () => generateProjectCode(pbInstance),
+    PRD: () => generateProductCode(pbInstance),
+    RFQ: () => generateRFQCode(pbInstance),
+    QUO: () => generateQuotationCode(pbInstance),
+    SHP: () => generateShipmentCode(pbInstance),
+    TSK: () => generateTaskCode(pbInstance),
+  };
+
+  const generator = prefixMap[prefix];
+  if (generator) {
+    return generator();
+  }
+
+  // Fallback to generic generator
+  return generateCodeByPrefix(prefix, pbInstance);
+}
+
+/**
+ * Validates if a code matches the expected format
+ */
+export function validateCode(code: string): boolean {
+  // Order: A{YY}{MM}-XXX
+  if (/^A\d{4}\d{3}$/.test(code)) return true;
+  // PO: PO-A{YY}{MM}-XXX
+  if (/^PO-A\d{4}\d{3}$/.test(code)) return true;
+  // Others: PREFIX-{YYYY}-XXXX
+  if (/^[A-Z]+-\d{4}-\d{4}$/.test(code)) return true;
+  return false;
+}
+
+/**
+ * Parses a business code into its components
+ */
 export interface ParsedCode {
   prefix: string;
   year: number;
@@ -63,264 +303,53 @@ export interface ParsedCode {
   isValid: boolean;
 }
 
-export interface CodeSequence {
-  id: string;
-  prefix: string;
-  year: number;
-  current_sequence: number;
-}
-
-/**
- * Validates if a code matches the expected format
- */
-export function validateCode(code: string): boolean {
-  return CODE_PATTERN.test(code);
-}
-
-/**
- * Parses a business code into its components
- */
 export function parseCode(code: string): ParsedCode {
-  const match = code.match(CODE_PATTERN);
-  
-  if (!match) {
+  // Try order format: A{YY}{MM}{XXX}
+  let match = code.match(/^A(\d{2})(\d{2})(\d{3})$/);
+  if (match) {
     return {
-      prefix: '',
-      year: 0,
-      sequence: 0,
-      isValid: false,
+      prefix: 'ORD',
+      year: 2000 + parseInt(match[1]),
+      sequence: parseInt(match[3]),
+      isValid: true,
+    };
+  }
+
+  // Try PO format: PO-A{YY}{MM}-{XXX}
+  match = code.match(/^PO-A(\d{2})(\d{2})-(\d{3})$/);
+  if (match) {
+    return {
+      prefix: 'PO',
+      year: 2000 + parseInt(match[1]),
+      sequence: parseInt(match[3]),
+      isValid: true,
+    };
+  }
+
+  // Try standard format: PREFIX-{YYYY}-{XXXX}
+  match = code.match(/^([A-Z]+)-(\d{4})-(\d{4})$/);
+  if (match) {
+    return {
+      prefix: match[1],
+      year: parseInt(match[2]),
+      sequence: parseInt(match[3]),
+      isValid: true,
     };
   }
 
   return {
-    prefix: match[1],
-    year: parseInt(match[2], 10),
-    sequence: parseInt(match[3], 10),
-    isValid: true,
+    prefix: '',
+    year: 0,
+    sequence: 0,
+    isValid: false,
   };
-}
-
-/**
- * Formats a code from its components
- * Standard format: {PREFIX}-{YYYY}-{XXXX} (4 digits for sequence)
- */
-export function formatCode(prefix: string, year: number, sequence: number): string {
-  const paddedSequence = sequence.toString().padStart(4, '0');
-  return `${prefix}-${year}-${paddedSequence}`;
-}
-
-/**
- * Formats an order code in compact format: A{YY}{MM}{XXX}
- * Example: A2601001 (A + 26 for 2026 + 01 for January + 001 sequence)
- */
-export function formatOrderCode(year: number, sequence: number, month?: number): string {
-  const yearSuffix = year.toString().slice(-2);
-  const monthValue = month !== undefined ? month : new Date().getMonth() + 1; // Use current month if not specified
-  const paddedMonth = monthValue.toString().padStart(2, '0');
-  const paddedSequence = sequence.toString().padStart(3, '0');
-  return `A${yearSuffix}${paddedMonth}${paddedSequence}`;
-}
-
-/**
- * Generates a new unique business code for the given prefix
- * Queries existing records to find the highest sequence number for the current year
- * @param prefix - The code prefix (e.g., 'QUO', 'ORD')
- * @param pbInstance - Optional PocketBase instance (for server-side use)
- */
-export async function generateCode(prefix: CodePrefix | string, pbInstance?: PocketBase): Promise<string> {
-  const currentYear = new Date().getFullYear();
-  const pb = pbInstance || getPb();
-
-  try {
-    // Find all records for the current year with this prefix
-    // Format is {PREFIX}-{YYYY}-{XXXX}, so we look for codes starting with prefix and year
-    const yearPattern = `${prefix}-${currentYear}`;
-
-    // Get all records that match the current year and prefix pattern, sorted by code descending
-    // Need to determine the appropriate collection based on prefix
-    let collectionName: string;
-    switch (prefix) {
-      case CODE_PREFIXES.CUSTOMER:
-        collectionName = 'customers';
-        break;
-      case CODE_PREFIXES.SUPPLIER:
-        collectionName = 'suppliers';
-        break;
-      case CODE_PREFIXES.PROJECT:
-        collectionName = 'projects';
-        break;
-      case CODE_PREFIXES.PRODUCT:
-        collectionName = 'products';
-        break;
-      case CODE_PREFIXES.RFQ:
-        collectionName = 'rfqs';
-        break;
-      case CODE_PREFIXES.QUOTATION:
-        collectionName = 'quotations';
-        break;
-      case CODE_PREFIXES.ORDER:
-        collectionName = 'orders'; // We'll handle orders separately
-        break;
-      case CODE_PREFIXES.PURCHASE_ORDER:
-        collectionName = 'purchase_orders';
-        break;
-      case CODE_PREFIXES.PROFORMA_INVOICE:
-        collectionName = 'proforma_invoices';
-        break;
-      case CODE_PREFIXES.COMMERCIAL_INVOICE:
-        collectionName = 'commercial_invoices';
-        break;
-      case CODE_PREFIXES.SHIPMENT:
-        collectionName = 'shipments';
-        break;
-      case CODE_PREFIXES.MOLD:
-        collectionName = 'molds';
-        break;
-      case CODE_PREFIXES.SERVICE_PROVIDER:
-        collectionName = 'service_providers';
-        break;
-      case CODE_PREFIXES.TASK:
-        collectionName = 'tasks';
-        break;
-      default:
-        collectionName = 'unknown'; // Fallback, though this shouldn't happen
-        break;
-    }
-
-    // For orders, we use the specialized function
-    if (prefix === CODE_PREFIXES.ORDER) {
-      return await generateOrderCode(pbInstance);
-    }
-
-    let newSequence: number = 1;
-
-    if (collectionName !== 'unknown' && collectionName !== 'orders') {
-      const records = await pb.collection(collectionName).getList(1, 1, {
-        filter: `code ~ "^${yearPattern}"`,
-        sort: '-code',
-      });
-
-      if (records.items.length > 0) {
-        // Extract sequence number from the highest existing code
-        const highestCode = records.items[0].code;
-        const match = highestCode.match(new RegExp(`^${yearPattern}-(\\d{3,4})$`)); // 3-4 digits for sequence
-
-        if (match) {
-          const currentSeq = parseInt(match[1], 10);
-          newSequence = currentSeq + 1;
-        } else {
-          // If the pattern doesn't match, start with 1
-          newSequence = 1;
-        }
-      }
-    } else {
-      // Fallback to the original sequence-based approach for unsupported collections
-      const existingSequences = await pb.collection('code_sequences').getList<CodeSequence>(1, 1, {
-        filter: `prefix = "${prefix}" && year = ${currentYear}`,
-      });
-
-      if (existingSequences.items.length > 0) {
-        // Update existing sequence
-        const existing = existingSequences.items[0];
-        newSequence = existing.current_sequence + 1;
-
-        await pb.collection('code_sequences').update(existing.id, {
-          current_sequence: newSequence,
-        });
-      } else {
-        // Create new sequence for this prefix and year
-        newSequence = 1;
-
-        await pb.collection('code_sequences').create({
-          prefix,
-          year: currentYear,
-          current_sequence: newSequence,
-        });
-      }
-    }
-
-    return formatCode(prefix, currentYear, newSequence);
-  } catch (error) {
-    console.error('Error generating code:', error);
-    throw new Error(`Failed to generate code for prefix: ${prefix}`);
-  }
-}
-
-/**
- * Generates a new unique order code in compact format: A{YY}{MM}{XXX}
- * Queries existing orders to find the highest sequence number for the current year and month
- * @param pbInstance - Optional PocketBase instance (for server-side use)
- */
-export async function generateOrderCode(pbInstance?: PocketBase): Promise<string> {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1; // Month is 0-indexed, so add 1
-  const yearSuffix = currentYear.toString().slice(-2);
-  const monthSuffix = currentMonth.toString().padStart(2, '0');
-  const pb = pbInstance || getPb();
-
-  try {
-    // Find all orders for the current year and month
-    // Format is A{YY}{MM}{XXX}, so we look for codes starting with A + year + month
-    const yearMonthPattern = `A${yearSuffix}${monthSuffix}`;
-
-    // Get all orders that match the current year and month pattern to find the max sequence
-    const orders = await pb.collection('orders').getFullList({
-      filter: `code >= "A${yearSuffix}${monthSuffix}000" && code < "A${yearSuffix}${monthSuffix}999"`,
-      sort: '-code',
-    });
-
-    let newSequence: number = 1;
-
-    if (orders.length > 0) {
-      // Find the highest sequence number among all matching orders
-      let maxSequence = 0;
-      for (const order of orders) {
-        const match = order.code.match(new RegExp(`^A${yearSuffix}${monthSuffix}(\\d{3})$`));
-        if (match) {
-          const seq = parseInt(match[1], 10);
-          if (seq > maxSequence) {
-            maxSequence = seq;
-          }
-        }
-      }
-      newSequence = maxSequence + 1;
-    }
-
-    return formatOrderCode(currentYear, newSequence, currentMonth);
-  } catch (error) {
-    console.error('Error generating order code:', error);
-    throw new Error('Failed to generate order code');
-  }
-}
-
-/**
- * Gets the next sequence number without incrementing (for preview)
- */
-export async function getNextSequence(prefix: CodePrefix): Promise<string> {
-  const currentYear = new Date().getFullYear();
-  const pb = getPb();
-  
-  try {
-    const existingSequences = await pb.collection('code_sequences').getList<CodeSequence>(1, 1, {
-      filter: `prefix = "${prefix}" && year = ${currentYear}`,
-    });
-
-    const nextSequence = existingSequences.items.length > 0
-      ? existingSequences.items[0].current_sequence + 1
-      : 1;
-
-    return formatCode(prefix, currentYear, nextSequence);
-  } catch (error) {
-    console.error('Error getting next sequence:', error);
-    return formatCode(prefix, currentYear, 1);
-  }
 }
 
 /**
  * Checks if a code already exists in the specified collection
  */
 export async function isCodeUnique(collection: string, code: string): Promise<boolean> {
-  const pb = getPb();
+  const pb = getPocketBase();
   try {
     const result = await pb.collection(collection).getList(1, 1, {
       filter: `code = "${code}"`,
@@ -332,15 +361,50 @@ export async function isCodeUnique(collection: string, code: string): Promise<bo
   }
 }
 
+/**
+ * Format a code in standard format: {PREFIX}-{YYYY}-{XXXX}
+ * @deprecated Use generateCode instead
+ */
+export function formatCode(prefix: string, year: number, sequence: number): string {
+  return formatCodeByType(prefix, sequence, year);
+}
+
+/**
+ * Set PocketBase instance for code generator (server-side use)
+ * @deprecated No longer needed, pass pbInstance directly to generate functions
+ */
+let customPb: PocketBase | null = null;
+
+export function setCodeGeneratorPb(pb: PocketBase): void {
+  customPb = pb;
+}
+
+function getActivePb(): PocketBase {
+  return customPb || getPocketBase();
+}
+
+// Override generateCodeByPrefix to use customPb when set
+const originalGenerateCodeByPrefix = generateCodeByPrefix;
+async function generateCodeWithCustomPb(prefix: string, pbInstance?: PocketBase): Promise<string> {
+  const pb = pbInstance || customPb || getPocketBase();
+  return originalGenerateCodeByPrefix(prefix, pb);
+}
+
 // Export the code generator service
 export const codeGenerator = {
   generate: generateCode,
   generateOrderCode,
-  validate: validateCode,
-  parse: parseCode,
-  format: formatCode,
-  formatOrderCode,
-  getNextSequence,
+  generatePOCode,
+  generateCustomerCode,
+  generateSupplierCode,
+  generateProjectCode,
+  generateProductCode,
+  generateRFQCode,
+  generateQuotationCode,
+  generateShipmentCode,
+  generateTaskCode,
+  validateCode,
+  parseCode,
   isCodeUnique,
   PREFIXES: CODE_PREFIXES,
 };

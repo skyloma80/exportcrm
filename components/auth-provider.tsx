@@ -36,23 +36,31 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<RecordModel | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // 初始化：检查现有认证状态
   useEffect(() => {
-    const pb = getPocketBase();
-    
-    // 从 authStore 获取当前用户
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setIsLoading(false);
+    const initAuth = () => {
+      try {
+        const pb = getPocketBase();
+        const currentUser = getCurrentUser();
+        setUser(currentUser);
+      } catch (e) {
+        console.error('Auth init error:', e);
+      }
+    };
 
-    // 监听认证状态变化
+    // 延迟初始化确保 DOM 准备好
+    const timer = setTimeout(initAuth, 50);
+
+    const pb = getPocketBase();
     const unsubscribe = pb.authStore.onChange((_token, model) => {
       setUser(model ?? null);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
