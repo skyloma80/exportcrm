@@ -52,9 +52,11 @@ export interface OrderFormProps {
   isLoading?: boolean
   /** 是否锁定项目字段（从项目上下文进入时） */
   projectLocked?: boolean
+  /** 是否为编辑模式（隐藏code生成按钮，code只读） */
+  isEdit?: boolean
 }
 
-export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) {
+export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFormProps) {
   const { t, locale } = useI18n()
   const { toast } = useToast()
 
@@ -254,15 +256,19 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
               <div className="flex gap-2">
                 <Input
                   value={formData.code}
-                  onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                  onChange={(e) => !isEdit && setFormData(prev => ({ ...prev, code: e.target.value }))}
                   placeholder="A2604-001"
                   required
                   className="flex-1"
+                  readOnly={isEdit}
+                  disabled={isEdit}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={generateSoCode}>
-                  <Wand2 className="w-4 h-4 mr-1" />
-                  {locale === 'zh' ? '生成' : 'Generate'}
-                </Button>
+                {!isEdit && (
+                  <Button type="button" variant="outline" size="sm" onClick={generateSoCode}>
+                    <Wand2 className="w-4 h-4 mr-1" />
+                    {locale === 'zh' ? '生成' : 'Generate'}
+                  </Button>
+                )}
               </div>
             </div>
             <div className="space-y-2">

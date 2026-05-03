@@ -128,6 +128,9 @@ export async function POST(
       }
     }
 
+    // Get customer name from expanded customer
+    const customerName = quotation.expand?.customer?.name || quotation.expand?.customer?.name_cn || '';
+
     // Create order using the service to properly handle created_by
     const { orderService } = await import('@/lib/pocketbase/services/orders');
 
@@ -136,6 +139,7 @@ export async function POST(
     const order = await orderService.createOrder({
       project: quotation.project,
       customer: quotation.customer,
+      customer_name: customerName,
       quotation: id,
       incoterm: quotation.incoterm,
       currency: quotation.currency,
@@ -149,7 +153,7 @@ export async function POST(
     // Transform quotation items to order items JSONB format
     const orderItems = quotationItems.map((item: any) => ({
       id: item.id || crypto.randomUUID(),
-      part_number: item.part_number || '',
+      part_number: item.part_number || undefined,
       product_name: item.product_name || '',
       description_en: item.description_en || '',
       description_cn: item.description_cn || '',

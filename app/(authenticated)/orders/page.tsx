@@ -13,8 +13,7 @@ import {
   Building2,
   Calendar,
   Loader2,
-  RefreshCw,
-  Copy
+  RefreshCw
 } from "lucide-react"
 import { format } from "date-fns"
 
@@ -38,7 +37,6 @@ export default function OrdersPage() {
   const [data, setData] = useState<FlatSO[]>([])
   const [loading, setLoading] = useState(true)
   const [totalItems, setTotalItems] = useState(0)
-  const [copyingId, setCopyingId] = useState<string | null>(null)
 
   useEffect(() => {
     loadOrders()
@@ -69,23 +67,8 @@ export default function OrdersPage() {
       case 'in_production': return 'secondary'
       case 'ready_to_ship': return 'outline'
       case 'shipped':
-      case 'delivered': return 'outline'
+case 'delivered': return 'outline'
       default: return 'outline'
-    }
-  }
-
-  const handleCopy = async (id: string) => {
-    setCopyingId(id)
-    try {
-      const response = await fetch(`/api/orders/${id}/copy`, { method: 'POST' })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error)
-      toast({ title: t('common.success'), description: `Copied to ${data.order.code}` })
-      router.push(`/orders/${data.order.id}`)
-    } catch (error: any) {
-      toast({ title: t('common.error'), description: error.message, variant: 'destructive' })
-    } finally {
-      setCopyingId(null)
     }
   }
 
@@ -160,13 +143,6 @@ export default function OrdersPage() {
           onEdit={(item) => router.push(`/orders/${item.id}/edit`)}
           extraActions={[
             {
-              label: copyingId === row.original.id ? "Copying..." : "Copy",
-              icon: copyingId === row.original.id ? Loader2 : Copy,
-              onClick: (item) => handleCopy(item.id),
-              className: "text-green-600",
-              disabled: copyingId !== null
-            },
-            {
                 label: "Export PI (Excel)",
                 icon: Download,
                 onClick: (item) => window.open(`/api/so/${item.id}/export-pi`, '_blank'),
@@ -176,7 +152,7 @@ export default function OrdersPage() {
         />
       ),
     },
-  ], [t, locale, router, copyingId])
+  ], [t, locale, router])
 
   return (
     <div className="p-6 space-y-6">

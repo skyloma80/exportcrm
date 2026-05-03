@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -59,10 +60,9 @@ export default function OrderDetailPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [generatingPI, setGeneratingPI] = useState(false)
-  const [showManualStatusDialog, setShowManualStatusDialog] = useState(false)
-  const [newStatus, setNewStatus] = useState<SOStatus>('draft')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
   const [copying, setCopying] = useState(false)
+  const [statusLoading, setStatusLoading] = useState(false)
 
   // Set breadcrumb
   useEffect(() => {
@@ -90,9 +90,6 @@ export default function OrderDetailPage({ params }: PageProps) {
         expand: "project_id,customer_id,created_by",
       })
       setOrder(result)
-      if (result) {
-        setNewStatus(result.status)
-      }
     } catch (err: any) {
       console.error("Error loading order:", err)
       setError(err)
@@ -113,28 +110,30 @@ export default function OrderDetailPage({ params }: PageProps) {
     }
   }
 
-  const handleManualStatusUpdate = async () => {
-    if (!order) return;
-
+  const handleStatusChange = async (newStatus: SOStatus) => {
+    if (!order || newStatus === order.status) return
+    
+    setStatusLoading(true)
     try {
       await soService.update(order.id, {
         status: newStatus,
-      });
+      })
 
       toast({
         title: t('orders.statusUpdateSuccess'),
         description: t('orders.statusUpdateSuccessDesc'),
-      });
+      })
 
-      setShowManualStatusDialog(false);
-      loadData();
+      loadData()
     } catch (error: any) {
-      console.error('Manual status update error:', error);
+      console.error('Status update error:', error)
       toast({
         title: t('orders.statusUpdateError'),
         description: error.message,
         variant: 'destructive',
-      });
+      })
+    } finally {
+      setStatusLoading(false)
     }
   }
 
@@ -262,39 +261,29 @@ export default function OrderDetailPage({ params }: PageProps) {
               <Badge variant={getStatusVariant(order.status as SOStatus)}>
                 {t(`orders.status.${order.status}`) || order.status}
               </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowManualStatusDialog(true)}
-                className="border border-blue-500 hover:bg-blue-50 h-8"
+              <Select
+                value={order.status}
+                onValueChange={(value) => handleStatusChange(value as SOStatus)}
+                disabled={statusLoading}
               >
-                <RefreshCw className="h-4 w-4 mr-1" />
-                {t('orders.manualStatusUpdate')}
-              </Button>
+                <SelectTrigger className="h-8 w-auto border-blue-500 hover:bg-blue-50">
+                  <RefreshCw className={`h-4 w-4 mr-1 ${statusLoading ? 'animate-spin' : ''}`} />
+                  <span className="text-xs">{t('orders.manualStatusUpdate')}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">{t('orders.status.draft')}</SelectItem>
+                  <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
+                  <SelectItem value="in_production">{t('orders.status.in_production')}</SelectItem>
+                  <SelectItem value="ready_to_ship">{t('orders.status.ready_to_ship')}</SelectItem>
+                  <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
+                  <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
+                  <SelectItem value="completed">{t('orders.status.completed')}</SelectItem>
+                  <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-        </div>
-        <div className="flex gap-2 ml-12 md:ml-0">
-          <Button
-            variant="outline"
-            onClick={handleCopy}
-            disabled={copying}
-          >
-            {copying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
-            {t('common.copy')}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setShowDeleteConfirmation(true)}
-            disabled={order.status !== 'draft'}
-          >
-            {t('common.delete')}
-          </Button>
-          <Button variant="outline" onClick={() => router.push(`/orders/${order.id}/edit`)}>
-            <Edit className="w-4 h-4 mr-2" />
-            {t("common.edit")}
-          </Button>
         </div>
       </div>
 
@@ -411,6 +400,29 @@ export default function OrderDetailPage({ params }: PageProps) {
                 <Truck className="mr-2 h-4 w-4" />
                 {t('orders.management.viewShipments')}
               </Button>
+              <div className="border-t pt-2 mt-2">
+                <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/edit`)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  {t("common.edit")}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleCopy}
+                  disabled={copying}
+                >
+                  {copying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+                  {t('common.copy')}
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="w-full justify-start"
+                  onClick={() => setShowDeleteConfirmation(true)}
+                  disabled={order.status !== 'draft'}
+                >
+                  {t('common.delete')}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -418,39 +430,6 @@ export default function OrderDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Manual Status Update Dialog */}
-      {showManualStatusDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-xl border">
-            <h3 className="text-lg font-semibold mb-4">{t('orders.manualStatusUpdate')}</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">{t('orders.currentStatus')}</label>
-              <div className="p-2 bg-gray-50 rounded border text-sm">{t(`orders.status.${order.status}`)}</div>
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">{t('orders.newStatus')}</label>
-              <select
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value as SOStatus)}
-                className="w-full p-2 border rounded text-sm bg-white"
-              >
-                <option value="draft">{t('orders.status.draft')}</option>
-                <option value="confirmed">{t('orders.status.confirmed')}</option>
-                <option value="in_production">{t('orders.status.in_production')}</option>
-                <option value="ready_to_ship">{t('orders.status.ready_to_ship')}</option>
-                <option value="shipped">{t('orders.status.shipped')}</option>
-                <option value="delivered">{t('orders.status.delivered')}</option>
-                <option value="completed">{t('orders.status.completed')}</option>
-                <option value="cancelled">{t('orders.status.cancelled')}</option>
-              </select>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowManualStatusDialog(false)}>{t('common.cancel')}</Button>
-              <Button onClick={handleManualStatusUpdate}>{t('common.update')}</Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation */}
       {showDeleteConfirmation && (

@@ -30,9 +30,11 @@ export interface POFormProps {
   initialData?: Partial<FlatPO>
   onSubmit: (data: POCreateInput) => Promise<void>
   isLoading?: boolean
+  /** 是否为编辑模式（隐藏code生成按钮，code只读） */
+  isEdit?: boolean
 }
 
-export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
+export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps) {
   const [showProductSearch, setShowProductSearch] = useState(false)
   const { toast } = useToast()
 
@@ -174,15 +176,19 @@ export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
               <div className="flex gap-2">
                 <Input
                   value={formData.code}
-                  onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                  onChange={(e) => !isEdit && setFormData(prev => ({ ...prev, code: e.target.value }))}
                   placeholder="PO-2026-001"
                   required
                   className="flex-1"
+                  readOnly={isEdit}
+                  disabled={isEdit}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={generatePoCode}>
-                  <Wand2 className="w-4 h-4 mr-1" />
-                  生成
-                </Button>
+                {!isEdit && (
+                  <Button type="button" variant="outline" size="sm" onClick={generatePoCode}>
+                    <Wand2 className="w-4 h-4 mr-1" />
+                    生成
+                  </Button>
+                )}
               </div>
             </div>
 

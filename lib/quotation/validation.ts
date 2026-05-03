@@ -129,12 +129,13 @@ export function validateQuotationForm(data: Partial<QuotationFormData>): Validat
 /**
  * 验证报价单明细项
  * Validate quotation item
+ * 自定义产品（productId为空但有productName或partNumber）也视为有效
  */
 export function validateQuotationItem(item: Partial<QuotationItemData>): ValidationError[] {
   const errors: ValidationError[] = []
 
-  // 产品ID必填
-  if (!item.productId) {
+  // 产品ID必填，除非是自定义产品（有productName或partNumber）
+  if (!item.productId && !item.productName && !item.partNumber) {
     errors.push({
       field: 'productId',
       message: 'Product is required',

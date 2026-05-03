@@ -56,11 +56,18 @@ interface ProductInput {
 }
 
 interface QuotationItemInput {
+  product_id?: string;
   product_code?: string;
+  product_name?: string;
+  part_number?: string;
+  description_en?: string;
+  description_cn?: string;
   quantity: number;
   unit?: string;
   unit_price: number;
   amount: number;
+  cost_price?: number;
+  profit_margin?: number;
   expand?: {
     product?: ProductInput;
   };
@@ -122,36 +129,27 @@ export function prepareQuotationPdfData({
       code: project.code,
     } : undefined,
     items: items.map(item => {
-      const product = item.expand?.product;
-
-      // 生成包装描述：多行格式
-      // 200 pcs/ctn
-      // 625×490×450 cm
-      // G.W: 25 kg/ctn
       const packagingLines: string[] = [];
-      if (product?.pcs_per_carton) {
-        packagingLines.push(`${product.pcs_per_carton} pcs/ctn`);
+      if (item.pcs_per_carton) {
+        packagingLines.push(`${item.pcs_per_carton} pcs/ctn`);
       }
-      if (product?.carton_dimensions) {
-        const d = product.carton_dimensions;
+      if (item.carton_dimensions) {
+        const d = item.carton_dimensions;
         if (d.length && d.width && d.height) {
           packagingLines.push(`${d.length}×${d.width}×${d.height} cm`);
         }
       }
-      if (product?.carton_gross_weight) {
-        packagingLines.push(`G.W: ${product.carton_gross_weight} kg/ctn`);
+      if (item.carton_gross_weight) {
+        packagingLines.push(`G.W: ${item.carton_gross_weight} kg/ctn`);
       }
       const packaging = packagingLines.length > 0 ? packagingLines.join('\n') : undefined;
 
-      // Description 直接从产品表获取
-      const description = product?.description || product?.name || undefined;
-
       return {
-        part_number: product?.part_number || undefined,
-        product_name: description,  // PDF 模板中 product_name 对应 Description 列
+        part_number: item.part_number || item.product_code || undefined,
+        product_name: item.description_en || item.description_cn || item.product_name || undefined,
         packaging,
         quantity: item.quantity,
-        unit: item.unit || product?.unit || 'PCS',
+        unit: item.unit || 'PCS',
         unit_price: item.unit_price,
         amount: item.amount,
       };

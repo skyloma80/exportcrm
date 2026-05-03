@@ -1169,7 +1169,15 @@
       "reason": "拒绝理由",
       "reasonPlaceholder": "请输入客户拒绝的理由（可选）"
     },
-    "selectProjectDescription": "请先从项目详情页创建报价单，以便系统自动关联项目和客户信息。"
+    "selectProjectDescription": "请先从项目详情页创建报价单，以便系统自动关联项目和客户信息。",
+    "manualStatusUpdate": "更新状态",
+    "currentStatus": "当前状态",
+    "newStatus": "选择新状态",
+    "statusUpdateSuccess": "状态更新成功",
+    "statusUpdateSuccessDesc": "报价单状态已更新",
+    "statusUpdateError": "更新状态失败",
+    "convertToOrderSuccess": "转订单成功",
+    "convertToOrderError": "转订单失败"
   },
   "purchaseOrders": {
     "title": "采购订单",
@@ -1183,7 +1191,7 @@
     "selectSupplier": "选择供应商",
     "pickFromCrm": "从 CRM 选择",
     "grandTotal": "总金额",
-    "listTitle": "采购订单列表",
+    "listTitle": "订单明细",
     "newPurchaseOrder": "新建采购订单",
     "new": "新建采购订单",
     "edit": "编辑采购订单",
@@ -1325,7 +1333,7 @@
     "remittanceConfig": "汇款配置",
     "importBankDetails": "导入银行详情",
     "grandTotal": "总金额",
-    "listTitle": "订单列表",
+    "listTitle": "订单明细",
     "newOrder": "新建订单",
     "new": "新建订单",
     "newDescription": "创建新的销售订单",
@@ -2692,6 +2700,25 @@
     "calculating": "计算中...",
     "smartCalculate": "智能计算最优方案",
     "smartCalculateHint": "自动选择最优托盘组合（支持混合规格）",
+    "customSpec": {
+      "addButton": "自定义",
+      "title": "添加自定义托盘规格",
+      "code": "编码",
+      "codePlaceholder": "例如: CUSTOM1200",
+      "name": "名称(英文)",
+      "nameCn": "名称(中文)",
+      "length": "长(mm)",
+      "width": "宽(mm)",
+      "height": "高(mm)",
+      "maxLoad": "最大载重(kg)",
+      "validationError": "验证错误",
+      "validationErrorDesc": "请填写所有必填项",
+      "createSuccess": "创建成功",
+      "createSuccessDesc": "自定义托盘规格已保存",
+      "createError": "创建失败",
+      "deleteSuccess": "删除成功",
+      "deleteError": "删除失败"
+    },
     "viewer": {
       "title": "3D预览"
     },

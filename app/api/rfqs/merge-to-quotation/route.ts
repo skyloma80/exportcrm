@@ -123,7 +123,42 @@ export async function POST(request: NextRequest) {
     // Generate quotation code (pass pb instance for server-side use)
     const quotationCode = await codeGenerator.generate(CODE_PREFIXES.QUOTATION, pb);
 
-    // Create quotation - use 0.01 as initial total_amount to avoid validation error
+    // Build items array for JSONB
+    let itemCount = 0;
+    let totalAmount = 0;
+    const items: Array<{
+      id: string;
+      product_id: string;
+      quantity: number;
+      unit: string;
+      unit_price: number;
+      amount: number;
+      cost_price: number;
+      profit_margin: number;
+    }> = [];
+
+    for (const [productId, data] of productQuotations) {
+      const defaultMargin = 0.2;
+      const unitPrice = data.costPrice > 0
+        ? data.costPrice * (1 + defaultMargin)
+        : 0;
+      const amount = unitPrice * data.quantity;
+      totalAmount += amount;
+
+      items.push({
+        id: crypto.randomUUID(),
+        product_id: productId,
+        quantity: data.quantity,
+        unit: 'PCS',
+        unit_price: unitPrice,
+        amount: amount,
+        cost_price: data.costPrice,
+        profit_margin: defaultMargin * 100,
+      });
+      itemCount++;
+    }
+
+    // Create quotation with items in JSONB
     const quotationData = {
       code: quotationCode,
       project: projectId,
@@ -134,7 +169,8 @@ export async function POST(request: NextRequest) {
       exchange_rate: 1,
       incoterm: 'FOB',
       validity_days: 30,
-      total_amount: 0.01, // Use 0.01 to avoid PocketBase min validation error
+      total_amount: totalAmount || 0.01,
+      items: items,
     };
     
     console.log('Creating quotation with data:', quotationData);
@@ -150,35 +186,6 @@ export async function POST(request: NextRequest) {
       });
       throw createError;
     }
-
-    // Create quotation items
-    let itemCount = 0;
-    let totalAmount = 0;
-    for (const [productId, data] of productQuotations) {
-      // Calculate unit price with default margin (20%)
-      const defaultMargin = 0.2;
-      const unitPrice = data.costPrice > 0
-        ? data.costPrice * (1 + defaultMargin)
-        : 0;
-      const amount = unitPrice * data.quantity;
-      totalAmount += amount;
-
-      await pb.collection('quotation_items').create({
-        quotation: quotation.id,
-        product: productId,
-        quantity: data.quantity,
-        cost_price: data.costPrice,
-        profit_margin: defaultMargin * 100,
-        unit_price: unitPrice,
-        amount: amount,
-      });
-      itemCount++;
-    }
-
-    // Update quotation total amount
-    await pb.collection('quotations').update(quotation.id, {
-      total_amount: totalAmount,
-    });
 
     // Update RFQ statuses to completed
     for (const rfqId of rfqIds) {

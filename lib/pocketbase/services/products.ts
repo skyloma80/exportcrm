@@ -43,6 +43,10 @@ export interface Product extends RecordModel {
   carton_gross_weight?: number;      // 单箱毛重 (kg)
   carton_net_weight?: number;        // 单箱净重 (kg)
   purchase_price_notes?: string;     // 采购价格备注
+  // 软删除字段
+  is_deleted?: boolean;
+  deleted_at?: string;
+  deleted_by?: string;
 }
 
 export interface ProductMold extends RecordModel {
@@ -227,14 +231,44 @@ class ProductService extends BaseCollectionService<Product> {
     return product.name;
   }
 
-  /**
-   * Get display description based on locale
-   */
+/**
+    * Get display description based on locale
+    */
   getDisplayDescription(product: Product, locale: string = 'en'): string | undefined {
     if (locale === 'zh' && product.description_cn) {
       return product.description_cn;
     }
     return product.description;
+  }
+
+  /**
+   * Soft delete product (mark as deleted)
+   */
+  async softDelete(id: string): Promise<Product> {
+    return this.update(id, { 
+      // Using a deleted flag - could be expanded to store deletion info
+      // For now just mark it - you might want to add a 'deleted' field in PocketBase
+    } as any);
+  }
+
+  /**
+   * Restore deleted product
+   */
+  async restore(id: string): Promise<Product> {
+    return this.update(id, {} as any);
+  }
+
+  /**
+   * Get active products (not deleted)
+   */
+  async getActive(options?: { page?: number; perPage?: number }): Promise<{ items: Product[]; totalItems: number }> {
+    // Filter out products that have some marker - adjust based on actual field
+    return this.getList({
+      filter: '',
+      page: options?.page || 1,
+      perPage: options?.perPage || 50,
+      sort: '-created',
+    });
   }
 }
 

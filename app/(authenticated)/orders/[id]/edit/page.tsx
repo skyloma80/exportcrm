@@ -136,6 +136,7 @@ export default function EditOrderPage({ params }: PageProps) {
         initialData={order}
         onSubmit={handleSubmit}
         isLoading={isSubmitting}
+        isEdit={true}
       />
     </div>
   )

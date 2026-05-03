@@ -219,9 +219,14 @@ export default function QuotationsPage() {
                 </DropdownMenuItem>
               )}
               {canCreateOrder && (
-                <DropdownMenuItem onClick={() => handleCreateOrder(quotation)}>
+                <DropdownMenuItem 
+                  onClick={() => handleCreateOrder(quotation)}
+                  disabled={convertingId === quotation.id}
+                >
                   <CheckCircle className="mr-2 h-4 w-4 text-blue-600" />
-                  {t("quotations.actions.createOrder") || "转订单"}
+                  {convertingId === quotation.id 
+                    ? (t("quotations.converting") || "转换中...") 
+                    : (t("quotations.actions.createOrder") || "转订单")}
                 </DropdownMenuItem>
               )}
               {/* 调试：显示当前状态 */}
@@ -268,9 +273,36 @@ export default function QuotationsPage() {
   }
 
   // 转订单（从报价单创建订单）
-  const handleCreateOrder = (quotation: QuotationWithExpand) => {
-    const projectId = quotation.project
-    router.push(`/orders/new?project=${projectId}&fromQuotation=${quotation.id}`)
+  const [convertingId, setConvertingId] = useState<string | null>(null)
+  
+  const handleCreateOrder = async (quotation: QuotationWithExpand) => {
+    setConvertingId(quotation.id)
+    try {
+      const response = await fetch(`/api/quotations/${quotation.id}/convert-to-order`, {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to convert to order')
+      }
+      const result = await response.json()
+      toast({ 
+        title: t("quotations.convertToOrderSuccess") || "转订单成功",
+        description: result.order ? `订单号: ${result.order.code}` : undefined,
+      })
+      if (result.order) {
+        router.push(`/orders/${result.order.id}?project=${quotation.project}`)
+      }
+    } catch (err: any) {
+      console.error("Convert to order error:", err)
+      toast({ 
+        title: t("quotations.convertToOrderError") || "转订单失败", 
+        description: err.message,
+        variant: "destructive" 
+      })
+    } finally {
+      setConvertingId(null)
+    }
   }
 
   // 确认报价单（客户接受）

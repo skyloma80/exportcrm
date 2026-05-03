@@ -26,6 +26,7 @@ import { ArrowLeft, Save, Ship, Coins } from 'lucide-react'
 import { PortSelect } from '@/components/ui/port-select'
 import { PaymentTermsSelect } from '@/components/ui/payment-terms-select'
 import { QuotationItemsTable } from '@/components/quotations/quotation-items-table'
+import { ProductSelectDialog } from '@/components/orders/product-select-dialog'
 
 import {
   QuotationItemData,
@@ -38,7 +39,8 @@ import { getPocketBase } from '@/lib/pocketbase/auth'
 import { CURRENCIES, COMMON_CURRENCIES } from '@/lib/constants/currencies'
 import { getRate } from '@/lib/services/exchange-rate'
 import { findCurrencyByCode, INCOTERMS } from '@/lib/constants/trade-constants'
-import type { Quotation, QuotationItem } from '@/lib/pocketbase/services/quotations'
+import type { Quotation } from '@/lib/pocketbase/services/quotations'
+import type { Product } from '@/lib/pocketbase/services/products'
 import { useBreadcrumb } from '@/lib/breadcrumb/context'
 import { useProjectContext } from '@/hooks/use-project-context'
 
@@ -119,6 +121,7 @@ export default function EditQuotationPage({ params }: PageProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [rateLoading, setRateLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
+  const [productDialogOpen, setProductDialogOpen] = useState(false)
 
   const [state, setState] = useState<QuotationEditPageState>({
     projectId: '',
@@ -179,49 +182,32 @@ export default function EditQuotationPage({ params }: PageProps) {
 
         setQuotation(quotationRes)
         setProjects(projectsRes)
-        // 加载产品明细
-        const itemsRes = await pb.collection('quotation_items').getFullList<QuotationItem>({
-          filter: `quotation = "${id}"`,
-          expand: 'product',
-          sort: 'id',
-        })
 
+        // 从JSONB字段读取产品明细
+        const jsonItems = (quotationRes as any).items || []
+        
         // 设置客户信息
         const project = projectsRes.find(p => p.id === quotationRes.project)
         const customer = project?.expand?.customer
         setSelectedCustomer(customer || null)
 
         // 转换产品明细数据
-        const items: QuotationItemData[] = itemsRes.map(item => {
-          const product = item.expand?.product as any
-          // 格式化纸箱尺寸
-          let cartonDimensions: string | undefined
-          if (product?.carton_dimensions) {
-            const d = product.carton_dimensions
-            if (d.length && d.width && d.height) {
-              cartonDimensions = `${d.length}×${d.width}×${d.height} mm`
-            }
-          }
-
+        const items: QuotationItemData[] = jsonItems.map((item: any) => {
           return {
-            id: item.id,
-            productId: item.product,
-            productCode: product?.code || '',
-            productName: product?.name || '',
-            productNameCn: product?.name_cn,
-            description: product?.description,
-            descriptionCn: product?.description_cn,
-            partNumber: product?.part_number,
-            unit: product?.unit || '',
-            quantity: item.quantity,
-            costPrice: item.cost_price,
-            profitMargin: item.profit_margin,
-            unitPrice: item.unit_price,
-            amount: item.amount,
-            // 包装信息
-            pcsPerCarton: product?.pcs_per_carton,
-            cartonDimensions,
-            cartonGrossWeight: product?.carton_gross_weight,
+            id: item.id || `item-${Date.now()}-${Math.random()}`,
+            productId: item.product_id || '',
+            productCode: item.product_code || '',
+            productName: item.product_name || '',
+            productNameCn: item.product_name_cn,
+            description: item.description_en || item.description || '',
+            descriptionCn: item.description_cn || '',
+            partNumber: item.part_number || '',
+            unit: item.unit || 'PCS',
+            quantity: item.quantity || 1,
+            costPrice: item.cost_price || 0,
+            profitMargin: item.profit_margin || state.globalProfitMargin,
+            unitPrice: item.unit_price || 0,
+            amount: item.amount || 0,
           }
         })
 
@@ -360,6 +346,55 @@ export default function EditQuotationPage({ params }: PageProps) {
     setState(prev => ({ ...prev, items }))
   }
 
+  const handleProductSelect = (products: Product[]) => {
+    const newItems = products.map(product => ({
+      id: `prod-${product.id}-${Date.now()}`,
+      productId: product.id,
+      productCode: product.code || '',
+      productName: product.name || '',
+      productNameCn: product.name_cn,
+      description: product.description || '',
+      descriptionCn: product.description_cn || '',
+      partNumber: product.part_number || '',
+      unit: product.unit || 'PCS',
+      quantity: 1,
+      costPrice: 0,
+      profitMargin: state.globalProfitMargin,
+      unitPrice: 0,
+      amount: 0,
+      pcsPerCarton: product.pcs_per_carton,
+      cartonDimensions: product.carton_dimensions?.length 
+        ? `${product.carton_dimensions.length}×${product.carton_dimensions.width}×${product.carton_dimensions.height} mm`
+        : undefined,
+      cartonGrossWeight: product.carton_gross_weight,
+    }))
+    setState(prev => ({ ...prev, items: [...prev.items, ...newItems] }))
+  }
+
+  // 添加自定义产品（空行）
+  const handleAddCustomItem = () => {
+    const newItem: QuotationItemData = {
+      id: `custom-${Date.now()}`,
+      productId: '',
+      productCode: '',
+      productName: '',
+      productNameCn: '',
+      description: '',
+      descriptionCn: '',
+      partNumber: '',
+      unit: 'PCS',
+      quantity: 1,
+      costPrice: 0,
+      profitMargin: state.globalProfitMargin,
+      unitPrice: 0,
+      amount: 0,
+    }
+    setState(prev => ({
+      ...prev,
+      items: [...prev.items, newItem],
+    }))
+  }
+
   const handleCostBreakdownChange = (costs: Record<string, number>) => {
     setState(prev => ({ ...prev, costBreakdown: costs }))
   }
@@ -428,28 +463,24 @@ export default function EditQuotationPage({ params }: PageProps) {
         remarks: state.remarks || null,
         subtotal: totals.subtotal || 0,
         total_amount: Math.max(totals.subtotal || 0, 0.01),
-      })
-
-      // 删除旧的产品明细
-      const existingItems = await pb.collection('quotation_items').getFullList({
-        filter: `quotation = "${id}"`,
-      })
-      for (const item of existingItems) {
-        await pb.collection('quotation_items').delete(item.id)
-      }
-
-      // 创建新的产品明细
-      for (const item of state.items) {
-        await pb.collection('quotation_items').create({
-          quotation: id,
-          product: item.productId,
+        // 使用JSONB字段存储产品明细
+        items: state.items.map(item => ({
+          id: item.id,
+          product_id: item.productId,
+          product_code: item.productCode,
+          product_name: item.productName,
+          product_name_cn: item.productNameCn,
+          part_number: item.partNumber,
+          description_en: item.description,
+          description_cn: item.descriptionCn,
+          unit: item.unit,
           quantity: item.quantity,
           cost_price: item.costPrice,
           profit_margin: item.profitMargin,
           unit_price: item.unitPrice,
           amount: item.amount,
-        })
-      }
+        })),
+      })
 
       toast({
         title: t('quotations.updateSuccess'),
@@ -726,6 +757,9 @@ export default function EditQuotationPage({ params }: PageProps) {
           onItemsChange={handleItemsChange}
           costCurrency={state.costCurrency}
           showInternal={true}
+          onSelectFromLibrary={() => setProductDialogOpen(true)}
+          onAddCustomItem={handleAddCustomItem}
+          onNewProduct={handleAddCustomItem}
         />
 
         {/* ========== 4. ActionButtons ========== */}
@@ -753,6 +787,14 @@ export default function EditQuotationPage({ params }: PageProps) {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Product Select Dialog */}
+      <ProductSelectDialog
+        open={productDialogOpen}
+        onOpenChange={setProductDialogOpen}
+        onSelect={handleProductSelect}
+        projectId={state.projectId}
+      />
     </div>
   )
 }

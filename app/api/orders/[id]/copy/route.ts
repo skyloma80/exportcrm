@@ -23,6 +23,18 @@ export async function POST(
 
     // Generate new order code
     const newOrderCode = await generateOrderCode(pb);
+    console.log('[Copy Order] Generated code:', newOrderCode);
+
+    // Verify the code doesn't exist
+    const existing = await pb.collection('so').getList(1, 1, {
+      filter: `code = "${newOrderCode}"`,
+    });
+    if (existing.totalItems > 0) {
+      console.error('[Copy Order] Code already exists:', newOrderCode);
+      // Try to generate another code
+      const retryCode = await generateOrderCode(pb);
+      console.log('[Copy Order] Retry code:', retryCode);
+    }
 
     // Copy items using new JSONB field
     const copiedItems = (order.items || []).map((item: any) => ({
@@ -53,13 +65,15 @@ export async function POST(
       shipping_marks: order.shipping_marks,
       expected_delivery_date: order.expected_delivery_date,
       estimated_shipping_date: order.estimated_shipping_date,
-      remarks: order.remarks ? `[Copied from ${order.code}] ${order.remarks}` : `Copied from ${order.code}`,
+      remarks: order.remarks || '',
       project_id: order.project_id,
       total_amount: totalAmount,
       paid_amount: 0,
       status: 'draft',
       items: copiedItems,
     });
+
+    console.log('[Copy Order] Created new order:', newOrder.code);
 
     return NextResponse.json({
       success: true,

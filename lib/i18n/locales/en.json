@@ -1168,7 +1168,15 @@
       "reason": "Rejection Reason",
       "reasonPlaceholder": "Enter the reason for rejection (optional)"
     },
-    "selectProjectDescription": "Please create quotations from the project detail page so the system can automatically link project and customer information."
+    "selectProjectDescription": "Please create quotations from the project detail page so the system can automatically link project and customer information.",
+    "manualStatusUpdate": "Update Status",
+    "currentStatus": "Current Status",
+    "newStatus": "Select new status",
+    "statusUpdateSuccess": "Status updated successfully",
+    "statusUpdateSuccessDesc": "Quotation status has been updated",
+    "statusUpdateError": "Failed to update status",
+    "convertToOrderSuccess": "Successfully converted to order",
+    "convertToOrderError": "Failed to convert to order"
   },
   "purchaseOrders": {
     "title": "Purchase Orders",
@@ -2711,6 +2719,25 @@
     "calculating": "Calculating...",
     "smartCalculate": "Smart Calculate Optimal Plan",
     "smartCalculateHint": "Auto-select best pallet combination (supports mixed specs)",
+    "customSpec": {
+      "addButton": "Custom",
+      "title": "Add Custom Pallet Specification",
+      "code": "Code",
+      "codePlaceholder": "e.g., CUSTOM1200",
+      "name": "Name (English)",
+      "nameCn": "Name (Chinese)",
+      "length": "Length (mm)",
+      "width": "Width (mm)",
+      "height": "Height (mm)",
+      "maxLoad": "Max Load (kg)",
+      "validationError": "Validation Error",
+      "validationErrorDesc": "Please fill in all required fields",
+      "createSuccess": "Created Successfully",
+      "createSuccessDesc": "Custom pallet specification has been saved",
+      "createError": "Creation Failed",
+      "deleteSuccess": "Deleted Successfully",
+      "deleteError": "Deletion Failed"
+    },
     "viewer": {
       "title": "3D Preview"
     },

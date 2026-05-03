@@ -55,6 +55,8 @@ export interface QuotationItemsTableProps {
   onSelectFromLibrary?: () => void
   /** 添加自定义产品（空行） */
   onAddCustomItem?: () => void
+  /** 新建产品 */
+  onNewProduct?: () => void
 }
 
 export function QuotationItemsTable({
@@ -68,6 +70,7 @@ export function QuotationItemsTable({
   costCurrency = 'CNY',
   showInternal = false,
   onSelectFromLibrary,
+  onAddCustomItem,
   onNewProduct,
 }: QuotationItemsTableProps) {
   const { t, locale } = useI18n()
@@ -169,17 +172,40 @@ export function QuotationItemsTable({
     )
   }
 
-  // 处理包装信息变化
-  const handlePackagingChange = (itemId: string, field: 'pcsPerCarton' | 'cartonDimensions' | 'cartonGrossWeight', value: string) => {
+  // 处理包装信息变化（简化为单个文本字段）
+  const handlePackagingChange = (itemId: string, value: string) => {
+    // 尝试解析文本格式: "50 pcs/ctn" 或 "50 pcs/ctn, 40x30x20 cm" 或 "G.W.: 12 kg"
+    const pcsMatch = value.match(/(\d+)\s*pcs[\/\\-]?ctn?/i)
+    const dimsMatch = value.match(/(\d+)\s*[x×X]\s*(\d+)\s*[x×X]\s*(\d+)\s*(cm|m)?/i)
+    const weightMatch = value.match(/(?:g\.?w\.?|weight)[:\s]*(\d+(?:\.\d+)?)\s*(kg|lbs?)?/i)
+
+    let pcsPerCarton: number | undefined
+    let cartonDimensions: string | undefined
+    let cartonGrossWeight: number | undefined
+
+    if (pcsMatch) {
+      pcsPerCarton = parseInt(pcsMatch[1])
+    }
+    if (dimsMatch) {
+      cartonDimensions = `${dimsMatch[1]}×${dimsMatch[2]}×${dimsMatch[3]}`
+    }
+    if (weightMatch) {
+      cartonGrossWeight = parseFloat(weightMatch[1])
+    }
+
+    // 如果解析失败，直接保存原始文本到 cartonDimensions
+    if (!pcsMatch && !dimsMatch && !weightMatch && value.trim()) {
+      cartonDimensions = value
+    }
+
     onItemsChange(
       items.map(item => {
         if (item.id === itemId) {
-          if (field === 'pcsPerCarton') {
-            return { ...item, pcsPerCarton: value ? parseInt(value) || undefined : undefined }
-          } else if (field === 'cartonDimensions') {
-            return { ...item, cartonDimensions: value || undefined }
-          } else if (field === 'cartonGrossWeight') {
-            return { ...item, cartonGrossWeight: value ? parseFloat(value) || undefined : undefined }
+          return {
+            ...item,
+            pcsPerCarton: pcsPerCarton ?? item.pcsPerCarton,
+            cartonDimensions: cartonDimensions ?? item.cartonDimensions,
+            cartonGrossWeight: cartonGrossWeight ?? item.cartonGrossWeight,
           }
         }
         return item
@@ -303,18 +329,19 @@ export function QuotationItemsTable({
             </CardTitle>
           </div>
           {/* 产品操作按钮 */}
-          {!disabled && (onSelectFromLibrary || onNewProduct) && (
+          {!disabled && (onSelectFromLibrary || onAddCustomItem || onNewProduct) && (
             <div className="flex gap-2">
-              {onNewProduct && (
+              {onAddCustomItem && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={onNewProduct}
+                  onClick={onAddCustomItem}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  {t('products.newProduct') || 'New Product'}
+                  自定义产品
                 </Button>
               )}
+
               {onSelectFromLibrary && (
                 <Button
                   size="sm"
@@ -392,46 +419,24 @@ export function QuotationItemsTable({
                       {disabled ? (
                         <DescriptionCell item={toProductItemBase(item)} locale={locale} />
                       ) : (
-                        <div className="space-y-1">
-                          <Input
-                            value={item.description || ''}
-                            onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
-                            className="h-8 text-sm"
-                            placeholder="Description (EN)"
-                          />
-                          <Input
-                            value={item.descriptionCn || ''}
-                            onChange={(e) => handleDescriptionCnChange(item.id, e.target.value)}
-                            className="h-8 text-sm"
-                            placeholder="描述 (CN)"
-                          />
-                        </div>
+                        <Input
+                          value={item.description || ''}
+                          onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
+                          className="h-9 text-sm"
+                          placeholder="Description"
+                        />
                       )}
                     </TableCell>
                     <TableCell>
                       {disabled ? (
                         <PackagingCell item={toProductItemBase(item)} />
                       ) : (
-                        <div className="space-y-1">
-                          <Input
-                            value={item.pcsPerCarton || ''}
-                            onChange={(e) => handlePackagingChange(item.id, 'pcsPerCarton', e.target.value)}
-                            className="h-8 text-xs"
-                            placeholder="pcs/ctn"
-                          />
-                          <Input
-                            value={item.cartonDimensions || ''}
-                            onChange={(e) => handlePackagingChange(item.id, 'cartonDimensions', e.target.value)}
-                            className="h-8 text-xs"
-                            placeholder="L×W×H cm"
-                          />
-                          <Input
-                            value={item.cartonGrossWeight || ''}
-                            onChange={(e) => handlePackagingChange(item.id, 'cartonGrossWeight', e.target.value)}
-                            className="h-8 text-xs"
-                            placeholder="G.W. kg"
-                          />
-                        </div>
+                        <Input
+                          value={item.cartonDimensions || ''}
+                          onChange={(e) => handlePackagingChange(item.id, e.target.value)}
+                          className="h-9 text-sm"
+                          placeholder="e.g. 50 pcs/ctn"
+                        />
                       )}
                     </TableCell>
                     <TableCell className="text-center">

@@ -106,11 +106,11 @@ function buildFilter(prefix: string, year?: number, month?: number): string {
   if (prefix === 'ORD') {
     const yearSuffix = currentYear.toString().slice(-2);
     const monthStr = currentMonth.toString().padStart(2, '0');
-    return `code >= "A${yearSuffix}${monthStr}000" && code < "A${yearSuffix}${monthStr}999"`;
+    return `code >= "A${yearSuffix}${monthStr}-000" && code < "A${yearSuffix}${monthStr}-999"`;
   } else if (prefix === 'PO') {
     const yearSuffix = currentYear.toString().slice(-2);
     const monthStr = currentMonth.toString().padStart(2, '0');
-    return `code >= "PO-A${yearSuffix}${monthStr}000" && code < "PO-A${yearSuffix}${monthStr}999"`;
+    return `code >= "PO-A${yearSuffix}${monthStr}-000" && code < "PO-A${yearSuffix}${monthStr}-999"`;
   } else {
     // Use range filter instead of regex for better compatibility
     const pattern = config?.pattern || prefix;
@@ -132,12 +132,12 @@ function extractSequence(code: string, prefix: string, year?: number, month?: nu
   if (prefix === 'ORD') {
     const yearSuffix = currentYear.toString().slice(-2);
     const monthStr = currentMonth.toString().padStart(2, '0');
-    const match = code.match(new RegExp(`^A${yearSuffix}${monthStr}(\\d{3})$`));
+    const match = code.match(new RegExp(`^A${yearSuffix}${monthStr}-(\\d{3})$`));
     return match ? parseInt(match[1], 10) : 0;
   } else if (prefix === 'PO') {
     const yearSuffix = currentYear.toString().slice(-2);
     const monthStr = currentMonth.toString().padStart(2, '0');
-    const match = code.match(new RegExp(`^PO-A${yearSuffix}${monthStr}(\\d{3})$`));
+    const match = code.match(new RegExp(`^PO-A${yearSuffix}${monthStr}-(\\d{3})$`));
     return match ? parseInt(match[1], 10) : 0;
   } else {
     const yearStr = currentYear.toString();
@@ -162,22 +162,34 @@ async function generateCodeByPrefix(prefix: string, pbInstance?: PocketBase): Pr
   const currentMonth = new Date().getMonth() + 1;
   const filter = buildFilter(prefix, currentYear, currentMonth);
 
+  console.log(`[CodeGenerator] Generating code for prefix: ${prefix}, collection: ${collectionName}`);
+  console.log(`[CodeGenerator] Filter: ${filter}`);
+
   try {
     const records = await pb.collection(collectionName).getFullList({
       filter,
       sort: '-code',
     });
 
+    console.log(`[CodeGenerator] Found ${records.length} records matching filter`);
+    for (const record of records) {
+      console.log(`[CodeGenerator] Existing code: ${record.code}`);
+    }
+
     let maxSequence = 0;
     for (const record of records) {
       const seq = extractSequence(record.code, prefix, currentYear, currentMonth);
+      console.log(`[CodeGenerator] Code: ${record.code}, extracted sequence: ${seq}`);
       if (seq > maxSequence) {
         maxSequence = seq;
       }
     }
 
     const newSequence = maxSequence + 1;
-    return formatCodeByType(prefix, newSequence, currentYear, currentMonth);
+    console.log(`[CodeGenerator] Max sequence: ${maxSequence}, new sequence: ${newSequence}`);
+    const newCode = formatCodeByType(prefix, newSequence, currentYear, currentMonth);
+    console.log(`[CodeGenerator] Generated code: ${newCode}`);
+    return newCode;
   } catch (error) {
     console.error(`Error generating code for ${prefix}:`, error);
     throw new Error(`Failed to generate code for ${prefix}`);

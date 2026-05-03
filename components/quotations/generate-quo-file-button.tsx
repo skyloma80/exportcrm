@@ -112,19 +112,14 @@ export function GenerateQuoFileButton({
       variant="outline"
       onClick={handleGenerateQuoFile}
       disabled={isGenerating || !hasRequiredData}
-      className="h-auto py-4 flex flex-col items-start gap-2"
+      className="w-full justify-start"
     >
-      <div className="flex items-center gap-2">
-        {isGenerating ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <HardDrive className="h-5 w-5" />
-        )}
-        <span className="font-semibold">生成QUO文件</span>
-      </div>
-      <span className="text-sm text-muted-foreground text-left">
-        基于当前报价单生成PDF并保存到网盘
-      </span>
+      {isGenerating ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <HardDrive className="mr-2 h-4 w-4" />
+      )}
+      生成QUO文件
     </Button>
   );
 }

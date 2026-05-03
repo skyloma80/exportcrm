@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Edit, FileSpreadsheet, Download, Copy, Loader2 } from "lucide-react"
+import { ArrowLeft, Edit, FileSpreadsheet, Copy, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { poService, FlatPO } from "@/lib/pocketbase/services/po"
+import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { format } from "date-fns"
 import {
   Table,
@@ -20,6 +21,7 @@ import {
 export default function PODetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { toast } = useToast()
+  const { setItems: setBreadcrumb } = useBreadcrumb()
   
   const unwrappedParams = use(params)
   const poId = unwrappedParams.id
@@ -27,6 +29,7 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [copying, setCopying] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -35,6 +38,14 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
         const data = await poService.getOne(poId)
         console.log("Loaded PO data:", data)
         setPo(data as FlatPO)
+        
+        // Set breadcrumb with PO code
+        if (data) {
+          setBreadcrumb([
+            { label: '采购订单', href: '/po' },
+            { label: (data as any).code },
+          ])
+        }
       } catch (err: any) {
         console.error("Failed to load PO:", err)
         toast({
@@ -49,7 +60,8 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
     if (poId) {
       loadData()
     }
-  }, [poId, toast])
+    return () => setBreadcrumb([])
+  }, [poId, toast, setBreadcrumb])
 
   const handleExport = async () => {
     setExporting(true)
@@ -111,6 +123,26 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm(`确定要删除采购订单 ${po?.code} 吗？此操作无法撤销。`)) {
+      return
+    }
+    setDeleting(true)
+    try {
+      await poService.delete(poId)
+      toast({ title: "删除成功" })
+      router.push('/po')
+    } catch (error: any) {
+      toast({
+        title: "删除失败",
+        description: String(error),
+        variant: 'destructive',
+      })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (loading) return <div className="p-6 flex justify-center">加载中...</div>
   if (!po) return <div className="p-6 flex justify-center">找不到采购订单</div>
 
@@ -139,6 +171,12 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             {exporting ? '导出中...' : '导出 Excel'}
           </Button>
+          {po.status === 'draft' && (
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              删除
+            </Button>
+          )}
         </div>
       </div>
 

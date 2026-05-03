@@ -180,6 +180,7 @@ export interface OrderItemWithExpand extends OrderItem {
 export interface OrderCreateInput {
   project?: string;
   customer: string;
+  customer_name: string;
   quotation?: string;
   incoterm: string;
   port_of_loading?: string;
@@ -398,9 +399,13 @@ class OrderService extends BaseCollectionService<Order> {
       throw new Error('Only accepted quotations can be converted to orders');
     }
 
+    // Get customer name from expanded customer
+    const customerName = (quotation as any).expand?.customer?.name || (quotation as any).expand?.customer?.name_cn || '';
+
     const order = await this.createOrder({
       project: quotation.project,
       customer: quotation.customer,
+      customer_name: customerName,
       quotation: quotationId,
       incoterm: quotation.incoterm,
       port_of_loading: quotation.port_of_loading,
@@ -640,9 +645,13 @@ class OrderService extends BaseCollectionService<Order> {
     if (!original) throw new Error('Original order not found');
 
     // Create new order
+    // Get customer name from expanded customer
+    const customerName = original.expand?.customer_id?.name || original.expand?.customer_id?.name_cn || original.customer_name || '';
+
     const newOrder = await this.createOrder({
       project: original.project,
       customer: original.customer,
+      customer_name: customerName,
       incoterm: original.incoterm,
       port_of_loading: original.port_of_loading,
       port_of_destination: original.port_of_destination,

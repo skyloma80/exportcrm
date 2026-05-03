@@ -91,7 +91,7 @@ export default function EditPOPage({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      <POForm initialData={po} onSubmit={handleSubmit} isLoading={isSubmitting} />
+      <POForm initialData={po} onSubmit={handleSubmit} isLoading={isSubmitting} isEdit={true} />
     </div>
   )
 }

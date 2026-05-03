@@ -348,7 +348,7 @@ class QuotationService extends BaseCollectionService<Quotation> {
       };
     });
 
-    await this.update(id, { 
+    await this.update(id, {
       global_profit_margin: margin,
       items,
     });
@@ -363,108 +363,7 @@ class QuotationService extends BaseCollectionService<Quotation> {
   }
 }
 
-// ============================================================================
-// Quotation Item Service
-// ============================================================================
 
-class QuotationItemService extends BaseCollectionService<QuotationItem> {
-  constructor() {
-    super('quotation_items', { sort: 'created' });
-  }
-
-  /**
-   * Get items for a quotation
-   */
-  async getByQuotation(quotationId: string): Promise<QuotationItemWithExpand[]> {
-    return this.pb.collection('quotation_items').getFullList<QuotationItemWithExpand>({
-      filter: `quotation = "${quotationId}"`,
-      expand: 'product',
-    });
-  }
-
-  /**
-   * Create quotation item with calculated prices
-   * 创建报价单明细项（需要传入汇率或从报价单获取）
-   * 
-   * @param data - 明细项数据
-   * @param exchangeRate - 汇率（可选，如果不传则从报价单获取）
-   */
-  async createItem(data: QuotationItemCreateInput, exchangeRate?: number): Promise<QuotationItem> {
-    // 如果没有传入汇率，从报价单获取
-    let rate = exchangeRate;
-    if (rate === undefined || rate <= 0) {
-      const quotation = await this.pb.collection('quotations').getOne(data.quotation);
-      rate = quotation.exchange_rate;
-
-      // 如果报价单也没有汇率，尝试获取实时汇率
-      if (!rate || rate <= 0) {
-        if (quotation.currency && quotation.currency !== 'CNY') {
-          rate = await exchangeRateService.getRate('CNY', quotation.currency);
-        } else {
-          rate = 1;
-        }
-      }
-    }
-
-    const unit_price = calculateSellingPrice(data.cost_price, data.profit_margin, rate);
-    const amount = unit_price * data.quantity;
-
-    return this.create({
-      ...data,
-      unit_price,
-      amount,
-    });
-  }
-
-  /**
-   * Update quotation item and recalculate prices
-   * 更新报价单明细项（需要传入汇率或从报价单获取）
-   * 
-   * @param id - 明细项ID
-   * @param data - 更新数据
-   * @param exchangeRate - 汇率（可选，如果不传则从报价单获取）
-   */
-  async updateItem(id: string, data: Partial<QuotationItemCreateInput>, exchangeRate?: number): Promise<QuotationItem> {
-    const existing = await this.getOne(id);
-    if (!existing) throw new Error('Quotation item not found');
-
-    // 如果没有传入汇率，从报价单获取
-    let rate = exchangeRate;
-    if (rate === undefined || rate <= 0) {
-      const quotation = await this.pb.collection('quotations').getOne(existing.quotation);
-      rate = quotation.exchange_rate;
-
-      // 如果报价单也没有汇率，尝试获取实时汇率
-      if (!rate || rate <= 0) {
-        if (quotation.currency && quotation.currency !== 'CNY') {
-          rate = await exchangeRateService.getRate('CNY', quotation.currency);
-        } else {
-          rate = 1;
-        }
-      }
-    }
-
-    const cost_price = data.cost_price ?? existing.cost_price;
-    const profit_margin = data.profit_margin ?? existing.profit_margin;
-    const quantity = data.quantity ?? existing.quantity;
-
-    const unit_price = calculateSellingPrice(cost_price, profit_margin, rate);
-    const amount = unit_price * quantity;
-
-    return this.update(id, {
-      ...data,
-      unit_price,
-      amount,
-    });
-  }
-
-  /**
-   * Bulk create quotation items
-   */
-  async bulkCreate(items: QuotationItemCreateInput[]): Promise<QuotationItem[]> {
-    return Promise.all(items.map(item => this.createItem(item)));
-  }
-}
 
 // ============================================================================
 // Quotation Creation with Items (Transaction-like)
@@ -530,7 +429,7 @@ export async function createQuotationWithItems(
     id: item.id || generateId(),
     product_id: item.product_id || (item as any).product || '',
     product_name: item.product_name || '',
-    part_number: item.part_number || '',
+    part_number: item.part_number || undefined,
     description_en: item.description_en || '',
     description_cn: item.description_cn || '',
     quantity: item.quantity,

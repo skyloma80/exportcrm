@@ -475,7 +475,7 @@ export default function NewQuotationPage() {
           id: item.id || crypto.randomUUID(),
           product_id: item.productId,
           product_name: item.productName || item.productNameCn || '',
-          part_number: item.partNumber || item.productCode || '',
+          part_number: item.partNumber || item.productCode || undefined,
           description_en: item.description || '',
           description_cn: item.descriptionCn || '',
           quantity: item.quantity,
@@ -499,9 +499,11 @@ export default function NewQuotationPage() {
       // Note: quotation detail page enforces `?project=` param
       router.push(`/quotations/${createdQuotation.id}?project=${projectIdFromUrl}`)
     } catch (error: any) {
+      console.error('Create quotation error:', error)
+      const errorMessage = error?.data?.message || error?.message || t('quotations.createError')
       toast({
         title: t('quotations.createError'),
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {
@@ -737,6 +739,7 @@ export default function NewQuotationPage() {
           showInternal={true}
           onSelectFromLibrary={() => setProductDialogOpen(true)}
           onAddCustomItem={handleAddCustomItem}
+          onNewProduct={handleAddCustomItem}
         />
 
         {/* ========== 5. CostBreakdownSection ========== */}

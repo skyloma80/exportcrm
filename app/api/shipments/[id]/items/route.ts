@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 
-interface ShipmentItemWithExpand {
+interface ShipmentItem {
   id: string;
   shipment: string;
   order_item: string;
@@ -21,20 +21,9 @@ interface ShipmentItemWithExpand {
   package_length?: number;
   package_width?: number;
   package_height?: number;
-  expand?: {
-    order_item?: {
-      id: string;
-      product: string;
-      quantity: number;
-      expand?: {
-        product?: {
-          id: string;
-          code: string;
-          name: string;
-        };
-      };
-    };
-  };
+  part_number?: string;
+  product_code?: string;
+  product_name?: string;
 }
 
 export async function GET(
@@ -46,9 +35,8 @@ export async function GET(
     const pb = await createServerPocketBase();
 
     // 获取发货明细
-    const items = await pb.collection('shipment_items').getFullList<ShipmentItemWithExpand>({
+    const items = await pb.collection('shipment_items').getFullList<ShipmentItem>({
       filter: `shipment = "${shipmentId}"`,
-      expand: 'order_item,order_item.product',
     });
 
     // 转换为前端期望的格式
@@ -64,12 +52,9 @@ export async function GET(
       package_length: item.package_length,
       package_width: item.package_width,
       package_height: item.package_height,
-      // 展开的产品信息
-      product: item.expand?.order_item?.expand?.product ? {
-        id: item.expand.order_item.expand.product.id,
-        name: item.expand.order_item.expand.product.name,
-        code: item.expand.order_item.expand.product.code,
-      } : null,
+      part_number: item.part_number,
+      product_code: item.product_code,
+      product_name: item.product_name,
     }));
 
     return NextResponse.json({ items: formattedItems });
@@ -101,7 +86,7 @@ export async function POST(
     const pb = await createServerPocketBase();
 
     // 获取现有的发货明细
-    const existingItems = await pb.collection('shipment_items').getFullList<ShipmentItemWithExpand>({
+    const existingItems = await pb.collection('shipment_items').getFullList<ShipmentItem>({
       filter: `shipment = "${shipmentId}"`,
     });
     const existingMap = new Map(existingItems.map(item => [item.order_item, item]));

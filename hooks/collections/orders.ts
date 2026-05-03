@@ -225,6 +225,7 @@ export function useOrderMutations() {
   const createOrder = useCallback(async (data: {
     project: string;
     customer: string;
+    customer_name: string;
     quotation?: string;
     incoterm: string;
     port_of_loading?: string;

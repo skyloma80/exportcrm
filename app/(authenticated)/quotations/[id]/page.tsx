@@ -16,6 +16,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { useToast } from "@/hooks/use-toast"
 import { formatUnitPrice, formatAmount, formatCostPrice } from '@/lib/utils/currency-formatting';
@@ -34,16 +36,17 @@ import {
   Calendar,
   Plus,
   Trash2,
+  Package,
+  RefreshCw,
 } from "lucide-react"
 import { SendQuotationDialog } from "@/components/quotations/send-quotation-dialog"
 import { QuotationItemDialog } from "@/components/quotations/quotation-item-dialog"
 import { StatusConfirmDialog } from "@/components/quotations/status-confirm-dialog"
 import { GenerateQuoFileButton } from "@/components/quotations/generate-quo-file-button"
-import type {
+import {
   QuotationWithExpand,
   QuotationStatus,
   QuotationItemWithExpand
-
 } from "@/lib/pocketbase/services/quotations"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { useProjectContext } from "@/hooks/use-project-context"
@@ -88,6 +91,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
   const [showAddItemDialog, setShowAddItemDialog] = useState(false)
   const [showStatusDialog, setShowStatusDialog] = useState<'accept' | 'reject' | null>(null)
   const [statusLoading, setStatusLoading] = useState(false)
+  const [convertingToOrder, setConvertingToOrder] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -185,6 +189,18 @@ export default function QuotationDetailPage({ params }: PageProps) {
     }
   }
 
+  // Quotation status options for manual update
+  const statusOptions: { value: QuotationStatus; label: string }[] = [
+    { value: 'draft', label: 'Draft' },
+    { value: 'sent', label: 'Sent' },
+    { value: 'accepted', label: 'Accepted' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'revised', label: 'Revised' },
+    { value: 'expired', label: 'Expired' },
+  ]
+
+  const pb = getPocketBase()
+
   const handleRevise = async () => {
     if (!quotation) return
     try {
@@ -211,31 +227,75 @@ export default function QuotationDetailPage({ params }: PageProps) {
     }
   }
 
-  const handleAddItems = async (newItems: { product: string; quantity: number; cost_price: number; profit_margin: number; unit_price: number; amount: number }[]) => {
+  // 报价转订单
+  const handleConvertToOrder = async () => {
+    if (!quotation) return
+    setConvertingToOrder(true)
+    try {
+      const response = await fetch(`/api/quotations/${quotation.id}/convert-to-order`, {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to convert to order')
+      }
+      const result = await response.json()
+      toast({
+        title: t("quotations.convertToOrderSuccess"),
+      })
+      if (result.order) {
+        router.push(`/orders/${result.order.id}?project=${projectIdFromUrl}`)
+      }
+    } catch (err: any) {
+      console.error("Convert to order error:", err)
+      toast({
+        title: t("quotations.convertToOrderError"),
+        description: err.message,
+        variant: "destructive",
+      })
+    } finally {
+      setConvertingToOrder(false)
+    }
+  }
+
+  const handleAddItems = async (newItems: any[]) => {
     if (!quotation) return
     try {
       const pb = getPocketBase()
-      for (const item of newItems) {
-        await pb.collection("quotation_items").create({
-          quotation: quotation.id,
-          product: item.product,
+      const currentItems = (quotation.items || []) as any[]
+
+      // 计算unit_price和amount
+      const newItemData = newItems.map((item, index) => {
+        const unitPrice = item.unit_price || item.cost_price * (1 + (item.profit_margin || 20) / 100)
+        const amount = item.amount || unitPrice * item.quantity
+        return {
+          id: `item-${Date.now()}-${index}`,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          part_number: undefined,
           quantity: item.quantity,
+          unit: 'PCS',
+          unit_price: unitPrice,
+          amount: amount,
           cost_price: item.cost_price,
           profit_margin: item.profit_margin,
-          unit_price: item.unit_price,
-          amount: item.amount,
-        })
-      }
-      // Recalculate total
-      await updateQuotationTotal()
+        }
+      })
+
+      await pb.collection("quotations").update(quotation.id, {
+        items: [...currentItems, ...newItemData],
+        total_amount: (quotation.total_amount || 0) + newItemData.reduce((sum, i) => sum + (i.amount || 0), 0),
+      })
       toast({
         title: t("quotations.items.addSuccess"),
       })
       loadData()
-    } catch (err) {
+    } catch (err: any) {
       console.error("Add items error:", err)
+      const errorMessage = err?.data?.message || err?.message || t("quotations.items.addError")
       toast({
         title: t("quotations.items.addError"),
+        description: errorMessage,
         variant: "destructive",
       })
     }
@@ -245,8 +305,11 @@ export default function QuotationDetailPage({ params }: PageProps) {
     if (!quotation) return
     try {
       const pb = getPocketBase()
-      await pb.collection("quotation_items").delete(itemId)
-      await updateQuotationTotal()
+      const currentItems = (quotation.items || []) as any[]
+      const updatedItems = currentItems.filter(item => item.id !== itemId)
+      await pb.collection("quotations").update(quotation.id, {
+        items: updatedItems,
+      })
       toast({
         title: t("quotations.items.deleteSuccess"),
       })
@@ -263,20 +326,19 @@ export default function QuotationDetailPage({ params }: PageProps) {
   const updateQuotationTotal = async () => {
     if (!quotation) return
     const pb = getPocketBase()
-    const allItems = await pb.collection("quotation_items").getFullList<{ amount: number }>({
-      filter: `quotation = "${quotation.id}"`,
-    })
+    const currentQuotation = await pb.collection("quotations").getOne(quotation.id)
+    const allItems = (currentQuotation.items || []) as any[]
     const allMolds = await pb.collection("quotation_mold_items").getFullList<{ cost: number; charge_method: string }>({
       filter: `quotation = "${quotation.id}"`,
     })
-    const itemsTotal = allItems.reduce((sum, item) => sum + item.amount, 0)
+    const itemsTotal = allItems.reduce((sum, item) => sum + (item.amount || 0), 0)
     const moldsTotal = allMolds.reduce((sum, mold) => {
       if (mold.charge_method === 'first_order_free') return sum
       return sum + mold.cost
     }, 0)
     // 包含 cost_breakdown
-    const costBreakdownTotal = quotation.cost_breakdown
-      ? Object.values(quotation.cost_breakdown as Record<string, number>).reduce((sum, v) => sum + (v || 0), 0)
+    const costBreakdownTotal = currentQuotation.cost_breakdown
+      ? Object.values(currentQuotation.cost_breakdown as Record<string, number>).reduce((sum, v) => sum + (v || 0), 0)
       : 0
     await pb.collection("quotations").update(quotation.id, {
       total_amount: itemsTotal + moldsTotal + costBreakdownTotal,
@@ -323,302 +385,245 @@ export default function QuotationDetailPage({ params }: PageProps) {
   const calculatedGrandTotal = itemsSubtotal + costBreakdownTotal
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+<div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold">{quotation.code}</h1>
-                <Badge variant={getStatusVariant(quotation.status)}>
-                  {t(`quotations.status.${quotation.status}`)}
-                </Badge>
+              <div className="flex items-center gap-2">
+                  <Badge variant={getStatusVariant(quotation.status)}>
+                    {t(`quotations.status.${quotation.status}`)}
+                  </Badge>
+                  <Select
+                    value={quotation.status}
+                    onValueChange={async (value) => {
+                      const newStatus = value as QuotationStatus
+                      if (newStatus === quotation.status) return
+                      
+                      setStatusLoading(true)
+                      try {
+                        await pb.collection("quotations").update(quotation.id, {
+                          status: newStatus,
+                        })
+                        toast({
+                          title: t("quotations.statusUpdateSuccess"),
+                          description: t("quotations.statusUpdateSuccessDesc"),
+                        })
+                        loadData()
+                      } catch (error: any) {
+                        console.error('Status update error:', error)
+                        toast({
+                          title: t("quotations.statusUpdateError"),
+                          description: error.message,
+                          variant: 'destructive',
+                        })
+                      } finally {
+                        setStatusLoading(false)
+                      }
+                    }}
+                    disabled={statusLoading}
+                  >
+                    <SelectTrigger className="h-8 w-auto border-blue-500 hover:bg-blue-50">
+                      <RefreshCw className={`h-4 w-4 mr-1 ${statusLoading ? 'animate-spin' : ''}`} />
+                      <span className="text-xs">{t('quotations.manualStatusUpdate')}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {t(`quotations.status.${option.value}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <span className="text-muted-foreground">v{quotation.version}</span>
               </div>
-              <p className="text-muted-foreground mt-1">
-                {getDisplayName(quotation.expand?.project)} • {getDisplayName(quotation.expand?.customer)}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {/* 顶部仅保留返回按钮功能，其他功能移至下方 Actions 卡片 */}
+            <p className="text-muted-foreground mt-1">
+              {getDisplayName(quotation.expand?.project)} • {getDisplayName(quotation.expand?.customer)}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('quotations.actionsTitle')}</CardTitle>
-          <CardDescription>{t('quotations.actionsDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {/* 编辑功能 */}
-            {quotation.status === 'draft' && (
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/quotations/${id}/edit?project=${projectIdFromUrl}`)}
-                className="h-auto py-4 flex flex-col items-start gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <Edit className="h-5 w-5" />
-                  <span className="font-semibold">{t("common.edit")}</span>
-                </div>
-                <span className="text-sm text-muted-foreground text-left">修改报价单基本信息和产品明细</span>
-              </Button>
-            )}
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Total Amount</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-600">{formatCurrency(calculatedGrandTotal)}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-emerald-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Items</span>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{items.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Incoterm</span>
+            </div>
+            <p className="text-2xl font-bold text-orange-600">{quotation.incoterm || '-'}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Status</span>
+            </div>
+            <p className="text-2xl font-bold text-purple-600">{t(`quotations.status.${quotation.status}`)}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* 发送/重发邮件 */}
-            {(quotation.status === 'draft' || quotation.status === 'sent') && (
-              <Button
-                variant="outline"
-                onClick={() => setShowSendDialog(true)}
-                className="h-auto py-4 flex flex-col items-start gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <Send className="h-5 w-5" />
-                  <span className="font-semibold">
-                    {quotation.status === 'draft' ? t("quotations.actions.sendEmail") : t("quotations.actions.resend")}
-                  </span>
-                </div>
-                <span className="text-sm text-muted-foreground text-left">通过邮件将 PDF 报价单发送给客户</span>
-              </Button>
-            )}
-
-            {/* 生成 PDF 文件 */}
-            <GenerateQuoFileButton
-              quotation={quotation}
-              customer={quotation.expand?.customer}
-              project={quotation.expand?.project}
-              items={items}
-              router={router}
-            />
-
-            {/* 状态管理 - 拒绝 */}
-            {quotation.status === 'sent' && (
-              <Button
-                variant="outline"
-                onClick={() => setShowStatusDialog('reject')}
-                className="h-auto py-4 flex flex-col items-start gap-2 border-red-200 hover:bg-red-50 hover:text-red-700"
-              >
-                <div className="flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-red-500" />
-                  <span className="font-semibold">{t("quotations.actions.reject")}</span>
-                </div>
-                <span className="text-sm text-muted-foreground text-left">标记客户已拒绝此报价并记录原因</span>
-              </Button>
-            )}
-
-            {/* 订单管理 */}
-            {existingOrder ? (
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/orders/${existingOrder.id}?project=${projectIdFromUrl}`)}
-                className="h-auto py-4 flex flex-col items-start gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  <span className="font-semibold">{t("quotations.actions.viewOrder")}</span>
-                </div>
-                <span className="text-sm text-muted-foreground text-left">此报价单已转为订单：{existingOrder.code}</span>
-              </Button>
-            ) : (
-              (quotation.status === 'accepted' || quotation.status === 'sent') && (
-                <Button
-                  onClick={() => router.push(`/orders/new?project=${projectIdFromUrl}&fromQuotation=${quotation.id}`)}
-                  className="h-auto py-4 flex flex-col items-start gap-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5" />
-                    <span className="font-semibold">{t("quotations.actions.createOrder") || "转订单"}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground text-left">客户确认报价后，将其转为正式销售订单</span>
-                </Button>
-              )
-            )}
-
-            {/* 修订版本 */}
-            <Button
-              variant="outline"
-              onClick={handleRevise}
-              className="h-auto py-4 flex flex-col items-start gap-2"
-            >
-              <div className="flex items-center gap-2">
-                <Copy className="h-5 w-5" />
-                <span className="font-semibold">{t("quotations.actions.revise")}</span>
-              </div>
-              <span className="text-sm text-muted-foreground text-left">基于当前版本创建新的修订版（提升版本号）</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="info">{t("quotations.tabs.info")}</TabsTrigger>
-          <TabsTrigger value="items">{t("quotations.tabs.items")}</TabsTrigger>
-        </TabsList>
-
-        {/* Info Tab */}
-        <TabsContent value="info">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("quotations.info.basic")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <FolderKanban className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t("quotations.columns.project")}:</span>
-                  <span>{getDisplayName(quotation.expand?.project)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t("quotations.columns.customer")}:</span>
-                  <span>{getDisplayName(quotation.expand?.customer)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t("quotations.columns.version")}:</span>
-                  <span>v{quotation.version}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t("common.created")}:</span>
-                  <span>{new Date(quotation.created).toLocaleDateString()}</span>
-                </div>
-                {quotation.sent_at && (
-                  <div className="flex items-center gap-2">
-                    <Send className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{t("quotations.columns.sentAt")}:</span>
-                    <span>{new Date(quotation.sent_at).toLocaleDateString()}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("quotations.info.terms")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <span className="text-muted-foreground">{t("quotations.columns.incoterm")}:</span>
-                  <span className="ml-2 font-mono">{quotation.incoterm}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("quotations.placeholders.portOfLoading")}:</span>
-                  <span className="ml-2">{quotation.port_of_loading || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("quotations.placeholders.portOfDestination")}:</span>
-                  <span className="ml-2">{quotation.port_of_destination || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("quotations.placeholders.paymentTerms")}:</span>
-                  <span className="ml-2">{quotation.payment_terms || "-"}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("quotations.columns.currency")}:</span>
-                  <span className="ml-2 font-mono">{quotation.currency}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t("quotations.columns.validityDays")}:</span>
-                  <span className="ml-2">{quotation.validity_days} {locale === 'zh' ? '天' : 'days'}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Cost Breakdown Card */}
-            {quotation.cost_breakdown && Object.keys(quotation.cost_breakdown).length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("quotations.costBreakdown.title")}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {Object.entries(quotation.cost_breakdown as Record<string, number>).map(([key, value]) => (
-                    <div key={key} className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {t(`quotations.costBreakdown.${key.replace(/_/g, '')}`) || key.replace(/_/g, ' ')}:
-                      </span>
-                      <span>{formatCurrency(value)}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between pt-2 border-t font-medium">
-                    <span>{t("quotations.costBreakdown.total")}:</span>
-                    <span>{formatCurrency(Object.values(quotation.cost_breakdown as Record<string, number>).reduce((sum, v) => sum + v, 0))}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Items Tab */}
-        <TabsContent value="items">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Items Table */}
+        <div className="lg:col-span-2 space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t("quotations.items.title")}</CardTitle>
-                <CardDescription>{t("quotations.items.description")}</CardDescription>
-              </div>
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-500" />
+                {t("quotations.items.title") || "Product Items"}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              {items.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">{t("quotations.items.empty")}</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("quotations.items.product")}</TableHead>
-                      <TableHead className="text-right">{t("quotations.items.quantity")}</TableHead>
-                      <TableHead className="text-right">{t("quotations.items.costPrice")} (CNY)</TableHead>
-                      <TableHead className="text-right">{t("quotations.items.profitMargin")} (%)</TableHead>
-                      <TableHead className="text-right">{t("quotations.items.unitPrice")} ({quotation.currency})</TableHead>
-                      <TableHead className="text-right">{t("quotations.items.amount")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{getDisplayName(item.expand?.product)}</div>
-                            <div className="text-sm text-muted-foreground">{item.expand?.product?.code}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">
-                          {item.cost_price ? formatCostCurrency(item.cost_price) : '-'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {item.profit_margin != null ? `${item.profit_margin.toFixed(1)}%` : '-'}
-                        </TableCell>
-                        <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(item.amount)}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow className="bg-muted/50">
-                      <TableCell colSpan={5} className="text-right font-medium">
-                        {t("quotations.costs.itemsSubtotal")}
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px] pl-6">Part No</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right w-[100px]">Qty</TableHead>
+                    <TableHead className="text-right w-[100px]">Unit</TableHead>
+                    <TableHead className="text-right w-[120px]">Unit Price</TableHead>
+                    <TableHead className="text-right pr-6 w-[120px]">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(items || []).map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="pl-6 font-mono text-xs">{item.part_number || item.product_code || '-'}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{item.product_name || '-'}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-2">{item.description_en || ''}</div>
                       </TableCell>
-                      <TableCell className="text-right font-bold">{formatCurrency(itemsSubtotal)}</TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">{item.unit || 'PCS'}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                      <TableCell className="text-right pr-6 font-bold">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
-                  </TableBody>
-                </Table>
+                  ))}
+                </TableBody>
+              </Table>
+              {items.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  {t("quotations.items.empty") || "No items"}
+                </div>
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Right Column - Actions */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-base">{t('quotations.actionsTitle') || 'Actions'}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-2">
+              {/* 编辑功能 */}
+              {quotation.status === 'draft' && (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/quotations/${id}/edit?project=${projectIdFromUrl}`)}
+                  className="w-full justify-start"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  {t("common.edit")}
+                </Button>
+              )}
+
+              {/* 发送/重发邮件 */}
+              {(quotation.status === 'draft' || quotation.status === 'sent') && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSendDialog(true)}
+                  className="w-full justify-start"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {quotation.status === 'draft' ? t("quotations.actions.sendEmail") : t("quotations.actions.resend")}
+                </Button>
+              )}
+
+              {/* 生成 PDF 文件 */}
+              <GenerateQuoFileButton
+                quotation={quotation}
+                customer={quotation.expand?.customer}
+                project={quotation.expand?.project}
+                items={items}
+                router={router}
+              />
+
+              {/* 状态管理 - 拒绝 */}
+              {quotation.status === 'sent' && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowStatusDialog('reject')}
+                  className="w-full justify-start border-red-200 hover:bg-red-50 hover:text-red-700"
+                >
+                  <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                  {t("quotations.actions.reject")}
+                </Button>
+              )}
+
+              {/* 订单管理 */}
+              {existingOrder ? (
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/orders/${existingOrder.id}?project=${projectIdFromUrl}`)}
+                  className="w-full justify-start"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  {t("quotations.actions.viewOrder")} ({existingOrder.code})
+                </Button>
+              ) : (
+                (quotation.status === 'accepted' || quotation.status === 'sent') && (
+                  <Button
+                    variant="outline"
+                    onClick={handleConvertToOrder}
+                    disabled={convertingToOrder}
+                    className="w-full justify-start"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    {t("quotations.actions.createOrder") || "转订单"}
+                  </Button>
+                )
+              )}
+
+              {/* 修订版本 */}
+              <Button
+                variant="outline"
+                onClick={handleRevise}
+                className="w-full justify-start"
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                {t("quotations.actions.revise")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+
 
       {/* Send Email Dialog */}
       <SendQuotationDialog
@@ -636,7 +641,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
         onOpenChange={setShowAddItemDialog}
         onAdd={handleAddItems}
         projectId={quotation.project}
-        excludeProductIds={items.map(item => item.product)}
+        excludeProductIds={items.map(item => (item as any).product_id || item.product)}
         defaultProfitMargin={quotation.global_profit_margin || 20}
       />
 
@@ -648,6 +653,8 @@ export default function QuotationDetailPage({ params }: PageProps) {
         onConfirm={(reason) => handleStatusChange(showStatusDialog === 'accept' ? 'accepted' : 'rejected', reason)}
         loading={statusLoading}
       />
+
+
     </div>
   )
 }

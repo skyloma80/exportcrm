@@ -37,7 +37,7 @@ export async function POST(
       supplier_name: original.supplier_name,
       currency: original.currency,
       expected_delivery_date: original.expected_delivery_date,
-      remarks: original.remarks ? `[Copied from ${original.code}] ${original.remarks}` : `Copied from ${original.code}`,
+      remarks: original.remarks || '',
       total_amount: original.total_amount || 0.01,
       status: 'draft',
       items: copiedItems,
