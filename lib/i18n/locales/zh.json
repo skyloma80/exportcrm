@@ -17,7 +17,6 @@
     "purchaseOrders": "采购订单",
     "quotations": "报价给客户",
     "orders": "销售订单",
-    "soOrders": "销售订单",
     "invoices": "形式发票",
     "proformaInvoices": "形式发票",
     "shipments": "发货管理",
@@ -2636,6 +2635,13 @@
     "uploadSuccess": "PDF 已保存到网盘",
     "uploadError": "保存失败",
     "folder": "文件夹"
+  },
+  "productSelect": {
+    "title": "产品目录",
+    "description": "浏览并选择要添加到文档的产品",
+    "confirm": "确认选择",
+    "itemsSelected": "项已选择",
+    "selectFromLibrary": "选择产品"
   },
   "validation": {
     "required": "此字段为必填项",

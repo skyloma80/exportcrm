@@ -112,7 +112,12 @@ function buildFilter(prefix: string, year?: number, month?: number): string {
     const monthStr = currentMonth.toString().padStart(2, '0');
     return `code >= "PO-A${yearSuffix}${monthStr}000" && code < "PO-A${yearSuffix}${monthStr}999"`;
   } else {
-    return `code ~ "^${config?.pattern || prefix}${currentYear}"`;
+    // Use range filter instead of regex for better compatibility
+    const pattern = config?.pattern || prefix;
+    const yearStr = currentYear.toString();
+    const startCode = `${pattern}${yearStr}-0000`;
+    const endCode = `${pattern}${yearStr}-9999`;
+    return `code >= "${startCode}" && code <= "${endCode}"`;
   }
 }
 

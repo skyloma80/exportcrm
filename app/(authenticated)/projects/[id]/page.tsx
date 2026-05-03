@@ -483,11 +483,11 @@ export default function ProjectDetailPage() {
                 <FileText className="h-4 w-4" />
                 {t("projects.rfqs.title")}
               </CardDescription>
-              <CardTitle className="text-2xl">{summary.rfqs.total}</CardTitle>
+              <CardTitle className="text-2xl">{summary?.rfqs?.total ?? 0}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                {summary.rfqs.completed} {locale === 'zh' ? '已完成' : 'completed'}
+                {summary?.rfqs?.completed ?? 0} {locale === 'zh' ? '已完成' : 'completed'}
               </p>
             </CardContent>
           </Card>
@@ -497,11 +497,11 @@ export default function ProjectDetailPage() {
                 <DollarSign className="h-4 w-4" />
                 {t("projects.quotations.title")}
               </CardDescription>
-              <CardTitle className="text-2xl">{summary.quotations.total}</CardTitle>
+              <CardTitle className="text-2xl">{summary?.quotations?.total ?? 0}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                {summary.quotations.accepted} {locale === 'zh' ? '已接受' : 'accepted'}
+                {summary?.quotations?.accepted ?? 0} {locale === 'zh' ? '已接受' : 'accepted'}
               </p>
             </CardContent>
           </Card>

@@ -40,12 +40,29 @@ export interface Quotation extends RecordModel {
   exchange_rate?: number;
   total_amount: number;
   sent_at?: string;
-  packaging_details?: string;  // 包装信息 (Requirements: 1.1)
-  delivery_time?: string;      // 交付时间 (Requirements: 1.2)
-  remarks?: string;            // 备注
-  cost_breakdown?: Record<string, number>;  // 费用分解
-  total_weight?: number;       // 总重量 (kg)
-  total_volume?: number;       // 总体积 (m³)
+  packaging_details?: string;
+  delivery_time?: string;
+  remarks?: string;
+  cost_breakdown?: Record<string, number>;
+  total_weight?: number;
+  total_volume?: number;
+  items?: QuotationItemJSON[];
+}
+
+export interface QuotationItemJSON {
+  id: string;
+  product_id: string;
+  product_name: string;
+  part_number: string;
+  description_en?: string;
+  description_cn?: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  amount: number;
+  cost_price: number;
+  profit_margin: number;
+  remarks?: string;
 }
 
 export interface QuotationItem extends RecordModel {
@@ -75,7 +92,6 @@ export interface QuotationWithExpand extends Quotation {
       name_cn?: string;
       preferred_currency?: string;
     };
-    quotation_items_via_quotation?: QuotationItemWithExpand[];
   };
 }
 
@@ -158,7 +174,7 @@ class QuotationService extends BaseCollectionService<Quotation> {
   async getWithDetails(id: string): Promise<QuotationWithExpand | null> {
     try {
       const quotation = await this.pb.collection('quotations').getOne<QuotationWithExpand>(id, {
-        expand: 'project,customer,quotation_items_via_quotation,quotation_items_via_quotation.product',
+        expand: 'project,customer',
       });
       return quotation;
     } catch (e: any) {
@@ -270,32 +286,27 @@ class QuotationService extends BaseCollectionService<Quotation> {
     // Mark original as revised
     await this.updateStatus(originalId, 'revised');
 
+    // Copy items from original
+    const items = original.items || [];
+
     // Create new quotation
-    const newQuotation = await this.createQuotation({
+    const newQuotation = await this.create({
+      code: await this.generateCode(),
+      version: original.version + 1,
       project: original.project,
       customer: original.customer,
       incoterm: original.incoterm,
       port_of_loading: original.port_of_loading,
       port_of_destination: original.port_of_destination,
       payment_terms: original.payment_terms,
-      validity_days: original.validity_days,
+      validity_days: original.validity_days || 30,
       global_profit_margin: original.global_profit_margin,
       currency: original.currency,
       exchange_rate: original.exchange_rate,
+      status: 'draft',
+      total_amount: 0.01,
+      items: items,
     });
-
-    // Copy items
-    const items = original.expand?.quotation_items_via_quotation || [];
-    for (const item of items) {
-      await quotationItemService.createItem({
-        quotation: newQuotation.id,
-        product: item.product,
-        quantity: item.quantity,
-        cost_price: item.cost_price,
-        profit_margin: item.profit_margin,
-        remarks: item.remarks,
-      });
-    }
 
     // Recalculate total
     await this.recalculateTotal(newQuotation.id);
@@ -304,59 +315,43 @@ class QuotationService extends BaseCollectionService<Quotation> {
   }
 
   /**
-   * Recalculate quotation total
+   * Recalculate quotation total from JSONB items
    */
   async recalculateTotal(id: string): Promise<Quotation> {
-    // 获取报价单以获取 cost_breakdown
     const quotation = await this.getOne(id);
     if (!quotation) throw new Error('Quotation not found');
 
-    const items = await quotationItemService.getByQuotation(id);
-
-    const itemInputs: QuotationItemInput[] = items.map(item => ({
-      product_id: item.product,
-      product_name: '',
-      quantity: item.quantity,
-      cost_price: item.cost_price,
-      profit_margin: item.profit_margin,
-    }));
-
-    const result = calculateQuotationTotal(
-      itemInputs,
-
-
-    );
+    const items = quotation.items || [];
+    const itemsSubtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
 
     return this.update(id, {
-      subtotal: result.items_subtotal || 0,
-      total_amount: Math.max(result.items_subtotal || 0, 0.01),
+      total_amount: Math.max(itemsSubtotal, 0.01),
     });
   }
 
   /**
    * Apply global profit margin to all items
-   * 应用全局利润率到所有明细项（使用报价单的汇率）
    */
   async applyGlobalMargin(id: string, margin: number): Promise<Quotation> {
-    // 获取报价单以获取汇率
     const quotation = await this.getOne(id);
     if (!quotation) throw new Error('Quotation not found');
 
     const exchangeRate = quotation.exchange_rate || 1;
-    const items = await quotationItemService.getByQuotation(id);
-
-    for (const item of items) {
+    const items = (quotation.items || []).map(item => {
       const unit_price = calculateSellingPrice(item.cost_price, margin, exchangeRate);
       const amount = unit_price * item.quantity;
-
-      await quotationItemService.update(item.id, {
+      return {
+        ...item,
         profit_margin: margin,
         unit_price,
         amount,
-      });
-    }
+      };
+    });
 
-    await this.update(id, { global_profit_margin: margin });
+    await this.update(id, { 
+      global_profit_margin: margin,
+      items,
+    });
     return this.recalculateTotal(id);
   }
 
@@ -494,79 +489,92 @@ export interface QuotationWithItemsInput {
   delivery_time?: string;
   remarks?: string;
 
-  // 产品明细
+  // 产品明细 (JSONB format)
   items: Array<{
-    product: string;
+    id?: string;
+    product_id?: string;
+    product?: string; // compatibility alias
+    product_name?: string;
+    part_number?: string;
+    description_en?: string;
+    description_cn?: string;
     quantity: number;
-    cost_price: number;
-    profit_margin: number;
+    unit?: string;
     unit_price: number;
     amount: number;
+    cost_price?: number;
+    profit_margin: number;
     remarks?: string;
   }>;
 }
 
+const generateId = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 /**
- * Create quotation with items in a transaction-like manner
- * 以事务方式创建报价单、明细和模具费用
- * **Validates: Requirements 5.1, 5.2**
+ * Create quotation with items stored in JSONB
  */
 export async function createQuotationWithItems(
   input: QuotationWithItemsInput
 ): Promise<QuotationWithExpand> {
-  // 1. 创建报价单
-  const quotation = await quotationService.createQuotation({
+  // Generate IDs and format items
+  const items: QuotationItemJSON[] = input.items.map(item => ({
+    id: item.id || generateId(),
+    product_id: item.product_id || (item as any).product || '',
+    product_name: item.product_name || '',
+    part_number: item.part_number || '',
+    description_en: item.description_en || '',
+    description_cn: item.description_cn || '',
+    quantity: item.quantity,
+    unit: item.unit || 'PCS',
+    unit_price: item.unit_price,
+    amount: item.amount,
+    cost_price: item.cost_price || 0,
+    profit_margin: item.profit_margin,
+    remarks: item.remarks,
+  }));
+
+  // Calculate total
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+
+  // 1. Create quotation with items in JSONB
+  const quotation = await quotationService.create({
+    code: await quotationService.generateCode(),
+    version: await quotationService.getLatestVersion(input.project) + 1,
     project: input.project,
     customer: input.customer,
     incoterm: input.incoterm,
     port_of_loading: input.port_of_loading,
     port_of_destination: input.port_of_destination,
     payment_terms: input.payment_terms,
-    validity_days: input.validity_days,
+    validity_days: input.validity_days || 30,
     global_profit_margin: input.global_profit_margin,
     currency: input.currency,
     exchange_rate: input.exchange_rate,
     delivery_time: input.delivery_time,
     remarks: input.remarks,
-    // 添加缺失的字段
     total_weight: input.total_weight,
     total_volume: input.total_volume,
     cost_breakdown: input.cost_breakdown,
+    status: 'draft',
+    total_amount: Math.max(totalAmount, 0.01),
+    items: items,
   });
 
-  try {
-    // 2. 创建产品明细
-    for (const item of input.items) {
-      await quotationItemService.create({
-        quotation: quotation.id,
-        product: item.product,
-        quantity: item.quantity,
-        cost_price: item.cost_price,
-        profit_margin: item.profit_margin,
-        unit_price: item.unit_price,
-        amount: item.amount,
-        remarks: item.remarks,
-      });
-    }
-
-    // 3. 重新计算总计
-    await quotationService.recalculateTotal(quotation.id);
-
-    // 4. 返回完整的报价单数据
-    const result = await quotationService.getWithDetails(quotation.id);
-    if (!result) {
-      throw new Error('Failed to retrieve created quotation');
-    }
-    return result;
-  } catch (error) {
-    // 如果创建明细失败，尝试删除已创建的报价单
-    try {
-      await quotationService.delete(quotation.id);
-    } catch (deleteError) {
-      console.error('Failed to rollback quotation:', deleteError);
-    }
-    throw error;
+  // 2. Return the created quotation
+  const result = await quotationService.getWithDetails(quotation.id);
+  if (!result) {
+    throw new Error('Failed to retrieve created quotation');
   }
+  return result;
 }
 
 // ============================================================================
@@ -574,6 +582,4 @@ export async function createQuotationWithItems(
 // ============================================================================
 
 export const quotationService = new QuotationService();
-export const quotationItemService = new QuotationItemService();
-
 export default quotationService;

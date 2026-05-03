@@ -131,13 +131,14 @@ export function useQuotation(id: string | null): UseQuotationResult {
     try {
       const pb = getPocketBase();
       
-      // Fetch quotation with expand
+      // Fetch quotation with expand (items now in JSONB)
       const result = await pb.collection('quotations').getOne<QuotationWithExpand>(id, {
-        expand: 'project,customer,quotation_items_via_quotation,quotation_items_via_quotation.product',
+        expand: 'project,customer',
       });
 
       setQuotation(result);
-      setItems(result.expand?.quotation_items_via_quotation || []);
+      // Get items from JSONB field
+      setItems((result.items || []) as any);
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to fetch quotation'));
       setQuotation(null);
@@ -346,7 +347,7 @@ export function useQuotationMutations() {
 }
 
 /**
- * Hook for quotation item mutations
+ * Hook for quotation item mutations (JSONB version)
  */
 export function useQuotationItemMutations() {
   const [isLoading, setIsLoading] = useState(false);
@@ -364,11 +365,25 @@ export function useQuotationItemMutations() {
     setError(null);
 
     try {
-      const { quotationItemService, quotationService } = await import('@/lib/pocketbase/services/quotations');
-      const result = await quotationItemService.createItem(data);
-      // Recalculate quotation total
-      await quotationService.recalculateTotal(data.quotation);
-      return result;
+      const pb = getPocketBase();
+      const quotation = await pb.collection('quotations').getOne(data.quotation);
+      const items = quotation.items || [];
+      
+      // Add new item to JSONB array
+      const newItem = {
+        id: crypto.randomUUID(),
+        product_id: data.product,
+        quantity: data.quantity,
+        cost_price: data.cost_price,
+        profit_margin: data.profit_margin,
+        unit_price: 0,
+        amount: 0,
+        remarks: data.remarks,
+      };
+      
+      items.push(newItem);
+      await pb.collection('quotations').update(data.quotation, { items });
+      return newItem as any;
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to create item'));
       return null;
@@ -391,11 +406,21 @@ export function useQuotationItemMutations() {
     setError(null);
 
     try {
-      const { quotationItemService, quotationService } = await import('@/lib/pocketbase/services/quotations');
-      const result = await quotationItemService.updateItem(id, data);
-      // Recalculate quotation total
-      await quotationService.recalculateTotal(quotationId);
-      return result;
+      const pb = getPocketBase();
+      const quotation = await pb.collection('quotations').getOne(quotationId);
+      const items = (quotation.items || []).map((item: any) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            ...data,
+            amount: (data.quantity ?? item.quantity) * (data.cost_price ?? item.cost_price),
+          };
+        }
+        return item;
+      });
+      
+      await pb.collection('quotations').update(quotationId, { items });
+      return items.find((i: any) => i.id === id) as any;
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to update item'));
       return null;
@@ -409,10 +434,11 @@ export function useQuotationItemMutations() {
     setError(null);
 
     try {
-      const { quotationItemService, quotationService } = await import('@/lib/pocketbase/services/quotations');
-      await quotationItemService.delete(id);
-      // Recalculate quotation total
-      await quotationService.recalculateTotal(quotationId);
+      const pb = getPocketBase();
+      const quotation = await pb.collection('quotations').getOne(quotationId);
+      const items = (quotation.items || []).filter((item: any) => item.id !== id);
+      
+      await pb.collection('quotations').update(quotationId, { items });
       return true;
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to delete item'));

@@ -22,6 +22,7 @@ export interface QuotationItemData {
   pcsPerCarton?: number
   cartonDimensions?: string // 格式: "LxWxH cm"
   cartonGrossWeight?: number // kg
+  remarks?: string
 }
 
 export interface MoldItemData {

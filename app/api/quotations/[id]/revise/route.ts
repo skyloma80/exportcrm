@@ -3,7 +3,7 @@
  * 报价单修订 API
  * 
  * POST /api/quotations/[id]/revise
- * Create a new revision of the quotation, copying all items and mold items.
+ * Create a new revision of the quotation, copying all items from JSONB field.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,10 +23,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get original quotation with items
-    const original = await pb.collection('quotations').getOne(id, {
-      expand: 'quotation_items_via_quotation,quotation_mold_items_via_quotation',
-    });
+    // Get original quotation with items (JSONB)
+    const original = await pb.collection('quotations').getOne(id);
 
     if (!original) {
       return NextResponse.json({ error: 'Quotation not found' }, { status: 404 });
@@ -37,6 +35,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Generate new code for the revision
     const newCode = await codeGenerator.generate(CODE_PREFIXES.QUOTATION, pb);
+
+    // Copy items from JSONB field
+    const originalItems = original.items || [];
 
     // Create new quotation with incremented version
     const newQuotation = await pb.collection('quotations').create({
@@ -54,24 +55,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       currency: original.currency,
       exchange_rate: original.exchange_rate,
       total_amount: original.total_amount,
+      items: originalItems,
     });
 
-    // Copy quotation items
-    const originalItems = original.expand?.quotation_items_via_quotation || [];
-    for (const item of originalItems) {
-      await pb.collection('quotation_items').create({
-        quotation: newQuotation.id,
-        product: item.product,
-        quantity: item.quantity,
-        cost_price: item.cost_price,
-        profit_margin: item.profit_margin,
-        unit_price: item.unit_price,
-        amount: item.amount,
-        remarks: item.remarks,
-      });
-    }
-
-   
     return NextResponse.json({
       success: true,
       quotationId: newQuotation.id,

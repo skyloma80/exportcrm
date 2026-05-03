@@ -207,26 +207,21 @@ export function ProductSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0 overflow-hidden border-none shadow-3xl bg-white gap-0">
         {/* Header Section */}
-        <div className="px-8 pt-8 pb-6 flex-shrink-0 flex items-start justify-between border-b border-slate-100">
-          <div className="flex gap-4">
-            <div className="bg-blue-600 p-3 rounded-2xl shadow-blue-200 shadow-xl">
-              <Package className="h-6 w-6 text-white" />
+        <div className="px-6 py-4 flex-shrink-0 flex items-start justify-between border-b">
+          <div className="flex gap-3 items-center">
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <Package className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">
-                Product Catalog
+              <DialogTitle className="text-xl font-semibold">
+                {t('productSelect.title') || 'Product Catalog'}
               </DialogTitle>
-              <DialogDescription className="text-slate-500 text-sm font-medium">
-                Browse and select products to add to your order document.
+              <DialogDescription className="text-sm text-muted-foreground">
+                {t('productSelect.description') || 'Browse and select products to add to your document'}
               </DialogDescription>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full border border-green-100">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span className="text-[11px] font-bold uppercase tracking-wider">{selectedIds.size} Items Selected</span>
-            </div>
-          </div>
+
         </div>
 
         {/* Content Area */}
@@ -240,7 +235,7 @@ export function ProductSelectDialog({
                     <Package className="h-5 w-5 text-blue-200" />
                   </div>
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] animate-pulse">Synchronizing Library...</span>
+                <span className="text-sm text-muted-foreground animate-pulse">{t('common.loading') || 'Loading...'} {t('productSelect.syncing') || ''}</span>
               </div>
             ) : (
               <div className="h-full flex flex-col">
@@ -258,32 +253,23 @@ export function ProductSelectDialog({
         {/* Footer Section - Fixed at bottom */}
         <div className="px-8 py-6 border-t border-slate-100 bg-white flex items-center justify-between flex-shrink-0 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</span>
-            <span className="text-sm font-bold text-slate-600">
-              {selectedIds.size > 0
-                ? `Ready to add ${selectedIds.size} products`
-                : "No products selected"}
-            </span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-md border">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">{selectedIds.size} {t('productSelect.itemsSelected') || 'items selected'}</span>
+            </div>
           </div>
           <div className="flex gap-4">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="h-12 px-6 rounded-xl border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
             >
-              Cancel
+              {t('common.cancel') || 'Cancel'}
             </Button>
             <Button
               onClick={handleConfirm}
               disabled={selectedIds.size === 0}
-              className={cn(
-                "h-12 px-10 rounded-xl font-black text-xs uppercase tracking-[0.15em] transition-all shadow-xl",
-                selectedIds.size > 0
-                  ? "bg-slate-900 hover:bg-black text-white shadow-slate-200"
-                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
-              )}
             >
-              Confirm Selection
+              {t('productSelect.confirm') || 'Confirm Selection'}
             </Button>
           </div>
         </div>

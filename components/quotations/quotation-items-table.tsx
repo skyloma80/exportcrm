@@ -51,6 +51,10 @@ export interface QuotationItemsTableProps {
   disabled?: boolean
   costCurrency?: string
   showInternal?: boolean
+  /** 从产品库选择产品 */
+  onSelectFromLibrary?: () => void
+  /** 添加自定义产品（空行） */
+  onAddCustomItem?: () => void
 }
 
 export function QuotationItemsTable({
@@ -63,6 +67,8 @@ export function QuotationItemsTable({
   disabled = false,
   costCurrency = 'CNY',
   showInternal = false,
+  onSelectFromLibrary,
+  onNewProduct,
 }: QuotationItemsTableProps) {
   const { t, locale } = useI18n()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -242,17 +248,30 @@ export function QuotationItemsTable({
               {t('quotations.items.title') || 'Products'}
             </CardTitle>
           </div>
-          {/* 隐藏添加项目按钮，因为产品库中的产品没有成本价，无法计算利润 */}
-          {/* {!disabled && projectId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDialogOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t('quotations.items.add') || 'Import from Cost Table'}
-            </Button>
-          )} */}
+          {/* 产品操作按钮 */}
+          {!disabled && (onSelectFromLibrary || onNewProduct) && (
+            <div className="flex gap-2">
+              {onNewProduct && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onNewProduct}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('products.newProduct') || 'New Product'}
+                </Button>
+              )}
+              {onSelectFromLibrary && (
+                <Button
+                  size="sm"
+                  onClick={onSelectFromLibrary}
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  {t('productSelect.selectFromLibrary') || 'Select Product'}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>

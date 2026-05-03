@@ -110,13 +110,14 @@ export default function QuotationDetailPage({ params }: PageProps) {
     try {
       const pb = getPocketBase()
       const result = await pb.collection("quotations").getOne<QuotationWithExpand>(id, {
-        expand: "project,customer,quotation_items_via_quotation,quotation_items_via_quotation.product,quotation_mold_items_via_quotation",
+        expand: "project,customer",
       })
       setQuotation(result)
-      setItems(result.expand?.quotation_items_via_quotation || [])
+      // Get items from JSONB field
+      setItems((result.items || []) as any)
 
       // Check if quotation has already been converted to an order
-      const orders = await pb.collection("orders").getList<{ id: string; code: string }>(1, 1, {
+      const orders = await pb.collection("so").getList<{ id: string; code: string }>(1, 1, {
         filter: `quotation = "${id}"`,
         fields: "id,code",
       })

@@ -390,7 +390,7 @@ class OrderService extends BaseCollectionService<Order> {
    */
   async createFromQuotation(quotationId: string): Promise<Order> {
     // Import quotation service dynamically to avoid circular dependency
-    const { quotationService, quotationItemService } = await import('./quotations');
+    const { quotationService } = await import('./quotations');
 
     const quotation = await quotationService.getWithDetails(quotationId);
     if (!quotation) throw new Error('Quotation not found');
@@ -409,26 +409,30 @@ class OrderService extends BaseCollectionService<Order> {
       currency: quotation.currency,
       exchange_rate: quotation.exchange_rate,
       // Copy country fields from quotation if available (for PI generation)
-      country_of_origin: quotation.country_of_origin || 'CN',  // Default to China
-      country_of_destination: quotation.country_of_destination || '',
+      country_of_origin: 'CN',
+      country_of_destination: '',
       // Set default values for shipment and delivery (for PI generation)
       mode_of_shipment: (quotation.port_of_loading && quotation.port_of_destination) ? 'Sea' : undefined,
       estimated_shipping_date: quotation.delivery_time || undefined,
-
     });
 
-    // Copy items
-    const items = quotation.expand?.quotation_items_via_quotation || [];
-    for (const item of items) {
-      await orderItemService.createItem({
-        order: order.id,
-        product: item.product,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-      });
-    }
+    // Copy items from quotation JSONB
+    const quotationItems = quotation.items || [];
+    const orderItems = quotationItems.map(item => ({
+      id: item.id || crypto.randomUUID(),
+      part_number: item.part_number || '',
+      product_name: item.product_name || '',
+      description_en: item.description_en || '',
+      description_cn: item.description_cn || '',
+      quantity: item.quantity,
+      unit: item.unit || 'PCS',
+      unit_price: item.unit_price,
+      amount: item.amount,
+      cost_price: item.cost_price || 0,
+    }));
 
-    // Recalculate total
+    // Update order with items
+    await this.update(order.id, { items: orderItems });
     await this.recalculateTotal(order.id);
 
     return this.getOne(order.id) as Promise<Order>;

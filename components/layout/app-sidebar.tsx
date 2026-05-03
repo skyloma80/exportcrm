@@ -38,7 +38,7 @@ const baseNavGroups: NavGroup[] = [
     items: [
       { titleKey: "nav.dashboard", url: "/dashboard", icon: LayoutDashboard },
       { titleKey: "nav.projects", url: "/projects", icon: FolderKanban },
-      { titleKey: "nav.soOrders", url: "/orders", icon: ShoppingCart },
+      { titleKey: "nav.orders", url: "/orders", icon: ShoppingCart },
     ],
   },
   {
@@ -69,32 +69,32 @@ const baseNavGroups: NavGroup[] = [
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { t } = useI18n()
   const { user } = useAuth()
-  
+
   const isAdmin = user?.role === "admin"
-  
+
   // Build nav groups based on user role
   const navGroups = React.useMemo(() => {
     const groups = [...baseNavGroups]
-    
+
     // Add system menu group based on role
     const systemItems = []
-    
+
     if (isAdmin) {
       // Admin sees settings
       systemItems.push({ titleKey: "nav.systemSettings", url: "/settings", icon: Settings })
     }
-    
+
     // All users can view feedbacks (用户反馈)
     systemItems.push({ titleKey: "nav.feedback", url: "/feedbacks", icon: MessageSquarePlus })
-    
+
     groups.push({
       labelKey: "",
       items: systemItems,
     })
-    
+
     return groups
   }, [isAdmin])
-  
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

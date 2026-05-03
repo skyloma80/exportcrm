@@ -56,7 +56,7 @@ export async function POST(
     const { id } = await params;
     const pb = await createServerPocketBase();
 
-    // Get quotation with items
+    // Get quotation with items (JSONB format)
     const quotation = await pb.collection('quotations').getOne(id, {
       expand: 'project,customer',
     });
@@ -91,10 +91,8 @@ export async function POST(
       });
     }
 
-    // Get quotation items
-    const quotationItems = await pb.collection('quotation_items').getFullList({
-      filter: `quotation = "${id}"`,
-    });
+    // Get quotation items from JSONB field
+    const quotationItems = quotation.items || [];
 
     // Generate order code in compact format: A{YY}{XXXX}
     const year = new Date().getFullYear();
@@ -148,18 +146,24 @@ export async function POST(
       remarks: quotation.remarks,
     }, undefined, quotation.total_amount);
 
-    // Create order items from quotation items
-    for (const item of quotationItems) {
-      // Ensure item amount is rounded to 2 decimal places to match quotation system behavior
-      const amount = Math.round(item.quantity * item.unit_price * 100) / 100;
-      await pb.collection('order_items').create({
-        order: order.id,
-        product: item.product,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        amount: amount,
-      });
-    }
+    // Transform quotation items to order items JSONB format
+    const orderItems = quotationItems.map((item: any) => ({
+      id: item.id || crypto.randomUUID(),
+      part_number: item.part_number || '',
+      product_name: item.product_name || '',
+      description_en: item.description_en || '',
+      description_cn: item.description_cn || '',
+      quantity: item.quantity,
+      unit: item.unit || 'PCS',
+      unit_price: item.unit_price,
+      amount: Math.round(item.quantity * item.unit_price * 100) / 100,
+      cost_price: item.cost_price || 0,
+    }));
+
+    // Update order with items in JSONB format
+    await pb.collection('so').update(order.id, {
+      items: orderItems,
+    });
 
     // Update quotation status to accepted if not already
     if (quotation.status !== 'accepted') {

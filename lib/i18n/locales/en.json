@@ -2655,6 +2655,13 @@
     "uploadError": "Save Failed",
     "folder": "Folder"
   },
+  "productSelect": {
+    "title": "Product Catalog",
+    "description": "Browse and select products to add to your document",
+    "confirm": "Confirm Selection",
+    "itemsSelected": "items selected",
+    "selectFromLibrary": "Select Product"
+  },
   "validation": {
     "required": "This field is required",
     "invalidEmail": "Please enter a valid email address"

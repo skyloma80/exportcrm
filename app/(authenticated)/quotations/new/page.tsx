@@ -32,14 +32,15 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Save, Ship, ClipboardList, Coins, AlertCircle, Table } from 'lucide-react'
+import { ArrowLeft, Save, Ship, ClipboardList, Coins, AlertCircle, Table, Package, Plus } from 'lucide-react'
 
 // 组件导入
 import { PortSelect } from '@/components/ui/port-select'
 import { PaymentTermsSelect } from '@/components/ui/payment-terms-select'
 import { QuotationItemsTable } from '@/components/quotations/quotation-items-table'
 import { CostBreakdownSection } from '@/components/quotations/cost-breakdown-section'
-import { ImportFromCostTableDialog, ImportedCostItem } from '@/components/quotations/import-from-cost-table-dialog'
+import { ProductSelectDialog } from '@/components/orders/product-select-dialog'
+import { Product } from '@/lib/pocketbase/services/products'
 
 // 工具函数导入
 import {
@@ -114,7 +115,6 @@ interface QuotationNewPageState {
   // UI 状态
   loading: boolean
   errors: Record<string, string>
-  costCurrency: string
 }
 
 export default function NewQuotationPage() {
@@ -141,8 +141,7 @@ export default function NewQuotationPage() {
 
   // 数据加载状态
   const [rateLoading, setRateLoading] = useState(false)
-  const [importDialogOpen, setImportDialogOpen] = useState(false)
-  const [hasCostTable, setHasCostTable] = useState(false)
+  const [productDialogOpen, setProductDialogOpen] = useState(false)
 
   // 页面状态 (参考 design.md > QuotationNewPageState)
   const [state, setState] = useState<QuotationNewPageState>({
@@ -167,7 +166,6 @@ export default function NewQuotationPage() {
     remarks: '',
     loading: false,
     errors: {},
-    costCurrency: 'CNY',
   })
 
   // 设置面包屑 (Requirements: 2.1)
@@ -202,9 +200,6 @@ export default function NewQuotationPage() {
               customerName: customer ? (locale === 'zh' && customer.name_cn ? customer.name_cn : customer.name) : '',
               currency: customer?.preferred_currency || prev.currency,
             }))
-
-            // Check if project has cost table
-            checkCostTable(project.id)
 
             // If coming from RFQ, show a hint to import from sourcing plan
             if (fromRfqId) {
@@ -255,50 +250,24 @@ export default function NewQuotationPage() {
     loadExchangeRate()
   }, [state.currency, toast])
 
-  const checkCostTable = async (projectId: string) => {
-    try {
-      const pb = getPocketBase()
-      const costTables = await pb.collection('project_cost_tables').getFullList({
-        filter: `project = "${projectId}"`,
-      })
-      const hasTable = costTables.length > 0
-      setHasCostTable(hasTable)
-      if (hasTable) {
-        setState(prev => ({ ...prev, costCurrency: costTables[0].currency || 'CNY' }))
-      }
-    } catch (err) {
-      console.error('Error checking cost table:', err)
-      setHasCostTable(false)
-    }
-  }
-
-  // Handle import from cost table
-  const handleImportFromCostTable = (importedItems: ImportedCostItem[]) => {
-    const newItems: QuotationItemData[] = importedItems.map((item, index) => {
-      // Calculate unit price from cost price and profit margin
-      const unitPrice = calculateUnitPriceFromMargin(item.costPrice, state.globalProfitMargin, state.exchangeRate)
-
+  // Handle product selection from product library
+  const handleProductSelect = (products: Product[]) => {
+    const newItems: QuotationItemData[] = products.map((product, index) => {
       return {
-        id: `imported-${Date.now()}-${index}`,
-        productId: item.productId,
-        productCode: item.productCode,
-        productName: item.productName,
-        productNameCn: item.productNameCn,
-        description: item.description,
-        descriptionCn: item.descriptionCn,
-        partNumber: item.partNumber,
-        unit: item.unit || '',
-        quantity: item.quantity,
-        costPrice: item.costPrice,
+        id: `product-${Date.now()}-${index}`,
+        productId: product.id,
+        productCode: product.code || product.part_number || '',
+        productName: locale === 'zh' && product.name_cn ? product.name_cn : product.name,
+        productNameCn: product.name_cn || product.name,
+        description: product.description_en || product.description || '',
+        descriptionCn: product.description_cn || '',
+        partNumber: product.part_number || '',
+        unit: product.unit || 'PCS',
+        quantity: 1,
+        costPrice: 0,
         profitMargin: state.globalProfitMargin,
-        unitPrice: unitPrice,
-        amount: item.quantity * unitPrice,
-        // Packaging info
-        pcsPerCarton: item.pcsPerCarton,
-        cartonDimensions: item.cartonDimensions
-          ? `${item.cartonDimensions.length || 0}x${item.cartonDimensions.width || 0}x${item.cartonDimensions.height || 0}`
-          : undefined,
-        cartonGrossWeight: item.cartonGrossWeight,
+        unitPrice: 0,
+        amount: 0,
       }
     })
 
@@ -307,11 +276,12 @@ export default function NewQuotationPage() {
     const itemsToAdd = newItems.filter(item => !existingProductIds.has(item.productId))
     const allItems = [...state.items, ...itemsToAdd]
 
-    // 不自动计算重量和体积，用户需要手动点击"重算"按钮
     setState(prev => ({
       ...prev,
       items: allItems,
     }))
+
+    setProductDialogOpen(false)
 
     toast({
       title: t('quotations.import.success'),
@@ -435,16 +405,6 @@ export default function NewQuotationPage() {
 
   // 保存报价单
   const handleSave = async (status: 'draft' | 'pending' = 'draft') => {
-    // 检查是否有成本表
-    if (!hasCostTable) {
-      toast({
-        title: '缺少成本表',
-        description: '创建报价单前必须先录入供应商报价并生成成本表',
-        variant: 'destructive',
-      })
-      return
-    }
-
     // 验证表单
     const validationResult = validateQuotationForm({
       projectId: state.projectId,
@@ -488,12 +448,19 @@ export default function NewQuotationPage() {
         delivery_time: state.deliveryTime || undefined,
         remarks: state.remarks || undefined,
         items: state.items.map((item) => ({
-          product: item.productId,
+          id: item.id || crypto.randomUUID(),
+          product_id: item.productId,
+          product_name: item.productName || item.productNameCn || '',
+          part_number: item.partNumber || item.productCode || '',
+          description_en: item.description || '',
+          description_cn: item.descriptionCn || '',
           quantity: item.quantity,
-          cost_price: item.costPrice,
-          profit_margin: item.profitMargin,
+          unit: item.unit || 'PCS',
           unit_price: item.unitPrice,
           amount: item.amount,
+          cost_price: item.costPrice || 0,
+          profit_margin: item.profitMargin,
+          remarks: item.remarks,
         })),
       })
 
@@ -541,66 +508,7 @@ export default function NewQuotationPage() {
       </div>
 
       <div className="space-y-6">
-        {/* ========== 0. 成本表缺失提示 ========== */}
-        {!hasCostTable && state.projectId && (
-          <Card className="border-destructive/20 bg-destructive/5">
-            <CardContent className="py-6">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="h-6 w-6 text-destructive mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-destructive mb-2">需要先创建成本表</h3>
-                  <p className="text-muted-foreground mb-4">
-                    创建报价单前，必须先录入供应商报价并生成项目成本表。
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button 
-                      onClick={() => router.push(`/projects/${state.projectId}/rfqs`)}
-                      variant="outline"
-                    >
-                      <ClipboardList className="mr-2 h-4 w-4" />
-                      录入供应商报价
-                    </Button>
-                    <Button 
-                      onClick={() => router.push(`/projects/${state.projectId}/cost-table`)}
-                      variant="outline"
-                    >
-                      <Table className="mr-2 h-4 w-4" />
-                      管理成本表
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ========== 0. 从成本表导入提示 ========== */}
-        {hasCostTable && state.projectId && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">{t('quotations.import.available')}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {t('quotations.import.availableHint')}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setImportDialogOpen(true)}
-                >
-                  <ClipboardList className="mr-2 h-4 w-4" />
-                  {t('quotations.import.importButton')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ========== 1. 币种与条款 (Requirements: 2.1) ========== */}
+        {/* ========== 币种与条款 (Requirements: 2.1) ========== */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
@@ -802,8 +710,8 @@ export default function NewQuotationPage() {
           projectId={state.projectId}
           defaultProfitMargin={state.globalProfitMargin}
           onItemsChange={handleItemsChange}
-          costCurrency={state.costCurrency}
           showInternal={true}
+          onSelectFromLibrary={() => setProductDialogOpen(true)}
         />
 
         {/* ========== 5. CostBreakdownSection ========== */}
@@ -842,12 +750,12 @@ export default function NewQuotationPage() {
         </Card>
       </div>
 
-      {/* Import from Cost Table Dialog */}
-      <ImportFromCostTableDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
+      {/* Product Select Dialog */}
+      <ProductSelectDialog
+        open={productDialogOpen}
+        onOpenChange={setProductDialogOpen}
+        onSelect={handleProductSelect}
         projectId={state.projectId}
-        onImport={handleImportFromCostTable}
       />
     </div>
   )
