@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Edit, FileSpreadsheet, Download } from "lucide-react"
+import { ArrowLeft, Edit, FileSpreadsheet, Download, Copy, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +26,7 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
   const [po, setPo] = useState<FlatPO | null>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [copying, setCopying] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -82,6 +83,34 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  const handleCopy = async () => {
+    if (!po) return
+    setCopying(true)
+    try {
+      const response = await fetch(`/api/po/${po.id}/copy`, {
+        method: 'POST',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to copy')
+      }
+      toast({
+        title: "复制成功",
+        description: `已复制到 ${data.order.code}`,
+      })
+      router.push(`/po/${data.order.id}`)
+    } catch (error: any) {
+      console.error('Copy error:', error)
+      toast({
+        title: "复制失败",
+        description: String(error),
+        variant: 'destructive',
+      })
+    } finally {
+      setCopying(false)
+    }
+  }
+
   if (loading) return <div className="p-6 flex justify-center">加载中...</div>
   if (!po) return <div className="p-6 flex justify-center">找不到采购订单</div>
 
@@ -98,6 +127,10 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleCopy} disabled={copying}>
+            {copying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+            复制
+          </Button>
           <Button variant="outline" onClick={() => router.push(`/po/${po.id}/edit`)}>
             <Edit className="w-4 h-4 mr-2" />
             编辑

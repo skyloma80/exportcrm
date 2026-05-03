@@ -22,6 +22,7 @@ interface DataTableRowActionsProps<TData> {
     icon?: React.ComponentType<{ className?: string }>
     onClick: (row: TData) => void
     className?: string
+    disabled?: boolean
   }[]
 }
 
@@ -73,8 +74,9 @@ export function DataTableRowActions<TData>({
             {extraActions.map((action, index) => (
               <DropdownMenuItem
                 key={index}
-                onClick={() => action.onClick(row.original)}
+                onClick={() => !action.disabled && action.onClick(row.original)}
                 className={action.className}
+                disabled={action.disabled}
               >
                 {action.icon && <action.icon className="mr-2 h-4 w-4" />}
                 {action.label}

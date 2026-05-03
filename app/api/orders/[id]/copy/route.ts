@@ -1,10 +1,11 @@
 /**
  * Copy Order API
- * 复制订单接口
+ * 复制销售订单接口 (使用新的 items 字段)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
+import { generateOrderCode } from '@/lib/services/code-generator';
 
 export async function POST(
   request: NextRequest,
@@ -20,63 +21,45 @@ export async function POST(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Get order items
-    const orderItems = await pb.collection('order_items').getFullList({
-      filter: `order = "${id}"`,
-    });
+    // Generate new order code
+    const newOrderCode = await generateOrderCode(pb);
 
-    // Generate new order code in compact format: A{YY}{XXXX}
-    const year = new Date().getFullYear();
-    const yearSuffix = year.toString().slice(-2);
-    const sequences = await pb.collection('code_sequences').getList(1, 1, {
-      filter: `prefix = "ORD" && year = ${year}`,
-    });
-
-    let newSequence = 1;
-    if (sequences.items.length > 0) {
-      newSequence = sequences.items[0].current_sequence + 1;
-      await pb.collection('code_sequences').update(sequences.items[0].id, {
-        current_sequence: newSequence,
-      });
-    } else {
-      await pb.collection('code_sequences').create({
-        prefix: 'ORD',
-        year,
-        current_sequence: 1,
-      });
-    }
-
-    const newOrderCode = `A${yearSuffix}${String(newSequence).padStart(4, '0')}`;
+    // Copy items using new JSONB field
+    const copiedItems = (order.items || []).map((item: any) => ({
+      ...item,
+      id: crypto.randomUUID(),
+    }));
 
     // Create new order (copy)
-    // Ensure total_amount is not 0 to avoid PocketBase validation error
     const totalAmount = order.total_amount || 0.01;
-    
+
     const newOrder = await pb.collection('so').create({
       code: newOrderCode,
-      project: order.project,
-      customer: order.customer,
-      status: 'draft',
-      incoterm: order.incoterm,
+      customer_id: order.customer_id,
+      customer_name: order.customer_name,
+      customer_address: order.customer_address,
+      customer_tax_id: order.customer_tax_id,
+      customer_po: order.customer_po,
+      vendor_code: order.vendor_code,
       currency: order.currency,
-      exchange_rate: order.exchange_rate,
+      incoterm: order.incoterm,
       port_of_loading: order.port_of_loading,
       port_of_destination: order.port_of_destination,
       payment_terms: order.payment_terms,
-      total_amount: totalAmount,
+      bank_info: order.bank_info,
+      country_of_origin: order.country_of_origin,
+      country_of_destination: order.country_of_destination,
+      mode_of_shipment: order.mode_of_shipment,
+      shipping_marks: order.shipping_marks,
+      expected_delivery_date: order.expected_delivery_date,
+      estimated_shipping_date: order.estimated_shipping_date,
       remarks: order.remarks ? `[Copied from ${order.code}] ${order.remarks}` : `Copied from ${order.code}`,
+      project_id: order.project_id,
+      total_amount: totalAmount,
+      paid_amount: 0,
+      status: 'draft',
+      items: copiedItems,
     });
-
-    // Copy order items
-    for (const item of orderItems) {
-      await pb.collection('order_items').create({
-        order: newOrder.id,
-        product: item.product,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        remarks: item.remarks,
-      });
-    }
 
     return NextResponse.json({
       success: true,

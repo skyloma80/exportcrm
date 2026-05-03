@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Eye, FileSpreadsheet } from "lucide-react"
+import { Plus, Eye, FileSpreadsheet, Copy, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Card } from "@/components/ui/card"
@@ -23,6 +23,7 @@ export default function POListPage() {
   
   const [pos, setPos] = useState<FlatPO[]>([])
   const [loading, setLoading] = useState(true)
+  const [copyingId, setCopyingId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -41,6 +42,21 @@ export default function POListPage() {
     }
     loadData()
   }, [toast])
+
+  const handleCopy = async (id: string) => {
+    setCopyingId(id)
+    try {
+      const response = await fetch(`/api/po/${id}/copy`, { method: 'POST' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error)
+      toast({ title: "复制成功", description: `已复制到 ${data.order.code}` })
+      router.push(`/po/${data.order.id}`)
+    } catch (error: any) {
+      toast({ title: "复制失败", description: String(error), variant: 'destructive' })
+    } finally {
+      setCopyingId(null)
+    }
+  }
 
   return (
     <div className="p-6 h-full flex flex-col">
@@ -89,6 +105,18 @@ export default function POListPage() {
                     <TableCell>{po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'yyyy-MM-dd') : '-'}</TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleCopy(po.id)}
+                          disabled={copyingId !== null}
+                        >
+                          {copyingId === po.id ? (
+                            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-green-600" />
+                          )}
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => router.push(`/po/${po.id}`)}>
                           <Eye className="w-4 h-4 text-muted-foreground" />
                         </Button>

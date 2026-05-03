@@ -373,6 +373,30 @@ export default function NewQuotationPage() {
     }))
   }
 
+  // 添加自定义产品（空行）
+  const handleAddCustomItem = () => {
+    const newItem: QuotationItemData = {
+      id: `custom-${Date.now()}`,
+      productId: '',
+      productCode: '',
+      productName: '',
+      productNameCn: '',
+      description: '',
+      descriptionCn: '',
+      partNumber: '',
+      unit: 'PCS',
+      quantity: 1,
+      costPrice: 0,
+      profitMargin: state.globalProfitMargin,
+      unitPrice: 0,
+      amount: 0,
+    }
+    setState(prev => ({
+      ...prev,
+      items: [...prev.items, newItem],
+    }))
+  }
+
   // 手动重新计算总重量和总体积
   const handleRecalculateWeightVolume = () => {
     console.log('🔄 [handleRecalculateWeightVolume] 点击重算按钮')
@@ -712,6 +736,7 @@ export default function NewQuotationPage() {
           onItemsChange={handleItemsChange}
           showInternal={true}
           onSelectFromLibrary={() => setProductDialogOpen(true)}
+          onAddCustomItem={handleAddCustomItem}
         />
 
         {/* ========== 5. CostBreakdownSection ========== */}

@@ -133,6 +133,60 @@ export function QuotationItemsTable({
     onItemsChange(items.filter(item => item.id !== itemId))
   }
 
+  // 处理 Part No. 变化
+  const handlePartNumberChange = (itemId: string, value: string) => {
+    onItemsChange(
+      items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, partNumber: value }
+        }
+        return item
+      })
+    )
+  }
+
+  // 处理描述变化（英文）
+  const handleDescriptionChange = (itemId: string, value: string) => {
+    onItemsChange(
+      items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, description: value }
+        }
+        return item
+      })
+    )
+  }
+
+  // 处理描述变化（中文）
+  const handleDescriptionCnChange = (itemId: string, value: string) => {
+    onItemsChange(
+      items.map(item => {
+        if (item.id === itemId) {
+          return { ...item, descriptionCn: value }
+        }
+        return item
+      })
+    )
+  }
+
+  // 处理包装信息变化
+  const handlePackagingChange = (itemId: string, field: 'pcsPerCarton' | 'cartonDimensions' | 'cartonGrossWeight', value: string) => {
+    onItemsChange(
+      items.map(item => {
+        if (item.id === itemId) {
+          if (field === 'pcsPerCarton') {
+            return { ...item, pcsPerCarton: value ? parseInt(value) || undefined : undefined }
+          } else if (field === 'cartonDimensions') {
+            return { ...item, cartonDimensions: value || undefined }
+          } else if (field === 'cartonGrossWeight') {
+            return { ...item, cartonGrossWeight: value ? parseFloat(value) || undefined : undefined }
+          }
+        }
+        return item
+      })
+    )
+  }
+
   // 处理数量变化
   const handleQuantityChange = (itemId: string, value: string) => {
     onItemsChange(
@@ -323,13 +377,62 @@ export function QuotationItemsTable({
                 {items.map((item, index) => (
                   <TableRow key={item.id}>
                     <TableCell className="pl-6">
-                      <PartNoCell value={item.partNumber} />
+                      {disabled ? (
+                        <PartNoCell value={item.partNumber} />
+                      ) : (
+                        <Input
+                          value={item.partNumber || ''}
+                          onChange={(e) => handlePartNumberChange(item.id, e.target.value)}
+                          className="h-9 text-sm font-mono"
+                          placeholder="Part No."
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
-                      <DescriptionCell item={toProductItemBase(item)} locale={locale} />
+                      {disabled ? (
+                        <DescriptionCell item={toProductItemBase(item)} locale={locale} />
+                      ) : (
+                        <div className="space-y-1">
+                          <Input
+                            value={item.description || ''}
+                            onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
+                            className="h-8 text-sm"
+                            placeholder="Description (EN)"
+                          />
+                          <Input
+                            value={item.descriptionCn || ''}
+                            onChange={(e) => handleDescriptionCnChange(item.id, e.target.value)}
+                            className="h-8 text-sm"
+                            placeholder="描述 (CN)"
+                          />
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <PackagingCell item={toProductItemBase(item)} />
+                      {disabled ? (
+                        <PackagingCell item={toProductItemBase(item)} />
+                      ) : (
+                        <div className="space-y-1">
+                          <Input
+                            value={item.pcsPerCarton || ''}
+                            onChange={(e) => handlePackagingChange(item.id, 'pcsPerCarton', e.target.value)}
+                            className="h-8 text-xs"
+                            placeholder="pcs/ctn"
+                          />
+                          <Input
+                            value={item.cartonDimensions || ''}
+                            onChange={(e) => handlePackagingChange(item.id, 'cartonDimensions', e.target.value)}
+                            className="h-8 text-xs"
+                            placeholder="L×W×H cm"
+                          />
+                          <Input
+                            value={item.cartonGrossWeight || ''}
+                            onChange={(e) => handlePackagingChange(item.id, 'cartonGrossWeight', e.target.value)}
+                            className="h-8 text-xs"
+                            placeholder="G.W. kg"
+                          />
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">
                       <Input

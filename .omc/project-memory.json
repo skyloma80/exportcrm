@@ -233,8 +233,8 @@
     },
     {
       "path": "components\\quotations\\quotation-items-table.tsx",
-      "accessCount": 14,
-      "lastAccessed": 1777793514093,
+      "accessCount": 15,
+      "lastAccessed": 1777793541403,
       "type": "directory"
     },
     {
@@ -328,6 +328,12 @@
       "type": "file"
     },
     {
+      "path": "components\\shared\\product-items-columns.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1777794769549,
+      "type": "directory"
+    },
+    {
       "path": "pocketbase\\pb_migrations\\005_create_products.js",
       "accessCount": 1,
       "lastAccessed": 1777787124733,
@@ -355,6 +361,12 @@
       "path": "public",
       "accessCount": 1,
       "lastAccessed": 1777791840150,
+      "type": "directory"
+    },
+    {
+      "path": "lib\\quotation\\calculations.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777794800649,
       "type": "directory"
     }
   ],

@@ -28,6 +28,7 @@ import {
   Package,
   Building2,
   Ship,
+  Copy,
 } from "lucide-react"
 import { soService, type FlatSO, type SOStatus } from "@/lib/pocketbase/services/so"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
@@ -61,6 +62,7 @@ export default function OrderDetailPage({ params }: PageProps) {
   const [showManualStatusDialog, setShowManualStatusDialog] = useState(false)
   const [newStatus, setNewStatus] = useState<SOStatus>('draft')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+  const [copying, setCopying] = useState(false)
 
   // Set breadcrumb
   useEffect(() => {
@@ -155,6 +157,34 @@ export default function OrderDetailPage({ params }: PageProps) {
     }
   }
 
+  const handleCopy = async () => {
+    if (!order) return
+    setCopying(true)
+    try {
+      const response = await fetch(`/api/orders/${order.id}/copy`, {
+        method: 'POST',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to copy')
+      }
+      toast({
+        title: t('common.success'),
+        description: `Copied to ${data.order.code}`,
+      })
+      router.push(`/orders/${data.order.id}`)
+    } catch (error: any) {
+      console.error('Copy error:', error)
+      toast({
+        title: t('common.error'),
+        description: error.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setCopying(false)
+    }
+  }
+
   const handleGeneratePI = async () => {
     if (!order) return
 
@@ -246,6 +276,14 @@ export default function OrderDetailPage({ params }: PageProps) {
 
         </div>
         <div className="flex gap-2 ml-12 md:ml-0">
+          <Button
+            variant="outline"
+            onClick={handleCopy}
+            disabled={copying}
+          >
+            {copying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+            {t('common.copy')}
+          </Button>
           <Button
             variant="destructive"
             onClick={() => setShowDeleteConfirmation(true)}
