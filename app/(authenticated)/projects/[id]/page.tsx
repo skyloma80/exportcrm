@@ -52,26 +52,16 @@ interface QuotationData {
   created: string
 }
 
-interface OrderData {
-  id: string
-  code: string
-  status: OrderStatus
-  total_amount: number
-  paid_amount: number
-  currency: string
-  created: string
-}
+
 
 interface BusinessSummary {
   rfqs: { total: number; completed: number };
   quotations: { total: number; accepted: number };
-  orders: { total: number; totalAmount: number; currency: string };
-  shipments: { total: number; delivered: number };
 }
 
 interface TimelineEvent {
   id: string;
-  type: 'rfq' | 'quotation' | 'order' | 'purchase_order' | 'shipment' | 'invoice';
+  type: 'rfq' | 'quotation';
   code: string;
   title: string;
   status: string;
@@ -93,7 +83,6 @@ export default function ProjectDetailPage() {
   const [products, setProducts] = useState<ProductProject[]>([])
   const [rfqs, setRfqs] = useState<RFQData[]>([])
   const [quotations, setQuotations] = useState<QuotationData[]>([])
-  const [orders, setOrders] = useState<OrderData[]>([])
   const [summary, setSummary] = useState<BusinessSummary | null>(null)
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,7 +97,7 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (project) {
       const projectDisplayName = locale === 'zh' && project.name_cn ? project.name_cn : project.name
-      
+
       if (customer) {
         const customerDisplayName = locale === 'zh' && customer.name_cn ? customer.name_cn : customer.name
         setBreadcrumb([
@@ -139,64 +128,64 @@ export default function ProjectDetailPage() {
     unit: string
     hs_code: string
   }>[] = [
-    {
-      accessorKey: "code",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.code")} />,
-      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("code")}</span>,
-    },
-    {
-      accessorKey: "name",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.name")} />,
-      cell: ({ row }) => {
-        const name = locale === 'zh' && row.original.name_cn ? row.original.name_cn : row.original.name
-        return (
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{name}</span>
+      {
+        accessorKey: "code",
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.code")} />,
+        cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("code")}</span>,
+      },
+      {
+        accessorKey: "name",
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.name")} />,
+        cell: ({ row }) => {
+          const name = locale === 'zh' && row.original.name_cn ? row.original.name_cn : row.original.name
+          return (
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{name}</span>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: "part_number",
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.partNumber")} />,
+        cell: ({ row }) => <span className="text-muted-foreground">{row.getValue("part_number") || "-"}</span>,
+      },
+      {
+        accessorKey: "description",
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.description")} />,
+        cell: ({ row }) => {
+          const desc = locale === 'zh' && row.original.description_cn ? row.original.description_cn : row.original.description
+          return (
+            <span className="text-muted-foreground max-w-[200px] truncate block" title={desc || "-"}>
+              {desc || "-"}
+            </span>
+          )
+        },
+      },
+      {
+        accessorKey: "unit",
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
+      },
+      {
+        accessorKey: "hs_code",
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.hsCode")} />,
+        cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("hs_code") || "-"}</span>,
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => router.push(`/products/${row.original.productId}?project=${id}`)}>
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(row.original.id)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
-        )
+        ),
       },
-    },
-    {
-      accessorKey: "part_number",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.partNumber")} />,
-      cell: ({ row }) => <span className="text-muted-foreground">{row.getValue("part_number") || "-"}</span>,
-    },
-    {
-      accessorKey: "description",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.description")} />,
-      cell: ({ row }) => {
-        const desc = locale === 'zh' && row.original.description_cn ? row.original.description_cn : row.original.description
-        return (
-          <span className="text-muted-foreground max-w-[200px] truncate block" title={desc || "-"}>
-            {desc || "-"}
-          </span>
-        )
-      },
-    },
-    {
-      accessorKey: "unit",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
-    },
-    {
-      accessorKey: "hs_code",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.hsCode")} />,
-      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("hs_code") || "-"}</span>,
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => router.push(`/products/${row.original.productId}?project=${id}`)}>
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(row.original.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
+    ]
 
   // RFQ table columns with selection
   const rfqColumns: ColumnDef<RFQData>[] = useMemo(() => [
@@ -294,57 +283,6 @@ export default function ProjectDetailPage() {
     },
   ], [t, locale, id])
 
-  // Order table columns
-  const orderColumns: ColumnDef<OrderData>[] = useMemo(() => [
-    {
-      accessorKey: "code",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("orders.columns.code")} />,
-      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("code")}</span>,
-    },
-    {
-      accessorKey: "status",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("orders.columns.status")} />,
-      cell: ({ row }) => {
-        const status = row.getValue("status") as OrderStatus
-        const variant = status === 'completed' ? 'default' : status === 'cancelled' ? 'destructive' : 'outline'
-        return <Badge variant={variant}>{t(`orders.status.${status}`)}</Badge>
-      },
-    },
-    {
-      accessorKey: "total_amount",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("orders.columns.totalAmount")} />,
-      cell: ({ row }) => (
-        <span className="font-medium">{formatCurrency(row.original.total_amount, row.original.currency)}</span>
-      ),
-    },
-    {
-      accessorKey: "paid_amount",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("orders.columns.paidAmount")} />,
-      cell: ({ row }) => {
-        const progress = row.original.total_amount ? Math.round((row.original.paid_amount / row.original.total_amount) * 100) : 0
-        return (
-          <span className={progress >= 100 ? "text-green-600" : ""}>
-            {formatCurrency(row.original.paid_amount, row.original.currency)} ({progress}%)
-          </span>
-        )
-      },
-    },
-    {
-      accessorKey: "created",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("common.created")} />,
-      cell: ({ row }) => new Date(row.getValue("created")).toLocaleDateString(),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DataTableRowActions
-          row={row}
-          onView={(item) => router.push(`/orders/${item.id}?project=${id}`)}
-          onEdit={(item) => router.push(`/orders/${item.id}/edit?project=${id}`)}
-        />
-      ),
-    },
-  ], [t, router, locale, id])
 
   const handleRemoveProduct = async (ppId: string) => {
     try {
@@ -380,34 +318,26 @@ export default function ProjectDetailPage() {
       setProducts(productsData)
 
       // Load business summary
-      const [rfqsData, quotationsData, ordersData, shipments] = await Promise.all([
+      // 先获取项目的订单ID列表
+
+
+      const [rfqsData, quotationsData] = await Promise.all([
         pb.collection("rfqs").getFullList<RFQData>({ filter: `project = "${id}"` }),
         pb.collection("quotations").getFullList<QuotationData>({ filter: `project = "${id}"` }),
-        pb.collection("so").getFullList<OrderData>({ filter: `project = "${id}"`, sort: "-code" }),
-        pb.collection("shipments").getFullList({ filter: `order.project = "${id}"` }).catch(() => []),
       ])
 
       setRfqs(rfqsData)
       setQuotations(quotationsData)
-      setOrders(ordersData)
 
+      // Set business summary
       setSummary({
         rfqs: {
           total: rfqsData.length,
-          completed: rfqsData.filter((r) => r.status === 'completed').length,
+          completed: rfqsData.filter(r => r.status === 'completed').length,
         },
         quotations: {
           total: quotationsData.length,
-          accepted: quotationsData.filter((q) => q.status === 'accepted').length,
-        },
-        orders: {
-          total: ordersData.length,
-          totalAmount: ordersData.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-          currency: ordersData[0]?.currency || 'USD',
-        },
-        shipments: {
-          total: shipments.length,
-          delivered: shipments.filter((s: any) => s.status === 'delivered').length,
+          accepted: quotationsData.filter(q => q.status === 'accepted').length,
         },
       })
 
@@ -431,25 +361,8 @@ export default function ProjectDetailPage() {
           amount: q.total_amount,
           currency: q.currency,
         })),
-        ...ordersData.map((o) => ({
-          id: o.id,
-          type: 'order' as const,
-          code: o.code,
-          title: o.code,
-          status: o.status,
-          date: o.created,
-          amount: o.total_amount,
-          currency: o.currency,
-        })),
-        ...shipments.map((s: any) => ({
-          id: s.id,
-          type: 'shipment' as const,
-          code: s.code || s.id,
-          title: s.code || 'Shipment',
-          status: s.status,
-          date: s.created,
-        })),
-      ]
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      
       setTimelineEvents(events)
     } catch (err: any) {
       console.error("Error loading project:", err)
@@ -563,8 +476,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Business Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-2">
@@ -593,36 +505,7 @@ export default function ProjectDetailPage() {
               </p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                {t("projects.orders.title")}
-              </CardDescription>
-              <CardTitle className="text-2xl">{summary.orders.total}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                {formatCurrency(summary.orders.totalAmount, summary.orders.currency)}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                {locale === 'zh' ? '发货' : 'Shipments'}
-              </CardDescription>
-              <CardTitle className="text-2xl">{summary.shipments.total}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                {summary.shipments.delivered} {locale === 'zh' ? '已送达' : 'delivered'}
-              </p>
-            </CardContent>
-          </Card>
         </div>
-      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
@@ -631,7 +514,7 @@ export default function ProjectDetailPage() {
           <TabsTrigger value="products">{t("projects.tabs.products")}</TabsTrigger>
           <TabsTrigger value="rfqs">{t("projects.tabs.rfqs")}</TabsTrigger>
           <TabsTrigger value="quotations">{t("projects.tabs.quotations")}</TabsTrigger>
-          <TabsTrigger value="orders">{t("projects.tabs.orders")}</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="info" className="space-y-6">
@@ -739,8 +622,8 @@ export default function ProjectDetailPage() {
                     {locale === 'zh' ? '开始添加产品' : 'Start Adding Products'}
                   </h3>
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {locale === 'zh' 
-                      ? '产品是项目的核心。添加产品后，您可以创建询价、报价和订单。' 
+                    {locale === 'zh'
+                      ? '产品是项目的核心。添加产品后，您可以创建询价、报价和订单。'
                       : 'Products are the core of your project. Add products to start creating RFQs, quotations, and orders.'}
                   </p>
                   <div className="flex justify-center gap-3">
@@ -810,8 +693,8 @@ export default function ProjectDetailPage() {
               </div>
               <div className="flex gap-2">
                 {selectedRfqIds.length > 0 && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setMergeDialogOpen(true)}
                   >
                     <Layers className="mr-2 h-4 w-4" />
@@ -868,33 +751,7 @@ export default function ProjectDetailPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="orders">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t("projects.orders.title")}</CardTitle>
-                <CardDescription>{t("projects.orders.description")}</CardDescription>
-              </div>
-              {/* 隐藏新建订单按钮 */}
-              {/* <Button onClick={() => router.push(`/orders/new?project=${id}`)}>
-                <Plus className="mr-2 h-4 w-4" />
-                {locale === 'zh' ? '新建订单' : 'New Order'}
-              </Button> */}
-            </CardHeader>
-            <CardContent>
-              {orders.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">{t("projects.orders.empty")}</p>
-              ) : (
-                <DataTable
-                  columns={orderColumns}
-                  data={orders}
-                  searchKey="code"
-                  onRowClick={(row) => router.push(`/orders/${row.id}?project=${id}`)}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+
 
 
       </Tabs>

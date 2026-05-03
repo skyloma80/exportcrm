@@ -2,7 +2,7 @@
 # Usage: .\deploy.ps1 [-ServerIP "42.194.150.84"] [-SkipBuild]
 
 param(
-    [string]$ServerIP = "69.5.23.121",
+    [string]$ServerIP = "42.194.150.84",
     [string]$ServerUser = "ubuntu",
     [string]$ServerPath = "/home/ubuntu/exportcrm",
     [switch]$SkipBuild

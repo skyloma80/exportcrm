@@ -65,11 +65,23 @@ export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
     }
   }
 
+  // 兼容的 UUID 生成函数
+  const generateId = (): string => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const handleAddItem = () => {
     setItems(prev => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: generateId(),
         part_number: '',
         product_name: '',
         description_en: '',
@@ -86,7 +98,7 @@ export function POForm({ initialData, onSubmit, isLoading }: POFormProps) {
     setItems(prev => [
       ...prev,
       ...products.map(product => ({
-        id: crypto.randomUUID(),
+        id: generateId(),
         part_number: product.part_number || product.code || '',
         product_name: product.name || '',
         description_en: product.description_en || product.name || '',

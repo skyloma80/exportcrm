@@ -2,8 +2,8 @@
 # Usage: .\deploy-only.ps1 -ServerIP "42.194.150.84" -ServerUser "ubuntu"
 
 param(
-    [Parameter(Mandatory=$true)]
-    [string]$ServerIP,
+    [Parameter(Mandatory = $true)]
+    [string]$ServerIP = "42.194.150.84",
     [string]$ServerUser = "ubuntu",
     [string]$ServerPath = "/home/ubuntu/exportcrm"
 )
@@ -61,7 +61,8 @@ ssh ${ServerUser}@${ServerIP} "mkdir -p $ServerPath/pocketbase/pb_migrations"
 scp -r pocketbase/pb_migrations/* ${ServerUser}@${ServerIP}:${ServerPath}/pocketbase/pb_migrations/
 if ($LASTEXITCODE -ne 0) {
     Write-Host "WARNING: Migrations upload failed (may not exist)" -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "OK: Migrations uploaded" -ForegroundColor Green
 }
 
@@ -69,18 +70,18 @@ Write-Host ""
 Write-Host "Step 3: Deploying on server..." -ForegroundColor Yellow
 
 $deployScript = "cd $ServerPath && " +
-    "echo 'Loading image...' && " +
-    "docker load -i $TarFile && " +
-    "echo 'Restarting services (keeping data)...' && " +
-    "docker-compose up -d --force-recreate && " +
-    "echo 'Waiting for PocketBase to apply migrations...' && " +
-    "sleep 10 && " +
-    "echo 'Container status:' && " +
-    "docker-compose ps && " +
-    "echo 'PocketBase logs:' && " +
-    "docker-compose logs --tail 30 pocketbase && " +
-    "echo 'NextJS logs:' && " +
-    "docker-compose logs --tail 20 nextjs"
+"echo 'Loading image...' && " +
+"docker load -i $TarFile && " +
+"echo 'Restarting services (keeping data)...' && " +
+"docker-compose up -d --force-recreate && " +
+"echo 'Waiting for PocketBase to apply migrations...' && " +
+"sleep 10 && " +
+"echo 'Container status:' && " +
+"docker-compose ps && " +
+"echo 'PocketBase logs:' && " +
+"docker-compose logs --tail 30 pocketbase && " +
+"echo 'NextJS logs:' && " +
+"docker-compose logs --tail 20 nextjs"
 
 ssh ${ServerUser}@${ServerIP} "$deployScript"
 
@@ -95,7 +96,8 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "  - PocketBase: http://${ServerIP}:8091/_/" -ForegroundColor Green
     Write-Host "  - MinIO:      http://${ServerIP}:9001" -ForegroundColor Green
     Write-Host ""
-} else {
+}
+else {
     Write-Host "ERROR: Deployment failed" -ForegroundColor Red
     exit 1
 }
