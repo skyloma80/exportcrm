@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useI18n } from '@/lib/i18n/use-i18n'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/components/auth-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,6 +51,7 @@ interface InputPanelProps {
 export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const { t } = useI18n()
   const { toast } = useToast()
+  const { user } = useAuth()
   
   // Custom pallet specs state
   const [customSpecs, setCustomSpecs] = useState<CustomPalletSpec[]>([])
@@ -72,12 +74,16 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const [boxDimensionsText, setBoxDimensionsText] = useState('')
   const [averageBoxWeight, setAverageBoxWeight] = useState(15)
   
-  // Load custom specs on mount
+  // Load custom specs on mount (only if user is logged in)
   useEffect(() => {
-    loadCustomSpecs()
-  }, [])
+    if (user) {
+      loadCustomSpecs()
+    }
+  }, [user])
   
   const loadCustomSpecs = async () => {
+    if (!user) return
+    
     setLoadingCustomSpecs(true)
     try {
       const specs = await customPalletSpecService.getAllActive()
@@ -141,6 +147,15 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   
   // Add custom pallet spec
   const handleAddCustomSpec = async () => {
+    if (!user) {
+      toast({
+        title: '请先登录',
+        description: '需要登录后才能创建自定义托盘规格',
+        variant: 'destructive'
+      })
+      return
+    }
+    
     if (!customSpecForm.length || !customSpecForm.width || !customSpecForm.height) {
       toast({
         title: t('palletCalculator.customSpec.validationError') || '验证错误',
@@ -265,16 +280,18 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>{t('palletCalculator.palletSpec') || '托盘规格'}</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setShowCustomSpecDialog(true)}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              {t('palletCalculator.customSpec.addButton') || '自定义'}
-            </Button>
+            {user && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setShowCustomSpecDialog(true)}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                {t('palletCalculator.customSpec.addButton') || '自定义'}
+              </Button>
+            )}
           </div>
           <Select value={palletSpecCode} onValueChange={setPalletSpecCode}>
             <SelectTrigger>
