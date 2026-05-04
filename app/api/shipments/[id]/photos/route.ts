@@ -18,10 +18,11 @@ interface RouteParams {
  * 获取装柜照片存储路径
  */
 function getLoadingPhotosPath(
-  pathInfo: { customerName: string; projectName: string; orderCode: string },
+  pathInfo: { customerName: string; projectName: string; orderCode?: string },
   shipmentIndex: number
 ): string {
-  return `Customers/${pathInfo.customerName}/${pathInfo.projectName}/orders/${pathInfo.orderCode}/shipments_${shipmentIndex}/loading_photos/`;
+  const orderCode = pathInfo.orderCode || 'unknown';
+  return `Customers/${pathInfo.customerName}/${pathInfo.projectName}/orders/${orderCode}/shipments_${shipmentIndex}/loading_photos/`;
 }
 
 /**
