@@ -88,7 +88,7 @@ export default function OrderDocumentsPage({ params }: PageProps) {
     if (order) {
       setBreadcrumbItems([
         { label: t("nav.orders"), href: "/orders" },
-        { label: order.code, href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
+        { label: order.code || t("orders.detail"), href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
         { label: t('orders.documents.title') },
       ])
     }
