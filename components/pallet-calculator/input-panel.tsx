@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useI18n } from '@/lib/i18n/use-i18n'
 import { useToast } from '@/hooks/use-toast'
-import { useAuth } from '@/components/auth-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +24,14 @@ import {
   type ParseResult,
   type StackingPlan
 } from '@/lib/pallet-calculator'
-import { customPalletSpecService, type CustomPalletSpec } from '@/lib/pocketbase/services/custom-pallet-specs'
+
+const CUSTOM_SPECS_STORAGE_KEY = 'custom_pallet_specs'
+
+interface CustomPalletSpec {
+  id: string
+  name: string
+  dimensions: string
+}
 
 export interface CalculatorConfig {
   palletSpec: PalletSpec
@@ -51,11 +57,9 @@ interface InputPanelProps {
 export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const { t } = useI18n()
   const { toast } = useToast()
-  const { user } = useAuth()
   
   // Custom pallet specs state
   const [customSpecs, setCustomSpecs] = useState<CustomPalletSpec[]>([])
-  const [loadingCustomSpecs, setLoadingCustomSpecs] = useState(false)
   
   // Dialog state for custom spec
   const [showCustomSpecDialog, setShowCustomSpecDialog] = useState(false)
@@ -74,24 +78,25 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const [boxDimensionsText, setBoxDimensionsText] = useState('')
   const [averageBoxWeight, setAverageBoxWeight] = useState(15)
   
-  // Load custom specs on mount (only if user is logged in)
+  // Load custom specs from localStorage
   useEffect(() => {
-    if (user) {
-      loadCustomSpecs()
-    }
-  }, [user])
-  
-  const loadCustomSpecs = async () => {
-    if (!user) return
-    
-    setLoadingCustomSpecs(true)
     try {
-      const specs = await customPalletSpecService.getAllActive()
-      setCustomSpecs(specs)
+      const stored = localStorage.getItem(CUSTOM_SPECS_STORAGE_KEY)
+      if (stored) {
+        setCustomSpecs(JSON.parse(stored))
+      }
     } catch (error) {
       console.error('Failed to load custom pallet specs:', error)
-    } finally {
-      setLoadingCustomSpecs(false)
+    }
+  }, [])
+  
+  // Save custom specs to localStorage
+  const saveCustomSpecs = (specs: CustomPalletSpec[]) => {
+    try {
+      localStorage.setItem(CUSTOM_SPECS_STORAGE_KEY, JSON.stringify(specs))
+      setCustomSpecs(specs)
+    } catch (error) {
+      console.error('Failed to save custom pallet specs:', error)
     }
   }
   
@@ -102,9 +107,23 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
       isCustom: false
     }))
     
-    const customSpecsConverted = customSpecs
-      .map(spec => customPalletSpecService.toPalletSpec(spec))
-      .filter(Boolean) as Array<PalletSpec & { isCustom: true; id: string }>
+    const customSpecsConverted = customSpecs.map(spec => {
+      const parts = spec.dimensions.split(/[×x*]/).map(s => parseInt(s.trim()))
+      if (parts.length === 3 && parts.every(p => !isNaN(p) && p > 0)) {
+        return {
+          code: \CUSTOM_\,
+          name: spec.name,
+          name_cn: spec.name,
+          length: parts[0],
+          width: parts[1],
+          height: parts[2],
+          maxLoad: 1500,
+          isCustom: true,
+          id: spec.id
+        }
+      }
+      return null
+    }).filter(Boolean) as Array<PalletSpec & { isCustom: true; id: string }>
     
     return [...presetSpecs, ...customSpecsConverted]
   }, [customSpecs])
@@ -196,21 +215,12 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   }
   
   // Delete custom pallet spec
-  const handleDeleteCustomSpec = async (id: string) => {
-    try {
-      await customPalletSpecService.delete(id)
-      toast({
-        title: t('palletCalculator.customSpec.deleteSuccess') || '删除成功'
-      })
-      loadCustomSpecs()
-    } catch (error: any) {
-      console.error('Failed to delete custom pallet spec:', error)
-      toast({
-        title: t('palletCalculator.customSpec.deleteError') || '删除失败',
-        description: error.message,
-        variant: 'destructive'
-      })
-    }
+  const handleDeleteCustomSpec = (id: string) => {
+    const updated = customSpecs.filter(s => s.id !== id)
+    saveCustomSpecs(updated)
+    toast({
+      title: t('palletCalculator.customSpec.deleteSuccess') || '删除成功'
+    })
   }
 
   const handleCalculate = useCallback(() => {
@@ -280,18 +290,16 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>{t('palletCalculator.palletSpec') || '托盘规格'}</Label>
-            {user && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setShowCustomSpecDialog(true)}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                {t('palletCalculator.customSpec.addButton') || '自定义'}
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setShowCustomSpecDialog(true)}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              {t('palletCalculator.customSpec.addButton') || '自定义'}
+            </Button>
           </div>
           <Select value={palletSpecCode} onValueChange={setPalletSpecCode}>
             <SelectTrigger>
