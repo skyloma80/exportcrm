@@ -58,8 +58,9 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   // Dialog state for custom spec
   const [showCustomSpecDialog, setShowCustomSpecDialog] = useState(false)
   const [customSpecForm, setCustomSpecForm] = useState({
-    name: '',
-    dimensions: '1200×1200×150'
+    length: 1200,
+    width: 1200,
+    height: 150
   })
   
   // Form state
@@ -140,36 +141,33 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   
   // Add custom pallet spec
   const handleAddCustomSpec = async () => {
-    if (!customSpecForm.name || !customSpecForm.dimensions) {
+    if (!customSpecForm.length || !customSpecForm.width || !customSpecForm.height) {
       toast({
         title: t('palletCalculator.customSpec.validationError') || '验证错误',
-        description: t('palletCalculator.customSpec.validationErrorDesc') || '请填写所有必填项',
+        description: t('palletCalculator.customSpec.validationErrorDesc') || '请填写所有尺寸',
         variant: 'destructive'
       })
       return
     }
     
-    // 验证尺寸格式
-    const parsed = customPalletSpecService.parseDimensions(customSpecForm.dimensions)
-    if (!parsed) {
-      toast({
-        title: t('palletCalculator.customSpec.formatError') || '格式错误',
-        description: t('palletCalculator.customSpec.formatErrorDesc') || '尺寸格式应为：长×宽×高，例如：1200×1200×150',
-        variant: 'destructive'
-      })
-      return
-    }
+    // 自动生成名称和尺寸字符串
+    const name = t('palletCalculator.customSpec.autoName') || '自定义托盘规格'
+    const dimensions = \×\×\
     
     try {
-      await customPalletSpecService.create(customSpecForm)
+      await customPalletSpecService.create({
+        name: \（\）\,
+        dimensions
+      })
       toast({
         title: t('palletCalculator.customSpec.createSuccess') || '创建成功',
         description: t('palletCalculator.customSpec.createSuccessDesc') || '自定义托盘规格已保存'
       })
       setShowCustomSpecDialog(false)
       setCustomSpecForm({
-        name: '',
-        dimensions: '1200×1200×150'
+        length: 1200,
+        width: 1200,
+        height: 150
       })
       loadCustomSpecs()
     } catch (error: any) {
@@ -462,24 +460,45 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>{t('palletCalculator.customSpec.name') || '托盘名称'} *</Label>
-              <Input
-                value={customSpecForm.name}
-                onChange={(e) => setCustomSpecForm({ ...customSpecForm, name: e.target.value })}
-                placeholder={t('palletCalculator.customSpec.namePlaceholder') || '例如：中国标准托盘'}
-              />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>{t('palletCalculator.customSpec.length') || '长'} (mm)</Label>
+                <Input
+                  type="number"
+                  value={customSpecForm.length}
+                  onChange={(e) => setCustomSpecForm({ ...customSpecForm, length: Number(e.target.value) })}
+                  min={100}
+                  max={3000}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('palletCalculator.customSpec.width') || '宽'} (mm)</Label>
+                <Input
+                  type="number"
+                  value={customSpecForm.width}
+                  onChange={(e) => setCustomSpecForm({ ...customSpecForm, width: Number(e.target.value) })}
+                  min={100}
+                  max={3000}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('palletCalculator.customSpec.height') || '高'} (mm)</Label>
+                <Input
+                  type="number"
+                  value={customSpecForm.height}
+                  onChange={(e) => setCustomSpecForm({ ...customSpecForm, height: Number(e.target.value) })}
+                  min={50}
+                  max={500}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>{t('palletCalculator.customSpec.dimensions') || '尺寸规格'} *</Label>
-              <Input
-                value={customSpecForm.dimensions}
-                onChange={(e) => setCustomSpecForm({ ...customSpecForm, dimensions: e.target.value })}
-                placeholder="1200×1200×150"
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('palletCalculator.customSpec.dimensionsHint') || '格式：长×宽×高（单位：mm），支持 ×、x、* 分隔'}
-              </p>
+            <div className="bg-muted rounded-lg p-3 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span>{t('palletCalculator.customSpec.preview') || '预览'}:</span>
+                <span className="font-medium text-foreground">
+                  {t('palletCalculator.customSpec.autoName') || '自定义托盘规格'}（{customSpecForm.length}×{customSpecForm.width}×{customSpecForm.height}）
+                </span>
+              </div>
             </div>
           </div>
           <DialogFooter>
