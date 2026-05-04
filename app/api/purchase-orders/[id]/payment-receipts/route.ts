@@ -77,7 +77,7 @@ export async function POST(
 
     // 构建目录路径: Customers/{客户名}/{项目名}/orders/{订单号}/purchase_orders/{采购单号}/{payment_type}/
     const typeFolder = PAYMENT_TYPE_FOLDERS[paymentType];
-    const uploadPath = `Customers/${sanitizePath(pathInfo.customerName)}/${sanitizePath(pathInfo.projectName)}/orders/${sanitizePath(pathInfo.orderCode)}/purchase_orders/${sanitizePath(po.code)}/${typeFolder}/${file.name}`;
+    const uploadPath = `Customers/${sanitizePath(pathInfo.customerName)}/${sanitizePath(pathInfo.projectName)}/orders/${sanitizePath(pathInfo.orderCode || 'unknown')}/purchase_orders/${sanitizePath(po.code)}/${typeFolder}/${file.name}`;
 
     console.log('Upload path:', uploadPath);
 
@@ -94,7 +94,7 @@ export async function POST(
     }
 
     // 构建相对路径（用于保存到数据库）
-    const relativePath = `${sanitizePath(pathInfo.customerName)}/${sanitizePath(pathInfo.projectName)}/orders/${sanitizePath(pathInfo.orderCode)}/purchase_orders/${sanitizePath(po.code)}/${typeFolder}/${file.name}`;
+    const relativePath = `${sanitizePath(pathInfo.customerName)}/${sanitizePath(pathInfo.projectName)}/orders/${sanitizePath(pathInfo.orderCode || 'unknown')}/purchase_orders/${sanitizePath(po.code)}/${typeFolder}/${file.name}`;
 
     // 如果提供了 payment_id，更新付款记录
     if (paymentId) {
