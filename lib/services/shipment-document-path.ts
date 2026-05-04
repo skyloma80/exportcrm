@@ -48,7 +48,7 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
 export interface OrderPathInfo {
   customerName: string;
   projectName: string;
-  orderCode: string;
+  orderCode?: string;
 }
 
 /**
@@ -60,7 +60,8 @@ export function getOrderDocumentPath(
   docType: OrderDocumentType
 ): string {
   const { customerName, projectName, orderCode } = info;
-  return `Customers/${sanitizePath(customerName)}/${sanitizePath(projectName)}/orders/${sanitizePath(orderCode)}/${docType}`;
+  const code = orderCode || 'unknown';
+  return `Customers/${sanitizePath(customerName)}/${sanitizePath(projectName)}/orders/${sanitizePath(code)}/${docType}`;
 }
 
 /**
@@ -135,7 +136,7 @@ function sanitizeFilename(filename: string): string {
  * 仅支持新版 FlatSO
  */
 export function extractOrderPathInfo(order: {
-  code: string;
+  code?: string;
   customer_name?: string;
   project_name?: string;
   expand?: {
