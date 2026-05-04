@@ -68,6 +68,13 @@ interface QuotationItemInput {
   amount: number;
   cost_price?: number;
   profit_margin?: number;
+  pcs_per_carton?: number;
+  carton_dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+  };
+  carton_gross_weight?: number;
   expand?: {
     product?: ProductInput;
   };
