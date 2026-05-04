@@ -111,7 +111,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
       const parts = spec.dimensions.split(/[×x*]/).map(s => parseInt(s.trim()))
       if (parts.length === 3 && parts.every(p => !isNaN(p) && p > 0)) {
         return {
-          code: \CUSTOM_\,
+          code: `CUSTOM_${spec.id}`,
           name: spec.name,
           name_cn: spec.name,
           length: parts[0],
