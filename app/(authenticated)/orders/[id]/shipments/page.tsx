@@ -58,7 +58,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
     if (order) {
       setBreadcrumbItems([
         { label: t("nav.orders"), href: "/orders" },
-        { label: order.code, href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
+        { label: order.code || t("orders.detail"), href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
         { label: t('shipments.title') },
       ])
     }

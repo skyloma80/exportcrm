@@ -31,7 +31,7 @@ export default function EditOrderPage({ params }: PageProps) {
     if (order) {
       setBreadcrumbItems([
         { label: t("nav.orders"), href: "/orders" },
-        { label: order.code, href: `/orders/${order.id}` },
+        { label: order.code || t("orders.detail"), href: `/orders/${order.id}` },
         { label: t("common.edit") },
       ])
     }

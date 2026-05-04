@@ -70,7 +70,7 @@ export default function OrderDetailPage({ params }: PageProps) {
       setBreadcrumbItems([
         { label: t("nav.orders"), href: "/orders" },
         {
-          label: order.code,
+          label: order.code || t("orders.detail"),
           href: `/orders/${order.id}`
         },
       ])

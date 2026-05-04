@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * New Shipment Page
@@ -80,7 +80,7 @@ export default function NewShipmentPage() {
   useEffect(() => {
     if (order) {
       setBreadcrumb([
-        { label: order.code, href: `/orders/${order.id}?project=${projectId}` },
+        { label: order.code || t("orders.detail"), href: `/orders/${order.id}?project=${projectId}` },
         { label: t('shipments.newShipment') },
       ]);
     }
