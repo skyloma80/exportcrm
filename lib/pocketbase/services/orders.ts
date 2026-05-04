@@ -646,7 +646,7 @@ class OrderService extends BaseCollectionService<Order> {
 
     // Create new order
     // Get customer name from expanded customer
-    const customerName = original.expand?.customer_id?.name || original.expand?.customer_id?.name_cn || original.customer_name || '';
+    const customerName = original.expand?.customer?.name || original.expand?.customer?.name_cn || original.customer_name || '';
 
     const newOrder = await this.createOrder({
       project: original.project,
