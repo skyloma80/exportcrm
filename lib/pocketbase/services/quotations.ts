@@ -53,7 +53,7 @@ export interface QuotationItemJSON {
   id: string;
   product_id: string;
   product_name: string;
-  part_number: string;
+  part_number?: string;
   description_en?: string;
   description_cn?: string;
   quantity: number;
