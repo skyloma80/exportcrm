@@ -105,7 +105,7 @@ export default function OrderPaymentsPage({ params }: PageProps) {
       {/* Payment Manager Component */}
       <PaymentManager
         orderId={id}
-        orderCode={order.code}
+        orderCode={order.code || ''}
         customerId={order.customer_id}
         projectId={order.project_id}
         totalAmount={order.total_amount}
