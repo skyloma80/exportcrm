@@ -180,7 +180,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
     
     const newSpec: CustomPalletSpec = {
       id: 'custom_' + Date.now(),
-      name: name + '（' + dimensions + '）',
+      name: name + '（' + dimensions + 'mm）',
       dimensions
     }
     
@@ -291,7 +291,10 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
             <SelectContent>
               {allPalletSpecs.map(spec => (
                 <SelectItem key={spec.code} value={spec.code}>
-                  {spec.name_cn} ({spec.length}×{spec.width}×{spec.height}mm)
+                  {spec.isCustom 
+                    ? spec.name_cn 
+                    : `${spec.name_cn} (${spec.length}×${spec.width}×${spec.height}mm)`
+                  }
                   {spec.isCustom && <span className="text-blue-500 ml-1">[自定义]</span>}
                 </SelectItem>
               ))}
