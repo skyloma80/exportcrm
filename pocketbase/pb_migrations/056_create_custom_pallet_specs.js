@@ -2,7 +2,7 @@
 
 /**
  * Migration: Create custom_pallet_specs collection
- * 自定义托盘规格
+ * 自定义托盘规格（简化版）
  */
 migrate((app) => {
   const collection = new Collection({
@@ -11,13 +11,6 @@ migrate((app) => {
     system: false,
     fields: [
         {
-            name: "code",
-            type: "text",
-            required: true,
-            min: 1,
-            max: 50
-        },
-        {
             name: "name",
             type: "text",
             required: true,
@@ -25,31 +18,11 @@ migrate((app) => {
             max: 200
         },
         {
-            name: "name_cn",
+            name: "dimensions",
             type: "text",
             required: true,
             min: 1,
-            max: 200
-        },
-        {
-            name: "length",
-            type: "number",
-            required: true
-        },
-        {
-            name: "width",
-            type: "number",
-            required: true
-        },
-        {
-            name: "height",
-            type: "number",
-            required: true
-        },
-        {
-            name: "maxLoad",
-            type: "number",
-            required: false
+            max: 50
         },
         {
             name: "is_active",

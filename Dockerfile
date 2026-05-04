@@ -1,4 +1,4 @@
-FROM docker.m.daocloud.io/library/node:22-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock .yarnrc ./
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
@@ -6,7 +6,7 @@ RUN corepack enable && \
     yarn config set registry https://registry.npmmirror.com && \
     yarn install
 
-FROM docker.m.daocloud.io/library/node:22-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
@@ -15,7 +15,7 @@ COPY . .
 COPY .env.local* ./
 RUN yarn build
 
-FROM docker.m.daocloud.io/library/node:22-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 # 安装基础依赖（PDF 使用 @react-pdf/renderer 客户端生成，无需 Chromium）

@@ -1,38 +1,16 @@
 import { RecordModel } from 'pocketbase';
 import { BaseCollectionService } from '../base-service';
-import { getPocketBase } from "@/lib/pocketbase/auth";
 
 export interface CustomPalletSpec extends RecordModel {
-  code: string;
-  name: string;
-  name_cn: string;
-  length: number;  // mm
-  width: number;   // mm
-  height: number;  // mm (pallet's own height)
-  maxLoad: number; // kg
+  name: string;           // 托盘名称，如"中国标准托盘"
+  dimensions: string;     // 尺寸规格，格式：长x宽x高，如"1200×1200×150"
   is_active: boolean;
   created_by?: string;
 }
 
 export interface CustomPalletSpecCreateInput {
-  code: string;
   name: string;
-  name_cn: string;
-  length: number;
-  width: number;
-  height: number;
-  maxLoad?: number;
-  is_active?: boolean;
-}
-
-export interface CustomPalletSpecUpdateInput {
-  code?: string;
-  name?: string;
-  name_cn?: string;
-  length?: number;
-  width?: number;
-  height?: number;
-  maxLoad?: number;
+  dimensions: string;
   is_active?: boolean;
 }
 
@@ -48,27 +26,50 @@ class CustomPalletSpecService extends BaseCollectionService<CustomPalletSpec> {
     });
   }
 
-  async getByCode(code: string): Promise<CustomPalletSpec | null> {
-    return this.getFirstListItem(`code = "${code}" && is_active = true`);
-  }
-
   async create(data: CustomPalletSpecCreateInput): Promise<CustomPalletSpec> {
     const specData = {
       ...data,
-      maxLoad: data.maxLoad || 1500,
       is_active: data.is_active !== undefined ? data.is_active : true,
     };
     
     return super.create(specData);
   }
 
-  async update(id: string, data: CustomPalletSpecUpdateInput): Promise<CustomPalletSpec> {
-    return super.update(id, data);
+  // 解析尺寸字符串，格式：1200×1200×150 或 1200*1200*150
+  parseDimensions(dimensions: string): { length: number; width: number; height: number } | null {
+    try {
+      const parts = dimensions.split(/[×x*]/).map(s => parseInt(s.trim()));
+      if (parts.length === 3 && parts.every(p => !isNaN(p) && p > 0)) {
+        return {
+          length: parts[0],
+          width: parts[1],
+          height: parts[2]
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
-  async delete(id: string): Promise<boolean> {
-    return super.delete(id);
+  // 转换为 PalletSpec 格式，用于计算
+  toPalletSpec(spec: CustomPalletSpec) {
+    const parsed = this.parseDimensions(spec.dimensions);
+    if (!parsed) return null;
+    
+    return {
+      code: `CUSTOM_${spec.id}`,
+      name: spec.name,
+      name_cn: spec.name,
+      length: parsed.length,
+      width: parsed.width,
+      height: parsed.height,
+      maxLoad: 1500, // 默认载重
+      isCustom: true,
+      id: spec.id
+    };
   }
 }
 
 export const customPalletSpecService = new CustomPalletSpecService();
+
