@@ -165,16 +165,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const canCalculate = validation.valid && parseResult.boxes.length > 0
   
   // Add custom pallet spec
-  const handleAddCustomSpec = async () => {
-    if (!user) {
-      toast({
-        title: '请先登录',
-        description: '需要登录后才能创建自定义托盘规格',
-        variant: 'destructive'
-      })
-      return
-    }
-    
+  const handleAddCustomSpec = () => {
     if (!customSpecForm.length || !customSpecForm.width || !customSpecForm.height) {
       toast({
         title: t('palletCalculator.customSpec.validationError') || '验证错误',
@@ -184,34 +175,26 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
       return
     }
     
-    // 自动生成名称和尺寸字符串
     const name = '自定义托盘规格'
-    const dimensions = `${customSpecForm.length}×${customSpecForm.width}×${customSpecForm.height}`
+    const dimensions = customSpecForm.length + '×' + customSpecForm.width + '×' + customSpecForm.height
     
-    try {
-      await customPalletSpecService.create({
-        name: `${name}（${dimensions}）`,
-        dimensions
-      })
-      toast({
-        title: t('palletCalculator.customSpec.createSuccess') || '创建成功',
-        description: t('palletCalculator.customSpec.createSuccessDesc') || '自定义托盘规格已保存'
-      })
-      setShowCustomSpecDialog(false)
-      setCustomSpecForm({
-        length: 1200,
-        width: 1200,
-        height: 150
-      })
-      loadCustomSpecs()
-    } catch (error: any) {
-      console.error('Failed to create custom pallet spec:', error)
-      toast({
-        title: t('palletCalculator.customSpec.createError') || '创建失败',
-        description: error.message,
-        variant: 'destructive'
-      })
+    const newSpec: CustomPalletSpec = {
+      id: 'custom_' + Date.now(),
+      name: name + '（' + dimensions + '）',
+      dimensions
     }
+    
+    saveCustomSpecs([...customSpecs, newSpec])
+    toast({
+      title: t('palletCalculator.customSpec.createSuccess') || '创建成功',
+      description: t('palletCalculator.customSpec.createSuccessDesc') || '自定义托盘规格已保存'
+    })
+    setShowCustomSpecDialog(false)
+    setCustomSpecForm({
+      length: 1200,
+      width: 1200,
+      height: 150
+    })
   }
   
   // Delete custom pallet spec

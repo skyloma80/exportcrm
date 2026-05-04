@@ -1,0 +1,33 @@
+﻿// Add custom pallet spec
+const handleAddCustomSpec = () => {
+if (!customSpecForm.length || !customSpecForm.width || !customSpecForm.height) {
+toast({
+title: t('palletCalculator.customSpec.validationError') || '验证错误',
+description: t('palletCalculator.customSpec.validationErrorDesc') || '请填写所有尺寸',
+variant: 'destructive'
+})
+return
+}
+
+// 自动生成名称和尺寸字符串
+const name = '自定义托盘规格'
+const dimensions = `+customSpecForm.length+'×'+customSpecForm.width+'×'+customSpecForm.height+`
+
+const newSpec: CustomPalletSpec = {
+id: 'custom_'+Date.now(),
+name: name+'（'+dimensions+'）',
+dimensions
+}
+
+saveCustomSpecs([...customSpecs, newSpec])
+toast({
+title: t('palletCalculator.customSpec.createSuccess') || '创建成功',
+description: t('palletCalculator.customSpec.createSuccessDesc') || '自定义托盘规格已保存'
+})
+setShowCustomSpecDialog(false)
+setCustomSpecForm({
+length: 1200,
+width: 1200,
+height: 150
+})
+}
