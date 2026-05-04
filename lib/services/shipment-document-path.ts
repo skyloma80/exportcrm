@@ -73,7 +73,8 @@ export function getPODocumentPath(
   supplierName: string
 ): string {
   const { customerName, projectName, orderCode } = info;
-  return `Customers/${sanitizePath(customerName)}/${sanitizePath(projectName)}/orders/${sanitizePath(orderCode)}/PurchaseOrders/${sanitizePath(supplierName)}`;
+  const code = orderCode || 'unknown';
+  return `Customers/${sanitizePath(customerName)}/${sanitizePath(projectName)}/orders/${sanitizePath(code)}/PurchaseOrders/${sanitizePath(supplierName)}`;
 }
 
 /**
@@ -86,7 +87,8 @@ export function getShipmentDocumentPath(
   docType: ShipmentDocumentType
 ): string {
   const { customerName, projectName, orderCode } = info;
-  return `Customers/${sanitizePath(customerName)}/${sanitizePath(projectName)}/orders/${sanitizePath(orderCode)}/shipments_${shipmentIndex}/${docType}`;
+  const code = orderCode || 'unknown';
+  return `Customers/${sanitizePath(customerName)}/${sanitizePath(projectName)}/orders/${sanitizePath(code)}/shipments_${shipmentIndex}/${docType}`;
 }
 
 /**
