@@ -928,10 +928,14 @@ class OrderTemplateService extends BaseCollectionService<OrderTemplate> {
       items?: Array<{ product: string; quantity: number; unit_price: number }>;
     };
 
+    const customer = await this.pb.collection('customers').getOne(customerId);
+    const customerName = customer.name || customer.name_cn || '';
+
     // Create order
     const order = await orderService.createOrder({
       project: projectId,
       customer: customerId,
+      customer_name: customerName,
       incoterm: data.incoterm,
       port_of_loading: data.port_of_loading,
       port_of_destination: data.port_of_destination,
