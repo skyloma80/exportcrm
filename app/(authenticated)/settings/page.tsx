@@ -6,10 +6,9 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Building2, Ruler, CreditCard } from 'lucide-react';
+import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Ruler, CreditCard } from 'lucide-react';
 import { BrandingConfigCard } from '@/components/settings/branding-config-card';
 import { FeedbackManagement } from '@/components/settings/feedback-management';
-import Link from 'next/link';
 export default function SettingsPage() {
   const { t, locale } = useI18n();
   const { toast } = useToast();
@@ -128,10 +127,6 @@ export default function SettingsPage() {
             <Settings className="mr-2 h-4 w-4" />
             {t('settings.brandingLabel')}
           </TabsTrigger>
-          <TabsTrigger value="bank-accounts">
-            <Building2 className="mr-2 h-4 w-4" />
-            {locale === 'zh' ? '银行账户' : 'Bank Accounts'}
-          </TabsTrigger>
           <TabsTrigger value="remittance">
             <CreditCard className="mr-2 h-4 w-4" />
             {locale === 'zh' ? '汇款模板' : 'Remittance'}
@@ -146,25 +141,6 @@ export default function SettingsPage() {
 
         <TabsContent value="branding">
           <BrandingConfigCard />
-        </TabsContent>
-
-        <TabsContent value="bank-accounts">
-          <div className="rounded-lg border bg-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-medium">{locale === 'zh' ? '银行账户管理' : 'Bank Account Management'}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {locale === 'zh' ? '配置公司银行账户，在订单中快速引用' : 'Configure company bank accounts for quick reference in orders'}
-                </p>
-              </div>
-              <Link href="/settings/bank-accounts">
-                <Button>
-                  <Building2 className="mr-2 h-4 w-4" />
-                  {locale === 'zh' ? '管理银行账户' : 'Manage Accounts'}
-                </Button>
-              </Link>
-            </div>
-          </div>
         </TabsContent>
 
         <TabsContent value="remittance">

@@ -1,6 +1,7 @@
 import { RecordModel } from 'pocketbase';
 import { BaseCollectionService } from '../base-service';
 import { getPocketBase } from '../client';
+import { generateOrderCode } from '@/lib/services/code-generator';
 
 export type SOStatus = 'draft' | 'confirmed' | 'in_production' | 'ready_to_ship' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
 
@@ -18,7 +19,7 @@ export interface SOItem {
 }
 
 export interface SOCreateInput {
-  code: string;
+  code?: string;
   customer_id?: string;
   customer_name: string;
   customer_address?: string;
@@ -59,6 +60,16 @@ export class SOService extends BaseCollectionService<FlatSO> {
     } catch (e) {
       return null;
     }
+  }
+
+  async create(data: Partial<FlatSO>): Promise<FlatSO> {
+    const pb = getPocketBase();
+    
+    if (!data.code) {
+      data.code = await generateOrderCode(pb);
+    }
+    
+    return pb.collection('so').create<FlatSO>(data);
   }
 }
 

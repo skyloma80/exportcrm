@@ -1,11 +1,12 @@
 import { RecordModel } from 'pocketbase';
 import { BaseCollectionService } from '../base-service';
 import { getPocketBase } from '../client';
+import { generatePOCode } from '@/lib/services/code-generator';
 
 export type POStatus = 'draft' | 'sent' | 'confirmed' | 'in_production' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
 
 export interface POItem {
-  id?: string; // Client-side tracking ID
+  id?: string;
   part_number?: string;
   product_name?: string;
   product_code?: string;
@@ -18,7 +19,7 @@ export interface POItem {
 }
 
 export interface POCreateInput {
-  code: string;
+  code?: string;
   supplier_id?: string;
   supplier_name: string;
   currency: string;
@@ -45,28 +46,14 @@ export class POService extends BaseCollectionService<FlatPO> {
     }
   }
 
-  // Generate a new sequential PO code (e.g., PO-20231015-01)
-  async generateNextPOCode(): Promise<string> {
+  async create(data: Partial<FlatPO>): Promise<FlatPO> {
     const pb = getPocketBase();
-    const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const prefix = `PO-${datePrefix}-`;
     
-    try {
-      const records = await pb.collection('po').getList(1, 1, {
-        filter: `code ~ "^${prefix}"`,
-        sort: '-code',
-      });
-      
-      if (records.items.length > 0) {
-        const lastCode = records.items[0].code;
-        const lastNum = parseInt(lastCode.split('-').pop() || '0', 10);
-        return `${prefix}${String(lastNum + 1).padStart(2, '0')}`;
-      }
-    } catch (e) {
-      console.error("Error generating PO code", e);
+    if (!data.code) {
+      data.code = await generatePOCode(pb);
     }
     
-    return `${prefix}01`;
+    return pb.collection('po').create<FlatPO>(data);
   }
 }
 

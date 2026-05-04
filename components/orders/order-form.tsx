@@ -35,8 +35,7 @@ import { getRate } from "@/lib/services/exchange-rate"
 import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so"
 import type { Product } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
-import { RefreshCw, Wand2 } from "lucide-react"
-import { codeGenerator } from "@/lib/services/code-generator"
+import { RefreshCw } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -104,18 +103,6 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
   const formatDateForInput = (dateStr?: string): string => {
     if (!dateStr) return ""
     return dateStr.split(" ")[0].split("T")[0]
-  }
-
-  // 自动生成销售单号
-  const generateSoCode = async () => {
-    try {
-      const newCode = await codeGenerator.generateOrderCode();
-      setFormData(prev => ({ ...prev, code: newCode }));
-      toast({ title: t("orders.columns.code") + " 已生成", description: newCode });
-    } catch (error) {
-      console.error('Failed to generate order code:', error);
-      toast({ title: "生成失败", description: "无法生成订单号", variant: "destructive" });
-    }
   }
 
   const [formData, setFormData] = useState({
@@ -210,7 +197,6 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
-    if (!formData.code) newErrors.code = t("validation.required")
     if (!formData.customer_name) newErrors.customer_name = t("validation.required")
 
     if (localItems.length === 0) {
@@ -252,24 +238,14 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t("orders.columns.code")} <span className="text-destructive">*</span></Label>
-              <div className="flex gap-2">
-                <Input
-                  value={formData.code}
-                  onChange={(e) => !isEdit && setFormData(prev => ({ ...prev, code: e.target.value }))}
-                  placeholder="A2604-001"
-                  required
-                  className="flex-1"
-                  readOnly={isEdit}
-                  disabled={isEdit}
-                />
-                {!isEdit && (
-                  <Button type="button" variant="outline" size="sm" onClick={generateSoCode}>
-                    <Wand2 className="w-4 h-4 mr-1" />
-                    {locale === 'zh' ? '生成' : 'Generate'}
-                  </Button>
-                )}
-              </div>
+              <Label>{t("orders.columns.code")}</Label>
+              <Input
+                value={formData.code || (locale === 'zh' ? '保存时自动生成' : 'Auto-generated on save')}
+                placeholder="A2604-001"
+                className="flex-1"
+                readOnly
+                disabled
+              />
             </div>
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
