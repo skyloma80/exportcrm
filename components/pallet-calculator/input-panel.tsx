@@ -147,19 +147,19 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   
   // Calculate effective height
   const effectiveHeight = useMemo(() => 
-    maxHeight - selectedPalletSpec.height,
-    [maxHeight, selectedPalletSpec.height]
+    maxHeight - (selectedPalletSpec?.height || 150),
+    [maxHeight, selectedPalletSpec?.height]
   )
   
   // Validation
   const validation = useMemo(() => 
     validateCalculatorConfig({
       maxHeight,
-      palletHeight: selectedPalletSpec.height,
+      palletHeight: selectedPalletSpec?.height || 150,
       overhangTolerance,
       heightTolerance
     }),
-    [maxHeight, selectedPalletSpec.height, overhangTolerance, heightTolerance]
+    [maxHeight, selectedPalletSpec?.height, overhangTolerance, heightTolerance]
   )
   
   const canCalculate = validation.valid && parseResult.boxes.length > 0
@@ -201,6 +201,12 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const handleDeleteCustomSpec = (id: string) => {
     const updated = customSpecs.filter(s => s.id !== id)
     saveCustomSpecs(updated)
+    
+    // 如果删除的是当前选中的规格，重置选择到第一个标准规格
+    if (selectedPalletSpec?.id === id) {
+      setPalletSpecCode(PALLET_SPECS[4].code) // 默认选择 CN12
+    }
+    
     toast({
       title: t('palletCalculator.customSpec.deleteSuccess') || '删除成功'
     })
