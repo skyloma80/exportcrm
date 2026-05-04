@@ -2706,8 +2706,6 @@
       "length": "长",
       "width": "宽",
       "height": "高",
-      "autoName": "自定义托盘规格",
-      "preview": "预览",
       "validationError": "验证错误",
       "validationErrorDesc": "请填写所有尺寸",
       "createSuccess": "创建成功",

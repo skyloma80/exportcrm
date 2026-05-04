@@ -2725,8 +2725,6 @@
       "length": "Length",
       "width": "Width",
       "height": "Height",
-      "autoName": "Custom Pallet Spec",
-      "preview": "Preview",
       "validationError": "Validation Error",
       "validationErrorDesc": "Please fill in all dimensions",
       "createSuccess": "Created Successfully",

@@ -151,12 +151,12 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
     }
     
     // 自动生成名称和尺寸字符串
-    const name = t('palletCalculator.customSpec.autoName') || '自定义托盘规格'
-    const dimensions = \×\×\
+    const name = '自定义托盘规格'
+    const dimensions = `${customSpecForm.length}×${customSpecForm.width}×${customSpecForm.height}`
     
     try {
       await customPalletSpecService.create({
-        name: \（\）\,
+        name: `${name}（${dimensions}）`,
         dimensions
       })
       toast({
@@ -494,9 +494,9 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
             </div>
             <div className="bg-muted rounded-lg p-3 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <span>{t('palletCalculator.customSpec.preview') || '预览'}:</span>
+                <span>预览:</span>
                 <span className="font-medium text-foreground">
-                  {t('palletCalculator.customSpec.autoName') || '自定义托盘规格'}（{customSpecForm.length}×{customSpecForm.width}×{customSpecForm.height}）
+                  自定义托盘规格（{customSpecForm.length}×{customSpecForm.width}×{customSpecForm.height}）
                 </span>
               </div>
             </div>
