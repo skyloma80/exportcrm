@@ -20,6 +20,8 @@ migrate((app) => {
     return app.save(existing);
   }
 
+  const quotationsCollection = app.findCollectionByNameOrId("quotations");
+  
   const collection = new Collection({
     name: "so",
     type: "base",
@@ -58,8 +60,16 @@ migrate((app) => {
         maxSelect: 1,
         values: ["draft", "confirmed", "in_production", "ready_to_ship", "shipped", "delivered", "completed", "cancelled"]
       },
-      { name: "items", type: "json", required: false }
-    ]
+      { name: "items", type: "json", required: false },
+      quotationsCollection ? {
+        name: "quotation",
+        type: "relation",
+        required: false,
+        collectionId: quotationsCollection.id,
+        cascadeDelete: false,
+        maxSelect: 1
+      } : null
+    ].filter(Boolean)
   });
 
   return app.save(collection);
