@@ -4,7 +4,7 @@ COPY package.json yarn.lock .yarnrc ./
 ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
 RUN corepack enable && \
     yarn config set registry https://registry.npmmirror.com && \
-    yarn install
+    yarn install --ignore-engines
 
 FROM node:20-alpine AS builder
 WORKDIR /app
