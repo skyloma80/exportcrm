@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Ruler, CreditCard } from 'lucide-react';
+import Link from 'next/link';
 import { BrandingConfigCard } from '@/components/settings/branding-config-card';
 import { FeedbackManagement } from '@/components/settings/feedback-management';
 export default function SettingsPage() {
