@@ -134,7 +134,7 @@ Best regards,`
         }
         
         setOrder(orderData)
-        setOrderCode(orderData.code)
+        setOrderCode(orderData.code || '')
         
         // Get customer info
         const customer = (orderData as any).expand?.customer_id
