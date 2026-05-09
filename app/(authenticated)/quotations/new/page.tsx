@@ -40,7 +40,7 @@ import { PaymentTermsSelect } from '@/components/ui/payment-terms-select'
 import { QuotationItemsTable } from '@/components/quotations/quotation-items-table'
 import { CostBreakdownSection } from '@/components/quotations/cost-breakdown-section'
 import { ProductSelectDialog } from '@/components/orders/product-select-dialog'
-import { Product } from '@/lib/pocketbase/services/products'
+import { Product, productService } from '@/lib/pocketbase/services/products'
 
 // 工具函数导入
 import {
@@ -251,7 +251,8 @@ export default function NewQuotationPage() {
   }, [state.currency, toast])
 
   // Handle product selection from product library
-  const handleProductSelect = (products: Product[]) => {
+  const handleProductSelect = async (productIds: string[]) => {
+    const products = await productService.getByIds(productIds)
     const newItems: QuotationItemData[] = products.map((product, index) => {
       return {
         id: `product-${Date.now()}-${index}`,

@@ -34,6 +34,7 @@ import { CURRENCIES, COMMON_CURRENCIES } from "@/lib/constants/currencies"
 import { getRate } from "@/lib/services/exchange-rate"
 import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so"
 import type { Product } from "@/lib/pocketbase/services/products"
+import { productService } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
 import { RefreshCw } from "lucide-react"
 import {
@@ -65,7 +66,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
   const [localItems, setLocalItems] = useState<SOItem[]>(initialData?.items || [])
   const [showProductSearch, setShowProductSearch] = useState(false)
 
-  const handleAddProduct = (products: any[]) => {
+  const handleAddProduct = async (productIds: string[]) => {
+    const products = await productService.getByIds(productIds)
     setLocalItems(prev => [
       ...prev,
       ...products.map(product => ({

@@ -41,6 +41,7 @@ import { getRate } from '@/lib/services/exchange-rate'
 import { findCurrencyByCode, INCOTERMS } from '@/lib/constants/trade-constants'
 import type { Quotation } from '@/lib/pocketbase/services/quotations'
 import type { Product } from '@/lib/pocketbase/services/products'
+import { productService } from '@/lib/pocketbase/services/products'
 import { useBreadcrumb } from '@/lib/breadcrumb/context'
 import { useProjectContext } from '@/hooks/use-project-context'
 
@@ -346,7 +347,8 @@ export default function EditQuotationPage({ params }: PageProps) {
     setState(prev => ({ ...prev, items }))
   }
 
-  const handleProductSelect = (products: Product[]) => {
+  const handleProductSelect = async (productIds: string[]) => {
+    const products = await productService.getByIds(productIds)
     const newItems = products.map(product => ({
       id: `prod-${product.id}-${Date.now()}`,
       productId: product.id,

@@ -33,6 +33,7 @@ import { CURRENCIES, COMMON_CURRENCIES } from "@/lib/constants/currencies"
 import { getRate } from "@/lib/services/exchange-rate"
 import type { PurchaseOrder, POCreateInput, PurchaseOrderItem } from "@/lib/pocketbase/services/purchase-orders"
 import type { Product } from "@/lib/pocketbase/services/products"
+import { productService } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
 import {
   Table,
@@ -65,7 +66,8 @@ export function PurchaseOrderForm({ initialData, onSubmit, isLoading, items }: P
     }
   }, [items])
 
-  const handleAddProduct = (products: any[]) => {
+  const handleAddProduct = async (productIds: string[]) => {
+    const products = await productService.getByIds(productIds)
     setLocalItems(prev => [
       ...prev,
       ...products.map(product => ({

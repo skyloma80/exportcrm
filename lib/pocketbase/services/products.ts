@@ -162,6 +162,15 @@ class ProductService extends BaseCollectionService<Product> {
   }
 
   /**
+   * Get products by IDs
+   */
+  async getByIds(ids: string[]): Promise<Product[]> {
+    if (ids.length === 0) return [];
+    const filter = ids.map(id => `id = "${id}"`).join(' || ');
+    return this.getFullList({ filter });
+  }
+
+  /**
    * Search products by name (supports both English and Chinese)
    */
   async search(query: string, options?: { page?: number; perPage?: number; categoryId?: string }): Promise<{

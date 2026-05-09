@@ -30,7 +30,7 @@ import { useI18n } from "@/lib/i18n/use-i18n"
 import { Loader2, Plus, Trash2, Package, Building2, Settings } from "lucide-react"
 import { ProjectSelectDialog } from "./project-select-dialog"
 import { ProductSelectDialog as CommonProductSelectDialog } from "@/components/orders/product-select-dialog"
-import { Product, ProductSelectItem } from "@/lib/pocketbase/services/products"
+import { ProductSelectItem, productService } from "@/lib/pocketbase/services/products"
 import { SupplierSelectDialog, SupplierSelectItem } from "./supplier-select-dialog"
 import { ProjectWithRelations } from "@/lib/pocketbase/services/projects"
 import { RFQ, RFQStatus } from "@/lib/pocketbase/services/rfqs"
@@ -167,7 +167,8 @@ export function RFQForm({ initialData, onSubmit, isLoading, projectLocked }: RFQ
     }
   }
 
-  const handleProductsSelect = (products: Product[]) => {
+  const handleProductsSelect = async (productIds: string[]) => {
+    const products = await productService.getByIds(productIds)
     const items: ProductSelectItem[] = products.map(p => ({
       product: p.id,
       productName: p.name,

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table"
 
 import { ProductSelectDialog } from "@/components/orders/product-select-dialog"
+import { productService } from "@/lib/pocketbase/services/products"
 
 export interface POFormProps {
   initialData?: Partial<FlatPO>
@@ -83,7 +84,8 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
     ])
   }
 
-  const handleAddLibraryProducts = (products: any[]) => {
+  const handleAddLibraryProducts = async (productIds: string[]) => {
+    const products = await productService.getByIds(productIds)
     setItems(prev => [
       ...prev,
       ...products.map(product => ({

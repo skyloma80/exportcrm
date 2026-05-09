@@ -27,7 +27,7 @@ interface ProductWithProjects extends Product {
 interface ProductSelectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (products: Product[]) => void
+  onSelect: (productIds: string[]) => void
   projectId?: string
 }
 
@@ -139,18 +139,13 @@ export function ProductSelectDialog({
               className="font-semibold text-[12px] text-slate-900 truncate max-w-[200px] cursor-pointer hover:text-primary hover:underline"
               onClick={(e) => {
                 e.stopPropagation()
-                router.push(`/products/${row.original.id}`)
+                window.open(`${window.location.origin}/products/${row.original.id}`, '_blank')
               }}
             >
               {name}
             </span>
-            <ExternalLink 
-              className="h-3 w-3 text-slate-400 hover:text-primary cursor-pointer" 
-              onClick={(e) => {
-                e.stopPropagation()
-                router.push(`/products/${row.original.id}`)
-              }}
-            />
+
+
           </div>
         )
       },
@@ -196,8 +191,8 @@ export function ProductSelectDialog({
   ], [t, locale, selectedIds, categories])
 
   const handleConfirm = () => {
-    const selected = products.filter(p => selectedIds.has(p.id))
-    onSelect(selected)
+    const selectedIdsArray = Array.from(selectedIds)
+    onSelect(selectedIdsArray)
     onOpenChange(false)
   }
 
