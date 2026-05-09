@@ -148,6 +148,7 @@ export const PALLET_SPECS = [
   { code: 'US48', name: 'US Standard', name_cn: '美标托盘', length: 1219, width: 1016, height: 150, maxLoad: 1500 },
   { code: 'CN12', name: 'China Standard', name_cn: '中国标准托盘', length: 1200, width: 1200, height: 150, maxLoad: 1500 },
   { code: 'CN11', name: 'China 1100', name_cn: '中国1100托盘', length: 1100, width: 1100, height: 150, maxLoad: 1500 },
+  { code: 'KR10', name: 'Korea/Japan 1000', name_cn: '日韩标准托盘', length: 1000, width: 1000, height: 150, maxLoad: 1500 },
 ] as const
 
 export type PalletSpecCode = typeof PALLET_SPECS[number]['code']

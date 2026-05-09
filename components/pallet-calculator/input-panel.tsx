@@ -230,10 +230,10 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const handleSmartCalculate = useCallback(() => {
     if (parseResult.boxes.length === 0) return
     
-    // 使用混合托盘算法
+    // 使用混合托盘算法（包括自定义托盘规格）
     const result = calculateMixedPalletPlan(
       parseResult.boxes,
-      PALLET_SPECS.map(s => ({ code: s.code, name_cn: s.name_cn, length: s.length, width: s.width, height: s.height })),
+      allPalletSpecs.map(s => ({ code: s.code, name_cn: s.name_cn, length: s.length, width: s.width, height: s.height })),
       {
         effectiveHeight: maxHeight - 150, // 使用平均托盘高度
         overhangTolerance,
@@ -248,7 +248,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
     
     setPalletSpecCode(primarySpecCode)
     
-    const primarySpec = PALLET_SPECS.find(s => s.code === primarySpecCode) as PalletSpec
+    const primarySpec = allPalletSpecs.find(s => s.code === primarySpecCode) as PalletSpec
     
     onCalculate({
       palletSpec: primarySpec,
@@ -264,7 +264,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
         volumeSaved: result.totalVolumeSaved
       }
     }, parseResult)
-  }, [parseResult, maxHeight, overhangTolerance, heightTolerance, selectedMaterial, selectedPalletSpec.code, boxDimensionsText, averageBoxWeight, onCalculate])
+  }, [parseResult, maxHeight, overhangTolerance, heightTolerance, selectedMaterial, selectedPalletSpec.code, boxDimensionsText, averageBoxWeight, onCalculate, allPalletSpecs])
 
   return (
     <Card className="h-full">
