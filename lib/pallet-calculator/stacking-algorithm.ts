@@ -210,8 +210,28 @@ function getAvailableHeights(allPlacedBoxes: PlacedBoxInfo[]): number[] {
 }
 
 /**
+ * 获取指定高度以下所有箱子的水平包围盒
+ * 用于约束上层箱子的放置范围，防止"上宽下窄"的不稳定堆叠
+ */
+function getLowerLayerFootprint(
+  allPlacedBoxes: PlacedBoxInfo[],
+  currentZ: number
+): { minX: number; maxX: number; minY: number; maxY: number } | null {
+  const lowerBoxes = allPlacedBoxes.filter(b => b.z < currentZ)
+  if (lowerBoxes.length === 0) return null
+
+  return {
+    minX: Math.min(...lowerBoxes.map(b => b.x)),
+    maxX: Math.max(...lowerBoxes.map(b => b.x + b.l)),
+    minY: Math.min(...lowerBoxes.map(b => b.y)),
+    maxY: Math.max(...lowerBoxes.map(b => b.y + b.w))
+  }
+}
+
+/**
  * 找空位算法：在托盘上找到可以放置箱子的位置
  * 使用 Bottom-Left 策略：优先放在最低、最左的位置
+ * @param footprint 下层包围盒约束（z>0时传入，防止上层超出下层范围）
  */
 function findFreePosition(
   boxL: number,
@@ -219,13 +239,26 @@ function findFreePosition(
   boxH: number,
   z: number,
   allPlacedBoxes: PlacedBoxInfo[],
-  config: StackingConfig
+  config: StackingConfig,
+  footprint?: { minX: number; maxX: number; minY: number; maxY: number } | null
 ): { x: number; y: number } | null {
   const maxOverhangPerSide = config.overhangTolerance / 2
-  const minX = -maxOverhangPerSide
-  const minY = -maxOverhangPerSide
-  const maxX = config.palletLength + maxOverhangPerSide - boxL
-  const maxY = config.palletWidth + maxOverhangPerSide - boxW
+
+  // z>0 时：候选范围约束在下层包围盒内（防止上宽下窄）
+  // z=0 时：使用完整托盘范围（含悬空公差）
+  let minX: number, minY: number, maxX: number, maxY: number
+  if (z > 0 && footprint) {
+    // 上层：x/y 范围约束在下层包围盒内
+    minX = footprint.minX
+    minY = footprint.minY
+    maxX = footprint.maxX - boxL
+    maxY = footprint.maxY - boxW
+  } else {
+    minX = -maxOverhangPerSide
+    minY = -maxOverhangPerSide
+    maxX = config.palletLength + maxOverhangPerSide - boxL
+    maxY = config.palletWidth + maxOverhangPerSide - boxW
+  }
 
   // 如果箱子太大，放不下
   if (maxX < minX || maxY < minY) {
@@ -235,7 +268,6 @@ function findFreePosition(
   // 收集所有可能的 X 坐标候选点
   const xCandidates = new Set<number>([minX, 0])
   for (const placed of allPlacedBoxes) {
-    // 考虑所有层的箱子边缘作为候选点
     xCandidates.add(placed.x) // 箱子左边
     xCandidates.add(placed.x + placed.l) // 箱子右边
   }
@@ -243,7 +275,6 @@ function findFreePosition(
   // 收集所有可能的 Y 坐标候选点
   const yCandidates = new Set<number>([minY, 0])
   for (const placed of allPlacedBoxes) {
-    // 考虑所有层的箱子边缘作为候选点
     yCandidates.add(placed.y) // 箱子后边
     yCandidates.add(placed.y + placed.w) // 箱子前边
   }
@@ -364,13 +395,16 @@ function stackOnPallet(
             continue
           }
 
+          // 获取下层包围盒（z>0时，上层放置必须约束在下层范围内，防止"上宽下窄"）
+          const footprint = z > 0 ? getLowerLayerFootprint(allPlacedBoxes, z) : null
+
           // 智能策略选择：
           // - 如果当前层是空的，优先使用网格算法（保证居中对齐）
           // - 如果当前层已有相同尺寸的箱子，继续使用网格算法（保持居中）
           // - 如果当前层有不同尺寸的箱子，使用找空位算法（灵活填充）
           const boxesAtThisLevel = allPlacedBoxes.filter(b => b.z === z)
           const isEmptyLevel = boxesAtThisLevel.length === 0
-          
+
           // 检查当前层是否都是相同尺寸
           let allSameSize = true
           if (boxesAtThisLevel.length > 0) {
@@ -386,19 +420,32 @@ function stackOnPallet(
               allSameSize = false
             }
           }
-          
+
           const useGridFirst = isEmptyLevel || allSameSize
-          
+
           if (useGridFirst) {
-            // 空层或相同尺寸：优先网格算法（居中对齐）
-            const layout = calculateGridLayout(l, w, config.palletLength, config.palletWidth, config.overhangTolerance)
+            // 空层或相同尺寸：使用网格算法
+            // z>0 时：网格基于下层包围盒尺寸（防止上层超出下层），z=0 时：基于完整托盘
+            let gridL = config.palletLength
+            let gridW = config.palletWidth
+            let gridBaseX = 0
+            let gridBaseY = 0
+
+            if (z > 0 && footprint) {
+              gridL = footprint.maxX - footprint.minX
+              gridW = footprint.maxY - footprint.minY
+              gridBaseX = footprint.minX
+              gridBaseY = footprint.minY
+            }
+
+            const layout = calculateGridLayout(l, w, gridL, gridW, z > 0 ? 0 : config.overhangTolerance)
 
             if (layout.countX > 0 && layout.countY > 0) {
               // 在网格中找空位
               for (let iy = 0; iy < layout.countY && !placed; iy++) {
                 for (let ix = 0; ix < layout.countX && !placed; ix++) {
-                  const x = layout.offsetX + ix * l
-                  const y = layout.offsetY + iy * w
+                  const x = gridBaseX + layout.offsetX + ix * l
+                  const y = gridBaseY + layout.offsetY + iy * w
 
                   // 检查是否与已放置的箱子重叠（3D检查）
                   if (!canPlaceAt3D(x, y, z, l, w, h, allPlacedBoxes)) {
@@ -418,9 +465,9 @@ function stackOnPallet(
               }
             }
 
-            // 网格失败，尝试找空位
+            // 网格失败，尝试找空位（传入 footprint 约束上层范围）
             if (!placed) {
-              const freePos = findFreePosition(l, w, h, z, allPlacedBoxes, config)
+              const freePos = findFreePosition(l, w, h, z, allPlacedBoxes, config, footprint)
               if (freePos) {
                 placeBox(freePos.x, freePos.y, z, l, w, h, box, rotation, allPlacedBoxes, placedBoxResults, config)
                 placed = true
@@ -429,8 +476,8 @@ function stackOnPallet(
               }
             }
           } else {
-            // 混合尺寸层：优先找空位算法（更灵活）
-            const freePos = findFreePosition(l, w, h, z, allPlacedBoxes, config)
+            // 混合尺寸层：优先找空位算法（传入 footprint 约束上层范围）
+            const freePos = findFreePosition(l, w, h, z, allPlacedBoxes, config, footprint)
             if (freePos) {
               placeBox(freePos.x, freePos.y, z, l, w, h, box, rotation, allPlacedBoxes, placedBoxResults, config)
               placed = true
@@ -438,15 +485,26 @@ function stackOnPallet(
               break
             }
 
-            // 找空位失败，尝试网格
-            const layout = calculateGridLayout(l, w, config.palletLength, config.palletWidth, config.overhangTolerance)
+            // 找空位失败，尝试网格（同样约束在下层范围内）
+            let gridL = config.palletLength
+            let gridW = config.palletWidth
+            let gridBaseX = 0
+            let gridBaseY = 0
+
+            if (z > 0 && footprint) {
+              gridL = footprint.maxX - footprint.minX
+              gridW = footprint.maxY - footprint.minY
+              gridBaseX = footprint.minX
+              gridBaseY = footprint.minY
+            }
+
+            const layout = calculateGridLayout(l, w, gridL, gridW, z > 0 ? 0 : config.overhangTolerance)
 
             if (layout.countX > 0 && layout.countY > 0) {
-              // 在网格中找空位
               for (let iy = 0; iy < layout.countY && !placed; iy++) {
                 for (let ix = 0; ix < layout.countX && !placed; ix++) {
-                  const x = layout.offsetX + ix * l
-                  const y = layout.offsetY + iy * w
+                  const x = gridBaseX + layout.offsetX + ix * l
+                  const y = gridBaseY + layout.offsetY + iy * w
 
                   // 检查是否与已放置的箱子重叠（3D检查）
                   if (!canPlaceAt3D(x, y, z, l, w, h, allPlacedBoxes)) {
@@ -744,8 +802,27 @@ export function calculateMixedPalletPlan(
   }
 
   const allPallets: PalletPlan[] = []
-  let remainingBoxes = [...boxes]
   const palletCounts = new Map<string, number>()
+
+  // 相同规格优先策略：按规格分组后排序，使相同规格箱子聚合
+  // 这样贪心时优先把同一规格的箱子填满一个托盘，避免混放导致的上宽下窄问题
+  const specOrder = new Map<string, number>()
+  for (const box of boxes) {
+    const key = `${box.length}x${box.width}x${box.height}`
+    specOrder.set(key, (specOrder.get(key) || 0) + 1)
+  }
+  // 按数量从多到少排序规格，数量多的规格优先整批放置
+  const sortedSpecKeys = Array.from(specOrder.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k)
+
+  let remainingBoxes = [...boxes].sort((a, b) => {
+    const keyA = `${a.length}x${a.width}x${a.height}`
+    const keyB = `${b.length}x${b.width}x${b.height}`
+    const idxA = sortedSpecKeys.indexOf(keyA)
+    const idxB = sortedSpecKeys.indexOf(keyB)
+    return idxA - idxB
+  })
 
   // 贪心策略：每次选择最优托盘规格
   while (remainingBoxes.length > 0) {
