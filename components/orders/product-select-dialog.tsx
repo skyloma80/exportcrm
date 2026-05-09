@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Package, Search, Loader2, X, Plus, Filter, CheckCircle2 } from "lucide-react"
+import { Package, Search, Loader2, X, Plus, Filter, CheckCircle2, ExternalLink } from "lucide-react"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { Product, productService, productCategoryService, ProductCategory } from "@/lib/pocketbase/services/products"
 import { projectService, productProjectService, Project } from "@/lib/pocketbase/services/projects"
@@ -36,6 +37,7 @@ export function ProductSelectDialog({
   onSelect,
   projectId: initialProjectId,
 }: ProductSelectDialogProps) {
+  const router = useRouter()
   const { t, locale } = useI18n()
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState<ProductWithProjects[]>([])
@@ -133,7 +135,22 @@ export function ProductSelectDialog({
             <div className="p-1.5 bg-slate-100 rounded-md">
               <Package className="h-3.5 w-3.5 text-slate-600" />
             </div>
-            <span className="font-semibold text-[12px] text-slate-900 truncate max-w-[200px]">{name}</span>
+            <span 
+              className="font-semibold text-[12px] text-slate-900 truncate max-w-[200px] cursor-pointer hover:text-primary hover:underline"
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/products/${row.original.id}`)
+              }}
+            >
+              {name}
+            </span>
+            <ExternalLink 
+              className="h-3 w-3 text-slate-400 hover:text-primary cursor-pointer" 
+              onClick={(e) => {
+                e.stopPropagation()
+                router.push(`/products/${row.original.id}`)
+              }}
+            />
           </div>
         )
       },

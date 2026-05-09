@@ -29,7 +29,8 @@ import {
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { Loader2, Plus, Trash2, Package, Building2, Settings } from "lucide-react"
 import { ProjectSelectDialog } from "./project-select-dialog"
-import { ProductSelectDialog, RFQItemInput } from "./product-select-dialog"
+import { ProductSelectDialog as CommonProductSelectDialog } from "@/components/orders/product-select-dialog"
+import { Product, ProductSelectItem } from "@/lib/pocketbase/services/products"
 import { SupplierSelectDialog, SupplierSelectItem } from "./supplier-select-dialog"
 import { ProjectWithRelations } from "@/lib/pocketbase/services/projects"
 import { RFQ, RFQStatus } from "@/lib/pocketbase/services/rfqs"
@@ -47,7 +48,7 @@ export interface RFQFormData {
   status: RFQStatus
   deadline?: string
   remarks?: string
-  items: RFQItemInput[]
+  items: ProductSelectItem[]
   suppliers: SupplierSelectItem[]
 }
 
@@ -69,7 +70,7 @@ interface ProjectDataForForm {
 
 export interface RFQFormProps {
   initialData?: Partial<RFQ> & {
-    items?: RFQItemInput[]
+    items?: ProductSelectItem[]
     suppliers?: SupplierSelectItem[]
     projectData?: ProjectDataForForm
   }
@@ -166,7 +167,17 @@ export function RFQForm({ initialData, onSubmit, isLoading, projectLocked }: RFQ
     }
   }
 
-  const handleProductsSelect = (items: RFQItemInput[]) => {
+  const handleProductsSelect = (products: Product[]) => {
+    const items: ProductSelectItem[] = products.map(p => ({
+      product: p.id,
+      productName: p.name,
+      productNameCn: p.name_cn,
+      productCode: p.code,
+      unit: p.unit,
+      quantity: 1,
+      target_price: undefined,
+      remarks: "",
+    }))
     setFormData(prev => ({
       ...prev,
       items: [...prev.items, ...items],
@@ -206,7 +217,7 @@ export function RFQForm({ initialData, onSubmit, isLoading, projectLocked }: RFQ
     }))
   }
 
-  const handleItemChange = (index: number, field: keyof RFQItemInput, value: any) => {
+  const handleItemChange = (index: number, field: keyof ProductSelectItem, value: any) => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.map((item, i) => 
@@ -437,12 +448,11 @@ export function RFQForm({ initialData, onSubmit, isLoading, projectLocked }: RFQ
         selectedProjectId={formData.project}
       />
 
-      <ProductSelectDialog
+      <CommonProductSelectDialog
         open={productDialogOpen}
         onOpenChange={setProductDialogOpen}
         onSelect={handleProductsSelect}
         projectId={formData.project}
-        excludeProductIds={formData.items.map(item => item.product)}
       />
 
       <SupplierSelectDialog

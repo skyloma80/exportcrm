@@ -99,6 +99,17 @@ export interface ProductCreateInput {
 
 export interface ProductUpdateInput extends Partial<ProductCreateInput> {}
 
+export interface ProductSelectItem {
+  product: string
+  productName: string
+  productNameCn?: string
+  productCode: string
+  unit: string
+  quantity: number
+  target_price?: number
+  remarks?: string
+}
+
 // ============================================================================
 // Product Category Service
 // ============================================================================

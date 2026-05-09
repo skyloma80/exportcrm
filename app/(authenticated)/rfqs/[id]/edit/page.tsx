@@ -14,7 +14,7 @@ import { notFound } from "next/navigation"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { Loader2 } from "lucide-react"
 import { RFQForm, RFQFormData } from "@/components/rfqs/rfq-form"
-import { RFQItemInput } from "@/components/rfqs/product-select-dialog"
+import { ProductSelectItem } from "@/lib/pocketbase/services/products"
 import { SupplierSelectItem } from "@/components/rfqs/supplier-select-dialog"
 import { 
   rfqService, 
@@ -52,7 +52,7 @@ export default function EditRFQPage() {
   })
 
   const [rfq, setRfq] = useState<RFQWithExpand | null>(null)
-  const [items, setItems] = useState<RFQItemInput[]>([])
+  const [items, setItems] = useState<ProductSelectItem[]>([])
   const [suppliers, setSuppliers] = useState<SupplierSelectItem[]>([])
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -91,7 +91,7 @@ export default function EditRFQPage() {
 
       // Transform items
       const rfqItems = rfqData.expand?.rfq_items_via_rfq || []
-      const transformedItems: RFQItemInput[] = rfqItems.map(item => ({
+      const transformedItems: ProductSelectItem[] = rfqItems.map(item => ({
         product: item.product,
         productName: item.expand?.product?.name || "",
         productNameCn: item.expand?.product?.name_cn,
