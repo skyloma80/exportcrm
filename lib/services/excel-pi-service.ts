@@ -4,6 +4,7 @@ import path from 'path';
 import { format } from 'date-fns';
 import fs from 'fs';
 import type { FlatSO } from '@/lib/pocketbase/services/so';
+import { getCountryInfo } from '@/lib/utils/country-utils';
 
 export class ExcelPiService {
   private templatePath = path.join(process.cwd(), 'excel-template', 'PI-template.xlsx');
@@ -92,11 +93,11 @@ export class ExcelPiService {
       const row = worksheet.getRow(rowNumber);
 
       const partNumber = item.part_number || (item as any).product_code || '';
-      const description = item.product_name || item.description_en || '';
+      const description = item.description_en   || '';
 
       row.getCell(1).value = index + 1;
       row.getCell(2).value = partNumber;
-      row.getCell(4).value = description;
+      row.getCell(4).value = item.description_en;
       row.getCell(5).value = item.quantity;
       row.getCell(6).value = item.unit || 'PCS';
       row.getCell(7).value = item.unit_price;
@@ -130,8 +131,10 @@ export class ExcelPiService {
     const termsStartRow = 17 + rowsInserted;
     worksheet.getRow(termsStartRow + 1).getCell(3).value = order.payment_terms || '';
     worksheet.getRow(termsStartRow + 2).getCell(3).value = order.incoterm || '';
-    worksheet.getRow(termsStartRow + 3).getCell(3).value = order.country_of_origin || 'China';
-    worksheet.getRow(termsStartRow + 4).getCell(3).value = order.country_of_destination || '';
+    const originCountryInfo = getCountryInfo(order.country_of_origin || 'CN');
+    const destCountryInfo = getCountryInfo(order.country_of_destination || '');
+    worksheet.getRow(termsStartRow + 3).getCell(3).value = originCountryInfo?.label || order.country_of_origin || 'China';
+    worksheet.getRow(termsStartRow + 4).getCell(3).value = destCountryInfo?.label || order.country_of_destination || '';
     worksheet.getRow(termsStartRow + 5).getCell(3).value = order.port_of_loading || '';
     worksheet.getRow(termsStartRow + 6).getCell(3).value = order.port_of_destination || '';
     worksheet.getRow(termsStartRow + 7).getCell(3).value = order.mode_of_shipment || '';

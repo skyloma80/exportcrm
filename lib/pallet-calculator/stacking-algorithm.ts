@@ -327,8 +327,8 @@ function stackOnPallet(
     if (areaB !== areaA) {
       return areaB - areaA
     }
-    // 底面积相同时，矮的优先（留更多高度空间）
-    return a.height - b.height
+    // 底面积相同时，高的优先（重的在下面，更稳定）
+    return b.height - a.height
   })
 
   let changed = true
@@ -694,9 +694,11 @@ export function calculateOptimalPlan(
       score
     })
   }
-  
+
   // 按评分排序，找出最优方案
   results.sort((a, b) => b.score - a.score)
+
+
   
   const best = results[0]
   

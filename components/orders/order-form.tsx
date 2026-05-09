@@ -360,8 +360,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                         </TableCell>
                         <TableCell>
                           <Textarea
-                            value={item.product_name || ''}
-                            onChange={(e) => updateLocalItem(index, 'product_name', e.target.value)}
+                            value={item.description_en || ''}
+                            onChange={(e) => updateLocalItem(index, 'description_en', e.target.value)}
                             placeholder="Description"
                             className="min-h-[3rem] h-12 text-sm resize-y"
                             rows={2}
