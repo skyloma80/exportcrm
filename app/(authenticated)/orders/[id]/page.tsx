@@ -30,6 +30,7 @@ import {
   Building2,
   Ship,
   Copy,
+  Trash2,
 } from "lucide-react"
 import { soService, type FlatSO, type SOStatus } from "@/lib/pocketbase/services/so"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
@@ -327,8 +328,8 @@ export default function OrderDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 space-y-6">
           {/* Order Items */}
           <Card>
             <CardHeader className="pb-3 border-b">
@@ -341,12 +342,12 @@ export default function OrderDetailPage({ params }: PageProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60px] pl-6 text-center">{locale === 'zh' ? '序号' : 'Seq.'}</TableHead>
+                    <TableHead className="w-[60px] pl-6 text-center">{t("orders.columns.seq")}</TableHead>
                     <TableHead className="w-[150px]">{t("orders.columns.partNo")}</TableHead>
                     <TableHead>{t("orders.columns.description")}</TableHead>
                     <TableHead className="text-right w-[100px]">{t("orders.columns.quantity")}</TableHead>
                     <TableHead className="text-right w-[120px]">{t("orders.columns.unitPrice")}</TableHead>
-                    <TableHead className="text-right pr-6 w-[120px]">{t("orders.columns.totalAmount")}</TableHead>
+                    <TableHead className="text-right pr-6 w-[120px]">{t("orders.columns.subtotal")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -381,50 +382,50 @@ export default function OrderDetailPage({ params }: PageProps) {
             <CardHeader className="pb-3 border-b">
               <CardTitle className="text-base">{t('orders.management.actions')}</CardTitle>
             </CardHeader>
-            <CardContent className="pt-4 space-y-2">
-              <Button onClick={handleGeneratePI} disabled={generatingPI} className="w-full justify-start">
+            <CardContent className="pt-4 space-y-3">
+              <Button variant="outline" onClick={handleGeneratePI} disabled={generatingPI} className="w-full justify-center border-blue-200 text-blue-700 hover:bg-blue-50">
                 {generatingPI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                 {t('orders.management.generatePI')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/send-email`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/send-email`)}>
                 <Mail className="mr-2 h-4 w-4" />
                 {t('orders.management.sendEmail')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/documents`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/documents`)}>
                 <FolderOpen className="mr-2 h-4 w-4" />
                 {t('orders.management.viewDocuments')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/payments`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/payments`)}>
                 <DollarSign className="mr-2 h-4 w-4" />
                 {t('orders.management.viewPayments')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/shipments`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/shipments`)}>
                 <Truck className="mr-2 h-4 w-4" />
                 {t('orders.management.viewShipments')}
               </Button>
-              <div className="border-t pt-2 mt-2">
-                <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/edit`)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t("common.edit")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={handleCopy}
-                  disabled={copying}
-                >
-                  {copying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
-                  {t('common.copy')}
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full justify-start"
-                  onClick={() => setShowDeleteConfirmation(true)}
-                  disabled={order.status !== 'draft'}
-                >
-                  {t('common.delete')}
-                </Button>
-              </div>
+              
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/edit`)}>
+                <Edit className="mr-2 h-4 w-4" />
+                {t("common.edit")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={handleCopy}
+                disabled={copying}
+              >
+                {copying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+                {t('common.copy')}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setShowDeleteConfirmation(true)}
+                disabled={order.status !== 'draft'}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('common.delete')}
+              </Button>
             </CardContent>
           </Card>
 

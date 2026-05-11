@@ -1373,7 +1373,14 @@
       "exchangeRate": "Exchange Rate",
       "totalAmount": "Total Amount",
       "paidAmount": "Paid Amount",
-      "expectedDelivery": "Expected Delivery"
+      "expectedDelivery": "Expected Delivery",
+      "partNo": "Part Number",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit Price",
+      "seq": "Seq.",
+      "unit": "Unit",
+      "subtotal": "Subtotal"
     },
     "status": {
       "draft": "Draft",

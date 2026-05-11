@@ -128,9 +128,8 @@ export class ExcelPiService {
       result: order.total_amount,
     };
 
-    // --- 强力清理阶段：解除所有可能干扰产品区和合计区的合并 ---
+    // --- 强力清理阶段：仅解除产品区和合计区的合并，避免影响后续的贸易条款 ---
     if (worksheet.model.merges) {
-      // 预先找出需要解除的合并项，避免在遍历时修改数组
       const mergesToRemove = worksheet.model.merges.filter(m => {
         const match = m.match(/([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?/);
         if (match) {
@@ -139,17 +138,16 @@ export class ExcelPiService {
           const colEnd = match[3] || colStart;
           const rowEnd = match[4] ? parseInt(match[4]) : rowStart;
 
-          // 1. 如果合并涉及 B 或 C 列，且位于产品区（11行起）及其推移后的区域，则解除
+          // 1. 仅处理 B 或 C 列涉及产品区域的合并 (11 行 到 合计行之前)
           const involvesBC = (colStart <= 'C' && colEnd >= 'B');
-          if (involvesBC && rowEnd >= 11 && rowStart <= totalRowIndex + 5) return true;
+          if (involvesBC && rowStart >= 11 && rowEnd < totalRowIndex) return true;
 
-          // 2. 如果合并涉及合计行区域，则解除（稍后会重建）
-          if (rowEnd >= 12 && rowStart <= totalRowIndex + 2) return true;
+          // 2. 仅处理合计行区域的合并 (totalRowIndex 到 totalRowIndex + 1)
+          if (rowEnd >= totalRowIndex && rowStart <= totalRowIndex + 1) return true;
         }
         return false;
       });
 
-      // 执行解除
       mergesToRemove.forEach(m => {
         try { worksheet.unMergeCells(m); } catch (e) { }
       });
