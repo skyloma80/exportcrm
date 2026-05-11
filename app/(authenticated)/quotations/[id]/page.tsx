@@ -486,9 +486,9 @@ export default function QuotationDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column - Items Table */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-3 space-y-6">
           <Card>
             <CardHeader className="pb-3 border-b">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -539,13 +539,13 @@ export default function QuotationDetailPage({ params }: PageProps) {
             <CardHeader className="pb-3 border-b">
               <CardTitle className="text-base">{t('quotations.actionsTitle') || 'Actions'}</CardTitle>
             </CardHeader>
-            <CardContent className="pt-4 space-y-2">
+            <CardContent className="pt-4 space-y-3">
               {/* 编辑功能 */}
               {quotation.status === 'draft' && (
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/quotations/${id}/edit?project=${projectIdFromUrl}`)}
-                  className="w-full justify-start"
+                  className="w-full justify-center"
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   {t("common.edit")}
@@ -557,7 +557,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
                 <Button
                   variant="outline"
                   onClick={() => setShowSendDialog(true)}
-                  className="w-full justify-start"
+                  className="w-full justify-center"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   {quotation.status === 'draft' ? t("quotations.actions.sendEmail") : t("quotations.actions.resend")}
@@ -571,16 +571,17 @@ export default function QuotationDetailPage({ params }: PageProps) {
                 project={quotation.expand?.project}
                 items={items}
                 router={router}
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
               />
 
               {/* 状态管理 - 拒绝 */}
               {quotation.status === 'sent' && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setShowStatusDialog('reject')}
-                  className="w-full justify-start border-red-200 hover:bg-red-50 hover:text-red-700"
+                  className="w-full justify-center text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                  <XCircle className="mr-2 h-4 w-4" />
                   {t("quotations.actions.reject")}
                 </Button>
               )}
@@ -590,7 +591,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/orders/${existingOrder.id}?project=${projectIdFromUrl}`)}
-                  className="w-full justify-start"
+                  className="w-full justify-center"
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   {t("quotations.actions.viewOrder")} ({existingOrder.code})
@@ -601,7 +602,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
                     variant="outline"
                     onClick={handleConvertToOrder}
                     disabled={convertingToOrder}
-                    className="w-full justify-start"
+                    className="w-full justify-center"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     {t("quotations.actions.createOrder") || "转订单"}
@@ -613,7 +614,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
               <Button
                 variant="outline"
                 onClick={handleRevise}
-                className="w-full justify-start"
+                className="w-full justify-center"
               >
                 <Copy className="mr-2 h-4 w-4" />
                 {t("quotations.actions.revise")}

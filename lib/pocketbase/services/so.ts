@@ -40,6 +40,8 @@ export interface SOCreateInput {
   estimated_shipping_date?: string;
   remarks?: string;
   project_id?: string;
+  project?: string;
+  customer?: string;
   total_amount: number;
   paid_amount?: number;
   status: SOStatus;

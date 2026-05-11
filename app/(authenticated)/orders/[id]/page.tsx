@@ -88,7 +88,7 @@ export default function OrderDetailPage({ params }: PageProps) {
     setError(null)
     try {
       const result = await soService.getOne(id, {
-        expand: "project_id,customer_id,created_by",
+        expand: "project_id,project,customer_id,customer,created_by",
       })
       setOrder(result)
     } catch (err: any) {
@@ -284,7 +284,22 @@ export default function OrderDetailPage({ params }: PageProps) {
               </Select>
             </div>
           </div>
-
+          <div className="flex items-center gap-2 text-muted-foreground mt-1 ml-12">
+            <Building2 className="w-4 h-4" />
+            <span>{order.customer_name}</span>
+            {(order.expand?.project_id || (order.expand as any)?.project) && (
+              <>
+                <span className="mx-1">•</span>
+                <FolderOpen className="w-4 h-4" />
+                <span>
+                  {(() => {
+                    const p = order.expand?.project_id || (order.expand as any)?.project;
+                    return locale === 'zh' && p.name_cn ? p.name_cn : p.name;
+                  })()}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -356,8 +371,8 @@ export default function OrderDetailPage({ params }: PageProps) {
                       <TableCell className="pl-6 text-center text-muted-foreground font-medium">{idx + 1}</TableCell>
                       <TableCell className="font-mono text-xs">{item.part_number}</TableCell>
                       <TableCell>
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-2">{item.description_en}</div>
+                        {item.description_en}
+
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">{item.quantity} {item.unit}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.unit_price)}</TableCell>
@@ -403,7 +418,7 @@ export default function OrderDetailPage({ params }: PageProps) {
                 <Truck className="mr-2 h-4 w-4" />
                 {t('orders.management.viewShipments')}
               </Button>
-              
+
               <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/edit`)}>
                 <Edit className="mr-2 h-4 w-4" />
                 {t("common.edit")}

@@ -211,6 +211,26 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
       id: item.id || Math.random().toString(36).substr(2, 9)
     }))
   )
+
+  // 辅助函数：确保获取的是 ID 字符串 (增强版)
+  const ensureId = (val: any): string => {
+    if (!val) return ""
+    if (Array.isArray(val)) return val[0] || "" // 兼容数组格式
+    if (typeof val === 'string') return val
+    if (typeof val === 'object' && (val as any).id) return (val as any).id
+    return String(val)
+  }
+
+  // 探测 initialData 中的项目字段
+  const getProjectIdFromData = (data: any) => {
+    if (!data) return ""
+    return ensureId(data.project_id || data.project || data.projectId)
+  }
+
+  const getCustomerIdFromData = (data: any) => {
+    if (!data) return ""
+    return ensureId(data.customer_id || data.customer || data.customerId)
+  }
   const [showProductSearch, setShowProductSearch] = useState(false)
 
   const handleAddProduct = async (productIds: string[]) => {
@@ -267,8 +287,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
 
   const [formData, setFormData] = useState({
     code: initialData?.code || "",
-    project_id: initialData?.project_id || "",
-    customer_id: initialData?.customer_id || "",
+    project_id: getProjectIdFromData(initialData) || projectId || "",
+    customer_id: getCustomerIdFromData(initialData) || contextProject?.customer || "",
     customer_name: initialData?.customer_name || "",
     customer_address: initialData?.customer_address || "",
     customer_tax_id: initialData?.customer_tax_id || "",
@@ -341,17 +361,43 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
     loadExchangeRate()
   }, [formData.currency])
 
-  // 当项目上下文加载完成时，更新表单数据
+  // 当项目上下文加载完成时，或者初始数据变化时，更新表单数据
   useEffect(() => {
-    if (isWithinProject && contextProject && !initialData?.code) {
+    if (initialData) {
+      const extractedProjectId = getProjectIdFromData(initialData);
+      const extractedCustomerId = getCustomerIdFromData(initialData);
+      
+      console.log("[OrderForm] initialData fields:", Object.keys(initialData));
+      console.log("[OrderForm] Extracted IDs - Project:", extractedProjectId, "Customer:", extractedCustomerId);
+      
       setFormData(prev => ({
         ...prev,
-        project_id: contextProject.id,
-        customer_id: contextProject.customer,
-        customer_name: contextCustomer?.name || "",
-        currency: contextCustomer?.preferred_currency || prev.currency,
-        country_of_destination: contextCustomer?.country || prev.country_of_destination,
+        project_id: extractedProjectId || prev.project_id,
+        customer_id: extractedCustomerId || prev.customer_id,
       }))
+    }
+  }, [initialData])
+
+  useEffect(() => {
+    console.log("[OrderForm] Current formData.project_id:", formData.project_id);
+  }, [formData.project_id])
+
+  useEffect(() => {
+    if (isWithinProject && contextProject) {
+      setFormData(prev => {
+        // 如果当前没有项目 ID，或者正在创建新订单，则使用上下文的项目 ID
+        if (!prev.project_id || !initialData?.code) {
+          return {
+            ...prev,
+            project_id: contextProject.id,
+            customer_id: contextProject.customer,
+            customer_name: contextCustomer?.name || prev.customer_name,
+            currency: contextCustomer?.preferred_currency || prev.currency,
+            country_of_destination: contextCustomer?.country || prev.country_of_destination,
+          }
+        }
+        return prev
+      })
     }
   }, [isWithinProject, contextProject, contextCustomer, initialData?.code])
 
@@ -410,7 +456,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
               <CustomerSelect
-                value={formData.customer_id || contextProject?.customer || ""}
+                value={formData.customer_id}
                 onChange={(c) => {
                   if (c) {
                     setFormData(prev => ({
@@ -429,7 +475,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '所属项目' : 'Related Project'}</Label>
               <ProjectSelect
-                value={formData.project_id || projectId || ""}
+                value={formData.project_id}
                 onChange={(p) => setFormData(prev => ({
                   ...prev,
                   project_id: p?.id || "",
