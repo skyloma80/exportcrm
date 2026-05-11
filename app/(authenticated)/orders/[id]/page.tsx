@@ -112,7 +112,7 @@ export default function OrderDetailPage({ params }: PageProps) {
 
   const handleStatusChange = async (newStatus: SOStatus) => {
     if (!order || newStatus === order.status) return
-    
+
     setStatusLoading(true)
     try {
       await soService.update(order.id, {
@@ -341,7 +341,8 @@ export default function OrderDetailPage({ params }: PageProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px] pl-6">{t("orders.columns.partNo")}</TableHead>
+                    <TableHead className="w-[60px] pl-6 text-center">{locale === 'zh' ? '序号' : 'Seq.'}</TableHead>
+                    <TableHead className="w-[150px]">{t("orders.columns.partNo")}</TableHead>
                     <TableHead>{t("orders.columns.description")}</TableHead>
                     <TableHead className="text-right w-[100px]">{t("orders.columns.quantity")}</TableHead>
                     <TableHead className="text-right w-[120px]">{t("orders.columns.unitPrice")}</TableHead>
@@ -351,14 +352,15 @@ export default function OrderDetailPage({ params }: PageProps) {
                 <TableBody>
                   {order.items.map((item, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="pl-6 font-mono text-xs">{item.part_number}</TableCell>
+                      <TableCell className="pl-6 text-center text-muted-foreground font-medium">{idx + 1}</TableCell>
+                      <TableCell className="font-mono text-xs">{item.part_number}</TableCell>
                       <TableCell>
                         <div className="font-medium">{item.product_name}</div>
                         <div className="text-xs text-muted-foreground line-clamp-2">{item.description_en}</div>
                       </TableCell>
-                      <TableCell className="text-right">{item.quantity} {item.unit}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                      <TableCell className="text-right pr-6 font-bold">{formatCurrency(item.amount)}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">{item.quantity} {item.unit}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.unit_price)}</TableCell>
+                      <TableCell className="text-right pr-6 font-bold whitespace-nowrap">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

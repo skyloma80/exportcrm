@@ -36,7 +36,25 @@ import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so
 import type { Product } from "@/lib/pocketbase/services/products"
 import { productService } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, GripVertical } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   Table,
   TableBody,
@@ -56,14 +74,143 @@ export interface OrderFormProps {
   isEdit?: boolean
 }
 
+interface SortableRowProps {
+  item: SOItem
+  index: number
+  currency: string
+  QUANTITY_UNITS: any[]
+  updateLocalItem: (index: number, field: keyof SOItem, value: any) => void
+  removeLocalItem: (index: number) => void
+}
+
+function SortableRow({
+  item,
+  index,
+  currency,
+  QUANTITY_UNITS,
+  updateLocalItem,
+  removeLocalItem
+}: SortableRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: item.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  const subtotal = (item.quantity || 0) * (item.unit_price || 0)
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      <TableCell className="w-[40px]">
+        <div {...attributes} {...listeners} className="flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted rounded p-1">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </TableCell>
+      <TableCell className="text-center font-medium text-muted-foreground">
+        {index + 1}
+      </TableCell>
+      <TableCell>
+        <Input
+          value={item.part_number || ''}
+          onChange={(e) => updateLocalItem(index, 'part_number', e.target.value)}
+          placeholder="Part No."
+          className="h-8 font-mono text-sm"
+        />
+      </TableCell>
+      <TableCell>
+        <Textarea
+          value={item.description_en || ''}
+          onChange={(e) => updateLocalItem(index, 'description_en', e.target.value)}
+          placeholder="Description"
+          className="min-h-[3rem] h-12 text-sm resize-y"
+          rows={2}
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          min="0"
+          step="any"
+          className="h-8"
+          value={item.quantity || ''}
+          onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+        />
+      </TableCell>
+      <TableCell>
+        <Select
+          value={item.unit || 'PCS'}
+          onValueChange={(value) => updateLocalItem(index, 'unit', value)}
+        >
+          <SelectTrigger className="h-8 text-sm">
+            <SelectValue placeholder="PCS" />
+          </SelectTrigger>
+          <SelectContent>
+            {QUANTITY_UNITS.map((unit) => (
+              <SelectItem key={unit.code} value={unit.code}>
+                {unit.code}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground">{currency}</span>
+          <Input
+            type="number"
+            min="0"
+            step="any"
+            className="h-8"
+            value={item.unit_price || ''}
+            onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+          />
+        </div>
+      </TableCell>
+      <TableCell className="text-right whitespace-nowrap">{currency} {subtotal.toFixed(2)}</TableCell>
+      <TableCell>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLocalItem(index)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  )
+}
+
 export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFormProps) {
   const { t, locale } = useI18n()
   const { toast } = useToast()
 
+  // DND Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   // 使用项目上下文 Hook (Requirements: 3.1, 3.2)
   const { project: contextProject, customer: contextCustomer, isWithinProject, projectId } = useProjectContext()
 
-  const [localItems, setLocalItems] = useState<SOItem[]>(initialData?.items || [])
+  const [localItems, setLocalItems] = useState<SOItem[]>(
+    (initialData?.items || []).map(item => ({
+      ...item,
+      id: item.id || Math.random().toString(36).substr(2, 9)
+    }))
+  )
   const [showProductSearch, setShowProductSearch] = useState(false)
 
   const handleAddProduct = async (productIds: string[]) => {
@@ -99,6 +246,17 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
 
   const removeLocalItem = (index: number) => {
     setLocalItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setLocalItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
   }
 
   // 格式化日期为 YYYY-MM-DD（HTML date input 需要的格式）
@@ -327,100 +485,54 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[150px]">{locale === 'zh' ? '零件号 (Part No.)' : 'Part Number'}</TableHead>
-                  <TableHead className="min-w-[200px]">{locale === 'zh' ? '描述 (Description)' : 'Description'}</TableHead>
-                  <TableHead className="w-[100px]">{locale === 'zh' ? '数量' : 'Quantity'}</TableHead>
-                  <TableHead className="w-[100px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
-                  <TableHead className="w-[150px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
-                  <TableHead className="text-right w-[150px]">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {localItems.length === 0 ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
+            >
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      {locale === 'zh' ? '暂无产品，请点击右上角添加' : 'No products added yet'}
-                    </TableCell>
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead className="w-[60px] text-center">{locale === 'zh' ? '序号' : 'Seq.'}</TableHead>
+                    <TableHead className="w-[150px]">{locale === 'zh' ? '零件号 (Part No.)' : 'Part Number'}</TableHead>
+                    <TableHead className="min-w-[200px]">{locale === 'zh' ? '描述 (Description)' : 'Description'}</TableHead>
+                    <TableHead className="w-[100px]">{locale === 'zh' ? '数量' : 'Quantity'}</TableHead>
+                    <TableHead className="w-[100px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
+                    <TableHead className="w-[150px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
+                    <TableHead className="text-right w-[150px]">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ) : (
-                  localItems.map((item, index) => {
-                    const subtotal = (item.quantity || 0) * (item.unit_price || 0)
-
-                    return (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <Input
-                            value={item.part_number || ''}
-                            onChange={(e) => updateLocalItem(index, 'part_number', e.target.value)}
-                            placeholder="Part No."
-                            className="h-8 font-mono text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Textarea
-                            value={item.description_en || ''}
-                            onChange={(e) => updateLocalItem(index, 'description_en', e.target.value)}
-                            placeholder="Description"
-                            className="min-h-[3rem] h-12 text-sm resize-y"
-                            rows={2}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="any"
-                            className="h-8"
-                            value={item.quantity || ''}
-                            onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.unit || 'PCS'}
-                            onValueChange={(value) => updateLocalItem(index, 'unit', value)}
-                          >
-                            <SelectTrigger className="h-8 text-sm">
-                              <SelectValue placeholder="PCS" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {QUANTITY_UNITS.map((unit) => (
-                                <SelectItem key={unit.code} value={unit.code}>
-                                  {unit.code}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">{formData.currency}</span>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="any"
-                              className="h-8"
-                              value={item.unit_price || ''}
-                              onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{formData.currency} {subtotal.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLocalItem(index)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {localItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                        {locale === 'zh' ? '暂无产品，请点击右上角添加' : 'No products added yet'}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <SortableContext
+                      items={localItems.map(item => item.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {localItems.map((item, index) => (
+                        <SortableRow
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          currency={formData.currency}
+                          QUANTITY_UNITS={QUANTITY_UNITS}
+                          updateLocalItem={updateLocalItem}
+                          removeLocalItem={removeLocalItem}
+                        />
+                      ))}
+                    </SortableContext>
+                  )}
+                </TableBody>
+              </Table>
+            </DndContext>
           </div>
         </CardContent>
       </Card>

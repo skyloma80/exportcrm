@@ -40,7 +40,9 @@ export class ExcelPiService {
 
     const items = Array.isArray(order.items) ? order.items : [];
     const templateRow = 11;
-    const templateRowCount = 1;
+    const originalProductRows = 1; // 模板中现在只有 1 个产品行 (第 11 行)
+    const totalRowStart = 12;      // 模板中 Total 所在的起始行 (12-13 行)
+    
     // 清空模板行占位符
     const row11 = worksheet.getRow(templateRow);
     for (let c = 1; c <= 8; c++) {
@@ -59,79 +61,120 @@ export class ExcelPiService {
     worksheet.getCell('B7').value = order.customer_address || '';
     worksheet.getCell('B8').value = order.customer_tax_id || '';
 
-    // 2. 产品行处理：处理多行合并
-    const rowsInserted = items.length > templateRowCount ? items.length - templateRowCount : 0;
+    // 2. 产品行处理：根据需要插入新行并复制样式
+    const extraRows = items.length > originalProductRows ? items.length - originalProductRows : 0;
 
-    if (rowsInserted > 0) {
-      worksheet.unMergeCells('B11:C11');
-      worksheet.spliceRows(templateRow + templateRowCount, 0, ...Array(rowsInserted).fill([]));
+    if (extraRows > 0) {
+      // 重要：先解除合计行（12-13行）的合并，防止拉伸冲突
+      try { worksheet.unMergeCells('A12:C13'); } catch (e) { }
+      try { worksheet.unMergeCells('F12:F13'); } catch (e) { }
+      try { worksheet.unMergeCells('G12:G13'); } catch (e) { }
+      try { worksheet.unMergeCells('H12:H13'); } catch (e) { }
+
+      // 批量插入行
+      worksheet.spliceRows(totalRowStart, 0, ...Array(extraRows).fill([]));
 
       const sourceRow = worksheet.getRow(templateRow);
-      for (let i = 0; i < rowsInserted; i++) {
-        const newRowNumber = templateRow + templateRowCount + i;
-        const newRow = worksheet.getRow(newRowNumber);
-        newRow.height = sourceRow.height;
-
-        sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          const targetCell = newRow.getCell(colNumber);
-          targetCell.style = { ...cell.style };
-        });
-
-        const merges = (worksheet as any)._merges;
-        if (merges) {
-          delete merges[`B${newRowNumber}`];
-          delete merges[`C${newRowNumber}`];
+      for (let i = 0; i < extraRows; i++) {
+        const currentRowNum = totalRowStart + i;
+        const currentRow = worksheet.getRow(currentRowNum);
+        currentRow.height = sourceRow.height;
+        // 复制样式
+        for (let c = 1; c <= 8; c++) {
+          const sourceCell = sourceRow.getCell(c);
+          const targetCell = currentRow.getCell(c);
+          targetCell.style = sourceCell.style;
         }
       }
-
-      worksheet.mergeCells('B11:C11');
     }
 
     // 3. 填充产品数据
+    const sourceRowStyle = worksheet.getRow(templateRow);
     items.forEach((item, index) => {
       const rowNumber = templateRow + index;
       const row = worksheet.getRow(rowNumber);
 
+      if (rowNumber !== templateRow) {
+        for (let c = 1; c <= 8; c++) {
+          row.getCell(c).style = sourceRowStyle.getCell(c).style;
+        }
+      }
+
       const partNumber = item.part_number || (item as any).product_code || '';
-      const description = item.description_en   || '';
+      const description = item.description_en || '';
 
       row.getCell(1).value = index + 1;
       row.getCell(2).value = partNumber;
-      row.getCell(4).value = item.description_en;
+      row.getCell(4).value = description;
       row.getCell(5).value = item.quantity;
       row.getCell(6).value = item.unit || 'PCS';
       row.getCell(7).value = item.unit_price;
       row.getCell(8).value = item.amount;
 
-      // 行高调整
       let lines = 1;
       if (description) lines = Math.ceil(description.length / 40) + 1;
       row.height = Math.max(20, lines * 15);
+
+      const descCell = row.getCell(4);
+      if (descCell.alignment) {
+        descCell.alignment = { ...descCell.alignment, wrapText: true };
+      }
     });
 
-    for (let i = 0; i < items.length; i++) {
-      const rowNumber = templateRow + i;
-      if (rowNumber === templateRow) continue;
-
-      try {
-        worksheet.mergeCells(`B${rowNumber}:C${rowNumber}`);
-      } catch (e) {
-        // 已经合并则跳过
-      }
-    }
-
-    const totalRowIndex = 15 + rowsInserted;
+    const totalRowIndex = totalRowStart + extraRows;
     const totalCell = worksheet.getRow(totalRowIndex).getCell(8);
     totalCell.value = {
       formula: `SUM(H${templateRow}:H${templateRow + items.length - 1})`,
       result: order.total_amount,
     };
 
+    // --- 强力清理阶段：解除所有可能干扰产品区和合计区的合并 ---
+    if (worksheet.model.merges) {
+      // 预先找出需要解除的合并项，避免在遍历时修改数组
+      const mergesToRemove = worksheet.model.merges.filter(m => {
+        const match = m.match(/([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?/);
+        if (match) {
+          const colStart = match[1];
+          const rowStart = parseInt(match[2]);
+          const colEnd = match[3] || colStart;
+          const rowEnd = match[4] ? parseInt(match[4]) : rowStart;
+
+          // 1. 如果合并涉及 B 或 C 列，且位于产品区（11行起）及其推移后的区域，则解除
+          const involvesBC = (colStart <= 'C' && colEnd >= 'B');
+          if (involvesBC && rowEnd >= 11 && rowStart <= totalRowIndex + 5) return true;
+
+          // 2. 如果合并涉及合计行区域，则解除（稍后会重建）
+          if (rowEnd >= 12 && rowStart <= totalRowIndex + 2) return true;
+        }
+        return false;
+      });
+
+      // 执行解除
+      mergesToRemove.forEach(m => {
+        try { worksheet.unMergeCells(m); } catch (e) { }
+      });
+    }
+
+    // 重建合并
+    try {
+      worksheet.mergeCells(`A${totalRowIndex}:C${totalRowIndex + 1}`);
+      worksheet.mergeCells(`F${totalRowIndex}:F${totalRowIndex + 1}`);
+      worksheet.mergeCells(`G${totalRowIndex}:G${totalRowIndex + 1}`);
+      worksheet.mergeCells(`H${totalRowIndex}:H${totalRowIndex + 1}`);
+    } catch (e) { }
+
+    for (let i = 0; i < items.length; i++) {
+      const rowNum = templateRow + i;
+      try {
+        worksheet.mergeCells(`B${rowNum}:C${rowNum}`);
+      } catch (e) { }
+    }
+
     // 5. 贸易条款
-    const termsStartRow = 17 + rowsInserted;
+    const termsStartRow = 14 + extraRows;
     worksheet.getRow(termsStartRow + 1).getCell(3).value = order.payment_terms || '';
     worksheet.getRow(termsStartRow + 2).getCell(3).value = order.incoterm || '';
-    const originCountryInfo = getCountryInfo(order.country_of_origin || 'CN');
+    const originCountryInfo = getCountryInfo(order.country_of_origin || 'China');
     const destCountryInfo = getCountryInfo(order.country_of_destination || '');
     worksheet.getRow(termsStartRow + 3).getCell(3).value = originCountryInfo?.label || order.country_of_origin || 'China';
     worksheet.getRow(termsStartRow + 4).getCell(3).value = destCountryInfo?.label || order.country_of_destination || '';
@@ -142,45 +185,29 @@ export class ExcelPiService {
       ? format(new Date(order.estimated_shipping_date), 'yyyy-MM-dd')
       : '';
 
-    // 6. 汇款信息 (Remittance)：保持单行样式，内容带序号和换行
-    const remittanceTemplateRow = 28 + rowsInserted;
-
-    // 获取模板样式：即使行移动了，我们也需要确保样式被正确应用
-    // 我们可以从偏移后的行重新获取样式，或者在操作前备份
+    // 6. 汇款信息
+    const remittanceTemplateRow = 25 + extraRows;
     const bankInfo = order.bank_info || '';
     const bankLines = typeof bankInfo === 'string' ? bankInfo.split('\n').filter(l => l.trim()) : [];
 
     if (bankLines.length > 0) {
-      // 将所有行合并成带序号的单行文本，使用换行符，并在行首添加4个空格
       const formattedBankInfo = bankLines.map((line, idx) => `    ${idx + 1}. ${line}`).join('\n');
       const row = worksheet.getRow(remittanceTemplateRow);
       const cell = row.getCell(1);
-
-      // 直接写入值，ExcelJS 会保留该位置原有的 style (字体、边框、背景)
       cell.value = formattedBankInfo;
-
-      // 增量修改对齐属性，不覆盖整个 style 对象
-      if (!cell.alignment) {
-        cell.alignment = { horizontal: 'left', vertical: 'top' };
-      }
+      if (!cell.alignment) cell.alignment = { horizontal: 'left', vertical: 'top' };
       cell.alignment.wrapText = true;
       cell.alignment.vertical = 'top';
       cell.alignment.horizontal = 'left';
-
-      // 调整行高
       row.height = Math.max(25, bankLines.length * 15);
     }
 
-    // 7. 生成并导出
-    const tempPath = path.join(process.cwd(), 'excel-template', `PI-temp-${Date.now()}.xlsx`);
-    await workbook.xlsx.writeFile(tempPath);
-
-    const newZip = await JSZip.loadAsync(fs.readFileSync(tempPath));
+    const buffer = await workbook.xlsx.writeBuffer();
+    const newZip = await JSZip.loadAsync(buffer);
     for (const [fileName, data] of Object.entries(originalMedia)) newZip.file(fileName, data);
     for (const [fileName, data] of Object.entries(originalDrawings)) newZip.file(fileName, data);
     for (const [fileName, data] of Object.entries(originalDrawingRels)) newZip.file(fileName, data);
 
-    // 关系修复逻辑
     const workbookXmlFile = newZip.file('xl/workbook.xml');
     if (workbookXmlFile) {
       const workbookXml = await workbookXmlFile.async('string');
@@ -209,9 +236,7 @@ export class ExcelPiService {
       }
     }
 
-    const outputBuffer = await newZip.generateAsync({ type: 'nodebuffer' });
-    fs.unlinkSync(tempPath);
-    return outputBuffer as unknown as Buffer;
+    return await newZip.generateAsync({ type: 'nodebuffer' }) as Buffer;
   }
 }
 
