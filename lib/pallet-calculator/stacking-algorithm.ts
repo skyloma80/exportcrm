@@ -129,9 +129,7 @@ interface PlacedBoxInfo {
 }
 
 /**
- * 检查箱子是否有足够的支撑
- * 要求：箱子底面至少有50%的面积被下方箱子的顶面支撑
- * 支撑条件：下方箱子的顶面高度 == 当前箱子的底面高度
+ * 检查箱子是否有足够的支撑 (优化版：包含重心校验)
  */
 function hasEnoughSupport(
   x: number,
@@ -142,34 +140,39 @@ function hasEnoughSupport(
   allPlacedBoxes: PlacedBoxInfo[],
   config: StackingConfig
 ): boolean {
-  // 第一层直接放在托盘上
-  if (z === 0) {
-    return true
-  }
+  if (z === 0) return true; // 第一层直接放托盘
+
+  const boxArea = boxL * boxW;
+  let supportedArea = 0;
   
-  const boxArea = boxL * boxW
-  let supportedArea = 0
-  
-  // 找出所有顶面高度等于当前箱子底面高度的箱子
+  // 箱子底面中心点 (重心)
+  const centerX = x + boxL / 2;
+  const centerY = y + boxW / 2;
+  let isCenterSupported = false;
+
   for (const placed of allPlacedBoxes) {
-    // 只有顶面高度等于当前 z 的箱子才能提供支撑
-    if (Math.abs(placed.topZ - z) > 1) { // 允许1mm误差
-      continue
-    }
-    
+    if (Math.abs(placed.topZ - z) > 1) continue;
+
     // 计算重叠区域
-    const overlapX1 = Math.max(x, placed.x)
-    const overlapY1 = Math.max(y, placed.y)
-    const overlapX2 = Math.min(x + boxL, placed.x + placed.l)
-    const overlapY2 = Math.min(y + boxW, placed.y + placed.w)
-    
+    const overlapX1 = Math.max(x, placed.x);
+    const overlapY1 = Math.max(y, placed.y);
+    const overlapX2 = Math.min(x + boxL, placed.x + placed.l);
+    const overlapY2 = Math.min(y + boxW, placed.y + placed.w);
+
     if (overlapX2 > overlapX1 && overlapY2 > overlapY1) {
-      supportedArea += (overlapX2 - overlapX1) * (overlapY2 - overlapY1)
+      supportedArea += (overlapX2 - overlapX1) * (overlapY2 - overlapY1);
+      
+      // 检查重心是否落在该支撑箱子的范围内 (给予一小点容差)
+      if (centerX >= placed.x - 1 && centerX <= placed.x + placed.l + 1 &&
+          centerY >= placed.y - 1 && centerY <= placed.y + placed.w + 1) {
+        isCenterSupported = true;
+      }
     }
   }
-  
-  // 要求至少50%的底面积有支撑
-  return supportedArea >= boxArea * 0.5
+
+  // 1. 面积支撑必须大于 60% (提高要求，50%太容易翘边)
+  // 2. 重心必须有实物支撑 (防止翻转)
+  return supportedArea >= (boxArea * 0.6) && isCenterSupported;
 }
 
 /**
@@ -210,21 +213,21 @@ function getAvailableHeights(allPlacedBoxes: PlacedBoxInfo[]): number[] {
 }
 
 /**
- * 获取指定高度以下所有箱子的水平包围盒
+ * 获取紧贴指定高度下方箱子的水平包围盒
  * 用于约束上层箱子的放置范围，防止"上宽下窄"的不稳定堆叠
  */
 function getLowerLayerFootprint(
   allPlacedBoxes: PlacedBoxInfo[],
   currentZ: number
 ): { minX: number; maxX: number; minY: number; maxY: number } | null {
-  const lowerBoxes = allPlacedBoxes.filter(b => b.z < currentZ)
-  if (lowerBoxes.length === 0) return null
+  const supportBoxes = allPlacedBoxes.filter(b => Math.abs(b.topZ - currentZ) <= 1)
+  if (supportBoxes.length === 0) return null
 
   return {
-    minX: Math.min(...lowerBoxes.map(b => b.x)),
-    maxX: Math.max(...lowerBoxes.map(b => b.x + b.l)),
-    minY: Math.min(...lowerBoxes.map(b => b.y)),
-    maxY: Math.max(...lowerBoxes.map(b => b.y + b.w))
+    minX: Math.min(...supportBoxes.map(b => b.x)),
+    maxX: Math.max(...supportBoxes.map(b => b.x + b.l)),
+    minY: Math.min(...supportBoxes.map(b => b.y)),
+    maxY: Math.max(...supportBoxes.map(b => b.y + b.w))
   }
 }
 
@@ -654,7 +657,7 @@ function calculatePalletChargeableVolume(pallet: PalletPlan): number {
 }
 
 /**
- * 主算法：计算堆放方案
+ * 主算法：计算堆放方案（按尺寸分组，纯托盘优先）
  */
 export function calculateStackingPlan(boxes: BoxDimension[], config: StackingConfig): StackingPlan {
   if (boxes.length === 0) {
@@ -667,24 +670,57 @@ export function calculateStackingPlan(boxes: BoxDimension[], config: StackingCon
       unplacedBoxes: []
     }
   }
-  
-  const pallets: PalletPlan[] = []
-  let remainingBoxes = [...boxes]
-  
-  // 持续堆放直到所有箱子都被处理
-  while (remainingBoxes.length > 0) {
-    const { pallet, remainingBoxes: leftover } = stackOnPallet(remainingBoxes, config)
-    
-    if (pallet.boxCount === 0) {
-      // 无法放置任何箱子，剩余的都是无法放置的
-      break
-    }
-    
-    pallets.push(pallet)
-    remainingBoxes = leftover
+
+  const pallets: PalletPlan[] = [];
+  let remainingBoxes = [...boxes];
+
+  // 1. 同品优先策略：将箱子按尺寸分组（生成特征 Key）
+  const skuGroups = new Map<string, BoxDimension[]>();
+  for (const box of remainingBoxes) {
+    // 保证长始终大于宽，作为统一特征
+    const l = Math.max(box.length, box.width);
+    const w = Math.min(box.length, box.width);
+    const key = `${l}x${w}x${box.height}`;
+    if (!skuGroups.has(key)) skuGroups.set(key, []);
+    skuGroups.get(key)!.push(box);
   }
-  
-  // 计算统计数据
+
+  // 2. 尝试为每组 SKU 独立打包纯托盘
+  const mixedBoxes: BoxDimension[] = [];
+  for (const [key, groupBoxes] of skuGroups.entries()) {
+    let currentSkuRemaining = [...groupBoxes];
+    
+    // 只要该 SKU 的数量够多，就尝试打纯托盘
+    while (currentSkuRemaining.length > 0) {
+      const { pallet, remainingBoxes: leftover } = stackOnPallet(currentSkuRemaining, config);
+      
+      // 评估打出来的这个托盘好不好（比如箱子数量 >= 4 或者 没剩箱子）
+      // 避免几个零星的箱子占用一个完整的纯托盘
+      const isGoodPurePallet = pallet.boxCount > 0 && 
+        (pallet.boxCount >= 4 || leftover.length === 0);
+
+      if (isGoodPurePallet) {
+        pallets.push(pallet);
+        currentSkuRemaining = leftover;
+      } else {
+        // 不足以打成一个好托盘的尾货，退回到混合池中
+        mixedBoxes.push(...currentSkuRemaining);
+        break;
+      }
+    }
+  }
+
+  // 3. 处理所有剩下的尾货（混合打包）
+  remainingBoxes = mixedBoxes;
+  while (remainingBoxes.length > 0) {
+    const { pallet, remainingBoxes: leftover } = stackOnPallet(remainingBoxes, config);
+    if (pallet.boxCount === 0) break;
+    
+    pallets.push(pallet);
+    remainingBoxes = leftover;
+  }
+
+  // 4. 计算统计数据
   const totalPlacedBoxes = pallets.reduce((sum, p) => sum + p.boxCount, 0)
   const placedBoxDimensions = pallets.flatMap(p => p.placedBoxes.map(pb => pb.dimension))
   
