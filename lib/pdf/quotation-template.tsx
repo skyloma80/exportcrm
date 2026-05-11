@@ -575,6 +575,24 @@ const countryCodeToName = (code: string): string => {
   return countries[code] || code;
 };
 
+// 格式化运输方式，避免重复的 "By"
+const formatShipmentMode = (mode: string): string => {
+  if (!mode || mode === '-') return '-';
+  
+  // 处理 Express 特殊情况
+  if (mode.toLowerCase() === 'express') {
+    return 'By Express (FedEx/DHL/UPS)';
+  }
+
+  // 如果已经以 "By " 开头（忽略大小写），则直接返回原值
+  if (mode.toLowerCase().startsWith('by ')) {
+    return mode;
+  }
+  
+  // 否则加上 "By " 前缀
+  return `By ${mode}`;
+};
+
 export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => {
   const branding = data.branding;
   const logoSrc = branding?.logoBase64 || branding?.logoPath;
@@ -797,11 +815,11 @@ export const QuotationPDF: React.FC<{ data: QuotationPDFData }> = ({ data }) => 
           </View>
         )}
 
-        {/* 仅当有运输方式数据且不是默认值'Sea'时显示该行 */}
-        {data.mode_of_shipment && data.mode_of_shipment !== 'Sea' && (
+        {/* 仅当有运输方式数据时显示该行 */}
+        {data.mode_of_shipment && data.mode_of_shipment !== '-' && (
           <View style={styles.termsRow}>
             <Text style={styles.termsLabel}>Mode of Shipment:</Text>
-            <Text style={styles.termsValue}>By {data.mode_of_shipment}</Text>
+            <Text style={styles.termsValue}>{formatShipmentMode(data.mode_of_shipment)}</Text>
           </View>
         )}
 

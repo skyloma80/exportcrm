@@ -366,10 +366,10 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
     if (initialData) {
       const extractedProjectId = getProjectIdFromData(initialData);
       const extractedCustomerId = getCustomerIdFromData(initialData);
-      
+
       console.log("[OrderForm] initialData fields:", Object.keys(initialData));
       console.log("[OrderForm] Extracted IDs - Project:", extractedProjectId, "Customer:", extractedCustomerId);
-      
+
       setFormData(prev => ({
         ...prev,
         project_id: extractedProjectId || prev.project_id,
@@ -755,49 +755,29 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
               <Input
                 value={formData.mode_of_shipment}
                 onChange={(e) => setFormData(prev => ({ ...prev, mode_of_shipment: e.target.value }))}
-
+                placeholder={locale === 'zh' ? '输入或选择运输方式' : 'Enter or select mode'}
               />
               <div className="flex flex-wrap gap-2 mt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Sea' }))}
-                >
-                  Sea
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (FedEx)' }))}
-                >
-                  Air (FedEx)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (DHL)' }))}
-                >
-                  Air (DHL)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Land' }))}
-                >
-                  Land
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Express (UPS)' }))}
-                >
-                  Express (UPS)
-                </Button>
+                {[
+                  'By Air',
+                  'By Sea',
+                  'By Courier (Fedex)',
+                  'By Courier (uPS)',
+                  'By Courier (DHL)',
+                  'By Courier',
+                  'By Train'
+                ].map((mode) => (
+                  <Button
+                    key={mode}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: mode }))}
+                    className={formData.mode_of_shipment === mode ? "bg-primary/10 border-primary" : ""}
+                  >
+                    {mode}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>

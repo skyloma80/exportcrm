@@ -42,7 +42,7 @@ export class ExcelPiService {
     const templateRow = 11;
     const originalProductRows = 1; // 模板中现在只有 1 个产品行 (第 11 行)
     const totalRowStart = 12;      // 模板中 Total 所在的起始行 (12-13 行)
-    
+
     // 清空模板行占位符
     const row11 = worksheet.getRow(templateRow);
     for (let c = 1; c <= 8; c++) {
@@ -128,47 +128,46 @@ export class ExcelPiService {
       result: order.total_amount,
     };
 
-    // --- 强力清理阶段：仅解除产品区和合计区的合并，避免影响后续的贸易条款 ---
+    // --- 强力合并管理：环境无关方案 ---
+    // 1. 收集所有原始合并信息
+    const originalMerges = worksheet.model.merges ? [...worksheet.model.merges] : [];
+
+    // 2. 彻底清除插入点及其下方的所有合并，防止冲突
     if (worksheet.model.merges) {
-      const mergesToRemove = worksheet.model.merges.filter(m => {
-        const match = m.match(/([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?/);
-        if (match) {
-          const colStart = match[1];
-          const rowStart = parseInt(match[2]);
-          const colEnd = match[3] || colStart;
-          const rowEnd = match[4] ? parseInt(match[4]) : rowStart;
-
-          // 1. 仅处理 B 或 C 列涉及产品区域的合并 (11 行 到 合计行之前)
-          const involvesBC = (colStart <= 'C' && colEnd >= 'B');
-          if (involvesBC && rowStart >= 11 && rowEnd < totalRowIndex) return true;
-
-          // 2. 仅处理合计行区域的合并 (totalRowIndex 到 totalRowIndex + 1)
-          if (rowEnd >= totalRowIndex && rowStart <= totalRowIndex + 1) return true;
-        }
-        return false;
+      const mergesToClear = originalMerges.filter(m => {
+        const match = m.match(/(\d+)/);
+        return match && parseInt(match[1]) >= templateRow;
       });
-
-      mergesToRemove.forEach(m => {
+      mergesToClear.forEach(m => {
         try { worksheet.unMergeCells(m); } catch (e) { }
       });
     }
 
-    // 重建合并
-    try {
-      worksheet.mergeCells(`A${totalRowIndex}:C${totalRowIndex + 1}`);
-      worksheet.mergeCells(`F${totalRowIndex}:F${totalRowIndex + 1}`);
-      worksheet.mergeCells(`G${totalRowIndex}:G${totalRowIndex + 1}`);
-      worksheet.mergeCells(`H${totalRowIndex}:H${totalRowIndex + 1}`);
-    } catch (e) { }
-
+    // 3. 为每一款产品行重建 B:C 合并
     for (let i = 0; i < items.length; i++) {
       const rowNum = templateRow + i;
-      try {
-        worksheet.mergeCells(`B${rowNum}:C${rowNum}`);
-      } catch (e) { }
+      try { worksheet.mergeCells(`B${rowNum}:C${rowNum}`); } catch (e) { }
     }
 
-    // 5. 贸易条款
+    // 4. 计算并应用底部所有合并的偏移
+    // 逻辑：原行号 >= totalRowStart 的，全部增加 extraRows
+    originalMerges.forEach(m => {
+      const match = m.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+      if (match) {
+        const [, colStart, rowStartStr, colEnd, rowEndStr] = match;
+        let rowStart = parseInt(rowStartStr);
+        let rowEnd = parseInt(rowEndStr);
+
+        // 如果该合并在插入点或其下方，则进行偏移
+        if (rowStart >= totalRowStart) {
+          try {
+            worksheet.mergeCells(`${colStart}${rowStart + extraRows}:${colEnd}${rowEnd + extraRows}`);
+          } catch (e) { }
+        }
+      }
+    });
+
+    // 5. 贸易条款数据填充
     const termsStartRow = 14 + extraRows;
     worksheet.getRow(termsStartRow + 1).getCell(3).value = order.payment_terms || '';
     worksheet.getRow(termsStartRow + 2).getCell(3).value = order.incoterm || '';
@@ -183,7 +182,7 @@ export class ExcelPiService {
       ? format(new Date(order.estimated_shipping_date), 'yyyy-MM-dd')
       : '';
 
-    // 6. 汇款信息
+    // 6. 汇款信息填充
     const remittanceTemplateRow = 25 + extraRows;
     const bankInfo = order.bank_info || '';
     const bankLines = typeof bankInfo === 'string' ? bankInfo.split('\n').filter(l => l.trim()) : [];

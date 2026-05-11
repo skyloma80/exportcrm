@@ -41,7 +41,7 @@ export function PaymentTermsSelect({
 }: PaymentTermsSelectProps) {
   const [open, setOpen] = useState(false)
 
-  const selectedTerm = PAYMENT_TERMS.find(t => t.code === value)
+  const selectedTerm = PAYMENT_TERMS.find(t => t.name === value || t.code === value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,8 +56,8 @@ export function PaymentTermsSelect({
           {selectedTerm ? (
             <span className="truncate">{selectedTerm.name}</span>
           ) : (
-            <span className="text-muted-foreground">
-              {placeholder || 'Select payment terms'}
+            <span className={cn("truncate", !value && "text-muted-foreground")}>
+              {value || placeholder || 'Select payment terms'}
             </span>
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -77,14 +77,15 @@ export function PaymentTermsSelect({
                 key={term.code}
                 value={`${term.name} ${term.code}`}
                 onSelect={() => {
-                  onChange(term.code === value ? "" : term.code)
+                  // 直接保存名称而非 code
+                  onChange(term.name === value ? "" : term.name)
                   setOpen(false)
                 }}
               >
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    value === term.code ? "opacity-100" : "opacity-0"
+                    value === term.name ? "opacity-100" : "opacity-0"
                   )}
                 />
                 <div className="flex-1 min-w-0">
