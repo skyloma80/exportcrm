@@ -1381,7 +1381,7 @@
       "description": "描述",
       "quantity": "数量",
       "unitPrice": "单价",
-      "seq": "序号",
+      "seq": "No.",
       "unit": "单位",
       "subtotal": "小计"
     },

@@ -142,6 +142,7 @@ export default function OrderDetailPage({ params }: PageProps) {
     return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       style: 'currency',
       currency: currency || order?.currency || 'USD',
+      currencyDisplay: 'narrowSymbol',
       minimumFractionDigits: 2,
     }).format(amount)
   }

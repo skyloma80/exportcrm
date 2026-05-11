@@ -155,7 +155,9 @@ export function PaymentManager({ orderId, orderCode, customerId, projectId, tota
   const formatCurrency = (amount: number, curr?: string) => {
     return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       style: 'currency',
-      currency: curr || currency,
+      currency: curr || currency || 'USD',
+      currencyDisplay: 'narrowSymbol',
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 

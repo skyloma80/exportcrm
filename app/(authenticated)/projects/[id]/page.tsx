@@ -390,6 +390,7 @@ export default function ProjectDetailPage() {
     return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       style: 'currency',
       currency,
+      currencyDisplay: 'narrowSymbol',
     }).format(amount)
   }
 

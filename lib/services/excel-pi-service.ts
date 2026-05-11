@@ -57,9 +57,38 @@ export class ExcelPiService {
       ? format(new Date(order.created), 'MMM dd, yyyy')
       : format(new Date(), 'MMM dd, yyyy');
 
-    worksheet.getCell('B6').value = order.customer_name || '';
-    worksheet.getCell('B7').value = order.customer_address || '';
-    worksheet.getCell('B8').value = order.customer_tax_id || '';
+    const nameCell = worksheet.getCell('B6');
+    const addrCell = worksheet.getCell('B7');
+    const taxCell = worksheet.getCell('B8');
+
+    nameCell.value = order.customer_name || '';
+    addrCell.value = order.customer_address || '';
+    taxCell.value = order.customer_tax_id || '';
+
+    // 设置自动换行
+    [nameCell, addrCell, taxCell].forEach(cell => {
+      cell.alignment = { ...cell.alignment, wrapText: true, vertical: 'top' };
+    });
+
+    // 根据姓名内容调整行高 (第6行)
+    if (order.customer_name) {
+      const nameRow = worksheet.getRow(6);
+      const cleanName = (order.customer_name || '').trim();
+      const manualLines = cleanName.split('\n').length;
+      const wrappedLines = Math.ceil(cleanName.length / 80);
+      const totalLines = Math.max(manualLines, wrappedLines);
+      nameRow.height = totalLines * 15 + 8; // 增加 8px 边距
+    }
+
+    // 根据地址内容调整行高 (第7行)
+    if (order.customer_address) {
+      const addrRow = worksheet.getRow(7);
+      const cleanAddr = (order.customer_address || '').trim();
+      const manualLines = cleanAddr.split('\n').length;
+      const wrappedLines = Math.ceil(cleanAddr.length / 80);
+      const totalLines = Math.max(manualLines, wrappedLines);
+      addrRow.height = totalLines * 15 + 10; // 增加 10px 边距
+    }
 
     // 2. 产品行处理：根据需要插入新行并复制样式
     const extraRows = items.length > originalProductRows ? items.length - originalProductRows : 0;
@@ -111,9 +140,12 @@ export class ExcelPiService {
       row.getCell(7).value = item.unit_price;
       row.getCell(8).value = item.amount;
 
-      let lines = 1;
-      if (description) lines = Math.ceil(description.length / 40) + 1;
-      row.height = Math.max(20, lines * 15);
+      // 动态计算产品行高度 (使用更严谨的估算)
+      const cleanDesc = (description || '').trim();
+      const manualLines = cleanDesc.split('\n').length;
+      const wrappedLines = Math.ceil(cleanDesc.length / 30);
+      const totalLines = Math.max(manualLines, wrappedLines);
+      row.height = totalLines * 18 + 8;
 
       const descCell = row.getCell(4);
       if (descCell.alignment) {
