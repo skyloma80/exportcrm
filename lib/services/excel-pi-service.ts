@@ -50,9 +50,9 @@ export class ExcelPiService {
     }
 
     // 填充头部信息
-    worksheet.getCell('G2').value = order.vendor_code || '';
-    worksheet.getCell('G3').value = order.customer_po || '';
-    worksheet.getCell('G4').value = order.code || '';
+    worksheet.getCell('G2').value = ''+order.vendor_code ;
+    worksheet.getCell('G3').value = ''+order.customer_po;
+    worksheet.getCell('G4').value = ''+order.code;
     worksheet.getCell('G5').value = order.created
       ? format(new Date(order.created), 'MMM dd, yyyy')
       : format(new Date(), 'MMM dd, yyyy');

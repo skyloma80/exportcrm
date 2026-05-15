@@ -201,17 +201,17 @@ export default function OrderDetailPage({ params }: PageProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const timestamp = format(new Date(), 'yyyy-MM-dd');
-      a.download = `PI-${order.code}-${timestamp}.xlsx`;
+      const timestamp = format(new Date(), 'yyyyMMdd');
+      a.download = `PI ${order.code} ${timestamp}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast({
-        title: t('orders.management.piGenerateSuccess'),
-        description: locale === 'zh' ? 'PI Excel 已成功生成并下载' : 'PI Excel has been generated and downloaded',
-      })
+      // toast({
+      //   title: t('orders.management.piGenerateSuccess'),
+      //   description: locale === 'zh' ? 'PI Excel 已成功生成并下载' : 'PI Excel has been generated and downloaded',
+      // })
     } catch (error: any) {
       console.error('Generate PI error:', error)
       toast({
@@ -250,7 +250,7 @@ export default function OrderDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col">

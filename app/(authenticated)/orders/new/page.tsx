@@ -66,7 +66,7 @@ export default function NewOrderPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <div className="mb-8">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={handleBack}>

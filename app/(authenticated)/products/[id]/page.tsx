@@ -162,7 +162,7 @@ export default function ProductDetailPage() {
               {category && (
                 <Badge variant="outline">
                   <Layers className="h-3 w-3 mr-1" />
-                  {locale === 'zh' && category.name_cn ? category.name_cn : category.name}
+                  {locale === 'zh'   ? category.name_cn : category.name}
                 </Badge>
               )}
             </div>
@@ -202,14 +202,11 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">{t("products.columns.name")}</p>
-                    <p className="font-medium">{product.name}</p>
+                    <p className="font-medium">{
+                         (locale === 'zh') ? product.name_cn : product.name
+                       }</p>
                   </div>
-                  {product.name_cn && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t("products.columns.nameCn")}</p>
-                      <p className="font-medium">{product.name_cn}</p>
-                    </div>
-                  )}
+
                   {product.part_number && (
                     <div>
                       <p className="text-sm text-muted-foreground">{t("products.columns.partNumber")}</p>
@@ -235,21 +232,10 @@ export default function ProductDetailPage() {
                 <CardTitle>{t("products.info.description")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {product.description && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t("products.columns.description")}</p>
-                    <p className="whitespace-pre-wrap">{product.description}</p>
-                  </div>
-                )}
-                {product.description_cn && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t("products.columns.descriptionCn")}</p>
-                    <p className="whitespace-pre-wrap">{product.description_cn}</p>
-                  </div>
-                )}
-                {!product.description && !product.description_cn && (
-                  <p className="text-muted-foreground">{t("common.noData")}</p>
-                )}
+                <div>
+                  <p className="whitespace-pre-wrap">{ locale =='zh'? product.description_cn : product.description }</p>
+                </div>
+
               </CardContent>
             </Card>
           </div>

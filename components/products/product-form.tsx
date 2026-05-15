@@ -42,16 +42,16 @@ export interface ProductFormProps {
 
 export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProductCreated, showProjectContext = true }: ProductFormProps) {
   const { t, locale } = useI18n()
-  
+
   // 使用项目上下文 Hook (Requirements: 1.5, 7.4)
   const { projectId, project, isWithinProject, loading: contextLoading } = useProjectContext()
-  
+
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryNameCn, setNewCategoryNameCn] = useState("")
   const [addingCategory, setAddingCategory] = useState(false)
-  
+
   const [formData, setFormData] = useState<ProductCreateInput>({
     part_number: initialData?.part_number || "",
     name: initialData?.name || "",
@@ -68,7 +68,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
     carton_gross_weight: initialData?.carton_gross_weight,
     carton_net_weight: initialData?.carton_net_weight,
   })
-  
+
   const [errors, setErrors] = useState<ValidationErrors>({})
 
   useEffect(() => {
@@ -149,13 +149,13 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
               </div>
             </div>
           )}
-          
+
           {/* ===== 基本信息 ===== */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-muted-foreground">
               {locale === 'zh' ? '基本信息' : 'Basic Information'}
             </h3>
-            
+
             {/* Row 1: Names */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -213,18 +213,18 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
               </div>
               <div className="space-y-1">
                 <Label>{t("products.columns.unit")} <span className="text-destructive">*</span></Label>
-                  <Select value={formData.unit} onValueChange={(value) => handleChange("unit", value)}>
+                <Select value={formData.unit} onValueChange={(value) => handleChange("unit", value)}>
                   <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
                     {QUANTITY_UNITS.map((unit) => (
-                        <SelectItem key={unit.code} value={unit.code}>
-                          {unit.code} - {locale === 'zh' ? unit.name_cn : unit.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectItem key={unit.code} value={unit.code}>
+                        {unit.code} - {locale === 'zh' ? unit.name_cn : unit.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.unit && <p className="text-sm text-destructive">{errors.unit}</p>}
               </div>
               <div className="space-y-1">
@@ -310,7 +310,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
                     ({locale === 'zh' ? '可选' : 'Optional'})
                   </span>
                 </div>
-                
+
                 <div className="grid grid-cols-3 gap-2">
                   <div className="space-y-1">
                     <Label htmlFor="pcs_per_carton" className="text-xs">
@@ -322,7 +322,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
                       min="1"
                       value={formData.pcs_per_carton || ""}
                       onChange={(e) => handleChange("pcs_per_carton", e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="100"
+
                     />
                   </div>
                   <div className="space-y-1">
@@ -336,7 +336,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
                       step="0.01"
                       value={formData.carton_gross_weight || ""}
                       onChange={(e) => handleChange("carton_gross_weight", e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="25"
+
                     />
                   </div>
                   <div className="space-y-1">
@@ -350,11 +350,11 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
                       step="0.01"
                       value={formData.carton_net_weight || ""}
                       onChange={(e) => handleChange("carton_net_weight", e.target.value ? Number(e.target.value) : undefined)}
-                      placeholder="23"
+
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   <Label className="text-xs">
                     {locale === 'zh' ? '纸箱尺寸 L×W×H (mm)' : 'Carton L×W×H (mm)'}
@@ -411,7 +411,7 @@ export function ProductForm({ initialData, onSubmit, onCancel, isLoading, onProd
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter className="flex justify-end gap-2">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>

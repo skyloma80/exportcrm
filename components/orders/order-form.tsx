@@ -108,6 +108,7 @@ function SortableRow({
   }
 
   const subtotal = (item.quantity || 0) * (item.unit_price || 0)
+  const currencySymbol = CURRENCIES[currency]?.symbol || currency;
 
   return (
     <TableRow ref={setNodeRef} style={style}>
@@ -124,7 +125,7 @@ function SortableRow({
           value={item.part_number || ''}
           onChange={(e) => updateLocalItem(index, 'part_number', e.target.value)}
           placeholder="Part No."
-          className="h-8 font-mono text-sm"
+          className="h-8 px-2 font-mono text-sm"
         />
       </TableCell>
       <TableCell>
@@ -132,7 +133,7 @@ function SortableRow({
           value={item.description_en || ''}
           onChange={(e) => updateLocalItem(index, 'description_en', e.target.value)}
           placeholder="Description"
-          className="min-h-[3rem] h-12 text-sm resize-y"
+          className="min-h-[3rem] h-12 px-2 py-1 text-sm resize-y"
           rows={2}
         />
       </TableCell>
@@ -141,7 +142,7 @@ function SortableRow({
           type="number"
           min="0"
           step="any"
-          className="h-8"
+          className="h-8 px-2"
           value={item.quantity || ''}
           onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
         />
@@ -151,7 +152,7 @@ function SortableRow({
           value={item.unit || 'PCS'}
           onValueChange={(value) => updateLocalItem(index, 'unit', value)}
         >
-          <SelectTrigger className="h-8 text-sm">
+          <SelectTrigger className="h-8 px-2 text-sm">
             <SelectValue placeholder="PCS" />
           </SelectTrigger>
           <SelectContent>
@@ -164,19 +165,16 @@ function SortableRow({
         </Select>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground">{currency}</span>
-          <Input
-            type="number"
-            min="0"
-            step="any"
-            className="h-8"
-            value={item.unit_price || ''}
-            onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-          />
-        </div>
+        <Input
+          type="number"
+          min="0"
+          step="any"
+          className="h-8 px-2"
+          value={item.unit_price || ''}
+          onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+        />
       </TableCell>
-      <TableCell className="text-right whitespace-nowrap">{currency} {subtotal.toFixed(2)}</TableCell>
+      <TableCell className="text-right whitespace-nowrap">{currencySymbol}{subtotal.toFixed(2)}</TableCell>
       <TableCell>
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLocalItem(index)}>
           <Trash2 className="h-4 w-4" />
@@ -298,7 +296,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
     payment_terms: initialData?.payment_terms || "",
     currency: initialData?.currency || "USD",
     expected_delivery_date: formatDateForInput(initialData?.expected_delivery_date),
-    country_of_origin: initialData?.country_of_origin || "CN",
+    country_of_origin: initialData?.country_of_origin || "China",
     country_of_destination: initialData?.country_of_destination || "",
     mode_of_shipment: initialData?.mode_of_shipment || "",
     bank_info: initialData?.bank_info || "",
@@ -442,7 +440,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>{t("orders.columns.code")}</Label>
               <Input
@@ -452,6 +450,19 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                 readOnly
                 disabled
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("orders.columns.status")}</Label>
+              <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["draft", "confirmed", "in_production", "ready_to_ship", "shipped", "delivered", "completed", "cancelled"].map(s => (
+                    <SelectItem key={s} value={s}>{t(`orders.status.${s}`) || s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
@@ -470,8 +481,6 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                 }}
               />
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{locale === 'zh' ? '所属项目' : 'Related Project'}</Label>
               <ProjectSelect
@@ -484,18 +493,54 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                 placeholder={locale === 'zh' ? '选择项目（可选）' : 'Select project (optional)'}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>{t("orders.columns.status")}</Label>
-              <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as any }))}>
-                <SelectTrigger>
+              <Label>{locale === 'zh' ? '客户订单号' : 'Customer PO Number'}</Label>
+              <Input
+                value={formData.customer_po}
+                onChange={(e) => setFormData(prev => ({ ...prev, customer_po: e.target.value }))}
+                placeholder="e.g. COMP/20.260.001"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '供应商代码' : 'Supplier ID'}</Label>
+              <Input
+                value={formData.vendor_code}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendor_code: e.target.value }))}
+                placeholder="e.g. 40000594"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("orders.columns.currency")} <span className="text-destructive">*</span></Label>
+              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
+                <SelectTrigger className={errors.currency ? "border-destructive" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {["draft", "confirmed", "in_production", "ready_to_ship", "shipped", "delivered", "completed", "cancelled"].map(s => (
-                    <SelectItem key={s} value={s}>{t(`orders.status.${s}`) || s}</SelectItem>
-                  ))}
+                  {COMMON_CURRENCIES.map(code => {
+                    const currency = CURRENCIES[code]
+                    return (
+                      <SelectItem key={code} value={code}>
+                        {code} - {locale === 'zh' ? currency.name_cn : currency.name}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("orders.columns.exchangeRate")}</Label>
+              <div className="h-10 px-3 py-2 rounded-md border bg-muted text-sm flex items-center">
+                {rateLoading ? (
+                  <span className="text-muted-foreground">{t("common.loading")}...</span>
+                ) : currentRate ? (
+                  <span>1 {formData.currency} = {currentRate.toFixed(4)} CNY</span>
+                ) : (
+                  <span className="text-muted-foreground">{locale === 'zh' ? '暂无汇率' : 'No rate'}</span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -600,60 +645,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 第0行：PO Number & Vendor Code */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '客户订单号 (PO Number)' : 'Customer PO Number'}</Label>
-              <Input
-                value={formData.customer_po}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_po: e.target.value }))}
-                placeholder="e.g. COMP/20.260.001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '供应商代码 ' : 'Supplier ID'}</Label>
-              <Input
-                value={formData.vendor_code}
-                onChange={(e) => setFormData(prev => ({ ...prev, vendor_code: e.target.value }))}
-                placeholder="e.g. 40000594"
-              />
-            </div>
-          </div>
 
-          {/* 第一行：币种、汇率 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t("orders.columns.currency")} <span className="text-destructive">*</span></Label>
-              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
-                <SelectTrigger className={errors.currency ? "border-destructive" : ""}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {COMMON_CURRENCIES.map(code => {
-                    const currency = CURRENCIES[code]
-                    return (
-                      <SelectItem key={code} value={code}>
-                        {code} - {locale === 'zh' ? currency.name_cn : currency.name}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("orders.columns.exchangeRate")}</Label>
-              <div className="h-10 px-3 py-2 rounded-md border bg-muted text-sm flex items-center">
-                {rateLoading ? (
-                  <span className="text-muted-foreground">{t("common.loading")}...</span>
-                ) : currentRate ? (
-                  <span>1 {formData.currency} = {currentRate.toFixed(4)} CNY</span>
-                ) : (
-                  <span className="text-muted-foreground">{locale === 'zh' ? '暂无汇率' : 'No rate'}</span>
-                )}
-              </div>
-            </div>
-          </div>
 
           {/* 第二行：Incoterm、付款条款 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -762,7 +754,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                   'By Air',
                   'By Sea',
                   'By Courier (Fedex)',
-                  'By Courier (uPS)',
+                  'By Courier (UPS)',
                   'By Courier (DHL)',
                   'By Courier',
                   'By Train'

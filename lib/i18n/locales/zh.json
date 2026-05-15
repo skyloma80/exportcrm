@@ -208,13 +208,13 @@
     "columns": {
       "code": "编码",
       "name": "名称",
-      "nameCn": "中文名称",
+
       "partNumber": "零件号",
       "category": "分类",
       "unit": "单位",
       "hsCode": "HS编码",
       "description": "描述",
-      "descriptionCn": "中文描述",
+
       "project": "所属项目"
     },
     "stats": {
