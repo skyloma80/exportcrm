@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import fs from 'fs';
 import type { FlatSO } from '@/lib/pocketbase/services/so';
 import { getCountryInfo } from '@/lib/utils/country-utils';
+import { UNITS } from '@/lib/constants/trade-standards';
 
 export class ExcelPiService {
   private templatePath = path.join(process.cwd(), 'excel-template', 'PI-template.xlsx');
@@ -136,7 +137,7 @@ export class ExcelPiService {
       row.getCell(2).value = partNumber;
       row.getCell(4).value = description;
       row.getCell(5).value = item.quantity;
-      row.getCell(6).value = item.unit || 'PCS';
+      row.getCell(6).value = UNITS[item.unit]?.name_cn || item.unit || '个';
       row.getCell(7).value = item.unit_price;
       row.getCell(8).value = item.amount;
 

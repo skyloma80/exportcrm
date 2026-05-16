@@ -21,10 +21,11 @@ import { Product } from "@/lib/pocketbase/services/products"
 import { DataTable, DataTableColumnHeader, DataTableRowActions } from "@/components/data-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ColumnDef } from "@tanstack/react-table"
-import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import type { RFQStatus } from "@/lib/pocketbase/services/rfqs"
+import { UNITS } from "@/lib/constants/trade-standards"
 import type { QuotationStatus } from "@/lib/pocketbase/services/quotations"
 import type { OrderStatus } from "@/lib/pocketbase/services/orders"
+import { useBreadcrumb } from "@/lib/breadcrumb/context"
 
 interface ProductProject {
   id: string
@@ -166,6 +167,7 @@ export default function ProjectDetailPage() {
       {
         accessorKey: "unit",
         header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
+        cell: ({ row }) => <span>{UNITS[row.getValue("unit") as string]?.name_cn || row.getValue("unit")}</span>,
       },
       {
         accessorKey: "hs_code",

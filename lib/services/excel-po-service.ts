@@ -4,6 +4,7 @@ import path from 'path';
 import { format } from 'date-fns';
 import fs from 'fs';
 import type { FlatPO, POItem } from '@/lib/pocketbase/services/po';
+import { UNITS } from '@/lib/constants/trade-standards';
 
 /**
  * ExcelPoService - 基于 FlatPO 模型生成采购订单 Excel
@@ -103,7 +104,7 @@ export class ExcelPoService {
       row.getCell(4).value = item.description_en || item.product_name || ''; // D: 英文描述
       row.getCell(5).value = item.description_cn || '';                   // E: 中文描述
       row.getCell(6).value = item.quantity ?? 1;                          // F: 数量
-      row.getCell(7).value = item.unit || 'PCS';                          // G: 单位
+      row.getCell(7).value = UNITS[item.unit ?? '']?.name_cn || item.unit || '个'; // G: 单位
       row.getCell(8).value = item.unit_price ?? 0;                        // H: 单价
       row.getCell(9).value = {                                            // I: 金额 (公式)
         formula: `H${rowNum}*F${rowNum}`,
@@ -115,7 +116,43 @@ export class ExcelPoService {
       row.height = Math.max(20, lineCount * 15);
     });
 
-    // 5. 合计行 (在数据区后第4行位置)
+    // 5. 合并单元格管理 — 参考 PI 实现，偏移底部合并
+    const originalMerges = worksheet.model.merges ? [...worksheet.model.merges] : [];
+
+    // 解除所有受插入影响的合并（从产品行往下全部清除）
+    if (worksheet.model.merges) {
+      const mergesToClear = originalMerges.filter(m => {
+        const match = m.match(/(\d+)/);
+        return match && parseInt(match[1]) >= TEMPLATE_DATA_ROW;
+      });
+      mergesToClear.forEach(m => {
+        try { worksheet.unMergeCells(m); } catch (e) { }
+      });
+    }
+
+    // 为所有产品行重建 B:C 合并
+    for (let i = 0; i < items.length; i++) {
+      const rowNum = TEMPLATE_DATA_ROW + i;
+      try { worksheet.mergeCells(`B${rowNum}:C${rowNum}`); } catch (e) { }
+    }
+
+    // 偏移还原底部合并（原始行号 >= 13 的合并，即模板中产品区之后的合并）
+    const BOTTOM_MERGE_START = 13;
+    originalMerges.forEach(m => {
+      const match = m.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+      if (match) {
+        const [, colStart, rowStartStr, colEnd, rowEndStr] = match;
+        const rowStart = parseInt(rowStartStr);
+        const rowEnd = parseInt(rowEndStr);
+        if (rowStart >= BOTTOM_MERGE_START) {
+          try {
+            worksheet.mergeCells(`${colStart}${rowStart + extraRows}:${colEnd}${rowEnd + extraRows}`);
+          } catch (e) { }
+        }
+      }
+    });
+
+    // 6. 合计行 (在数据区后第4行位置)
     const totalRowIndex = TEMPLATE_DATA_ROW + items.length + 3; // 原模板合计行偏移
     try {
       const totalCell = worksheet.getRow(totalRowIndex).getCell(9);
@@ -127,7 +164,7 @@ export class ExcelPoService {
       // 若合计行位置不存在，忽略
     }
 
-    // 6. 备注 — 每行文本插入一个 Excel 行，保留模板样式
+    // 7. 备注 — 每行文本插入一个 Excel 行，保留模板样式
     const remarks = po.remarks || '';
     const remarkLines = remarks.split('\n'); // 保留空行，维持格式感
     // 备注区首行在模板中为第17行，随产品行数偏移
@@ -188,11 +225,19 @@ export class ExcelPoService {
       worksheet.getRow(rowNum).getCell(1).value = '';
     }
 
-    // 7. 写临时文件
+    // 确保每条备注行都有 A:I 合并
+    const totalRemarkRows = Math.max(remarkLines.length, TEMPLATE_REMARK_ROWS);
+    for (let i = 0; i < totalRemarkRows; i++) {
+      const rowNum = remarkStartRow + i;
+      try { worksheet.unMergeCells(`A${rowNum}:I${rowNum}`); } catch (_) {}
+      try { worksheet.mergeCells(`A${rowNum}:I${rowNum}`); } catch (_) {}
+    }
+
+    // 8. 写临时文件
     const tempPath = path.join(process.cwd(), 'excel-template', `PO-temp-${Date.now()}.xlsx`);
     await workbook.xlsx.writeFile(tempPath);
 
-    // 8. 用 JSZip 把图片、图形关系还原到输出文件
+    // 9. 用 JSZip 把图片、图形关系还原到输出文件
     const newZip = await JSZip.loadAsync(fs.readFileSync(tempPath));
 
     for (const [fileName, data] of Object.entries(originalMedia)) {
