@@ -2504,7 +2504,19 @@
     "importConfig": "Import Config",
     "importSuccess": "Import successful! Created {{created}}, updated {{updated}}",
     "importError": "Import failed",
-    "selectJsonFile": "Please select a JSON file"
+    "selectJsonFile": "Please select a JSON file",
+    "masterData": {
+      "title": "Master Data Management",
+      "description": "Export or import customers, suppliers, products, and system config data in one place. Supports full migration including ext fields.",
+      "exportButton": "Export All (Excel)",
+      "importButton": "Select and Import Excel",
+      "updateExisting": "Update existing records (based on Code/Key)",
+      "summary": "Import Summary",
+      "exportSuccess": "Export Successful",
+      "exportSuccessDesc": "All data has been exported to an Excel file",
+      "importSuccess": "Import Completed",
+      "importSuccessDesc": "Data has been synchronized to the system"
+    }
   },
   "userSettings": {
     "title": "User Settings",

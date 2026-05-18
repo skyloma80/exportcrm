@@ -2479,6 +2479,18 @@
       "testButton": "测试连接",
       "testSuccess": "连接成功",
       "saveSuccess": "AI设置已保存"
+    },
+    "masterData": {
+      "title": "全量数据管理",
+      "description": "统一导出或导入客户、供应商、产品及系统配置数据。支持包含 ext 字段在内的全量数据迁移。",
+      "exportButton": "全量导出 (Excel)",
+      "importButton": "选择并导入 Excel",
+      "updateExisting": "更新已存在的记录 (基于 Code/Key)",
+      "summary": "导入结果汇总",
+      "exportSuccess": "导出成功",
+      "exportSuccessDesc": "所有数据已导出到 Excel 文件",
+      "importSuccess": "导入完成",
+      "importSuccessDesc": "数据已同步到系统"
     }
   },
   "userSettings": {

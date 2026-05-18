@@ -10,6 +10,8 @@ import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Rul
 import Link from 'next/link';
 import { BrandingConfigCard } from '@/components/settings/branding-config-card';
 import { FeedbackManagement } from '@/components/settings/feedback-management';
+import { MasterDataCard } from '@/components/settings/master-data-card';
+import { FileSpreadsheet } from 'lucide-react';
 export default function SettingsPage() {
   const { t, locale } = useI18n();
   const { toast } = useToast();
@@ -133,6 +135,12 @@ export default function SettingsPage() {
             {locale === 'zh' ? '汇款模板' : 'Remittance'}
           </TabsTrigger>
           {isAdmin && (
+            <TabsTrigger value="master-data">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              {t('settings.masterData.title')}
+            </TabsTrigger>
+          )}
+          {isAdmin && (
             <TabsTrigger value="feedback">
               <MessageSquare className="mr-2 h-4 w-4" />
               {t('settings.feedbackManagement')}
@@ -162,6 +170,12 @@ export default function SettingsPage() {
             </div>
           </div>
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="master-data">
+            <MasterDataCard />
+          </TabsContent>
+        )}
 
         {isAdmin && (
           <TabsContent value="feedback">
