@@ -255,9 +255,9 @@ export interface Unit {
 
 export const UNITS: Record<string, Unit> = {
   // Quantity units - 数量单位
-  PCS: { code: 'PCS', name: 'Pieces', name_cn: '件', category: 'quantity' },
-  EA: { code: 'EA', name: 'Each', name_cn: '个 ', category: 'quantity' },
-  U: { code: 'UNIT', name: 'Unit', name_cn: '个 ', category: 'quantity' },
+  PCS: { code: 'PCS', name: 'Pieces', name_cn: '个', category: 'quantity' },
+  EA: { code: 'EA', name: 'Each', name_cn: '个', category: 'quantity' },
+  UNIT: { code: 'UNIT', name: 'Unit', name_cn: '个', category: 'quantity' },
 
   SET: { code: 'SET', name: 'Sets', name_cn: '套', category: 'quantity' },
   PAIR: { code: 'PAIR', name: 'Pairs', name_cn: '对', category: 'quantity' },

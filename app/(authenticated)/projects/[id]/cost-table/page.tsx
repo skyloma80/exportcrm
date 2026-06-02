@@ -18,6 +18,7 @@ import { Loader2, AlertCircle, Save, Package, Star } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { getPocketBase } from "@/lib/pocketbase/auth"
+import { UNITS } from "@/lib/constants/trade-standards"
 import {
   Select,
   SelectContent,
@@ -473,7 +474,7 @@ export default function ProjectCostTablePage() {
                             </div>
                           </td>
                           <td className="text-right py-3 px-4">
-                            {product.quantity} {product.unit}
+                            {product.quantity} {UNITS[product.unit]?.name_cn || product.unit}
                           </td>
                           <td className="py-3 px-4">
                             <Select

@@ -32,6 +32,7 @@ interface Customer {
   name_cn?: string
   country?: string
   contact_person?: string
+  supplier_id?: string
 }
 
 interface CustomerSelectProps {
@@ -72,6 +73,25 @@ export function CustomerSelect({
       setLoading(false)
     }
   }
+
+  // 独立请求逻辑：如果传入了 value 但列表中没有，则单独加载该客户
+  useEffect(() => {
+    const fetchSingleCustomer = async () => {
+      if (value && customers.length > 0 && !customers.find(c => c.id === value)) {
+        try {
+          console.log("[CustomerSelect] Value not in list, fetching specifically:", value);
+          const pb = getPocketBase();
+          const c = await pb.collection("customers").getOne<Customer>(value);
+          if (c) {
+            setCustomers(prev => [...prev, c]);
+          }
+        } catch (error) {
+          console.error("[CustomerSelect] Error fetching single customer:", error);
+        }
+      }
+    };
+    fetchSingleCustomer();
+  }, [value, customers.length]);
 
   const getDisplayName = (customer: Customer) => {
     if (locale === "zh" && customer.name_cn) return customer.name_cn

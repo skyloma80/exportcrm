@@ -30,6 +30,7 @@ import {
   Building2,
   Ship,
   Copy,
+  Trash2,
 } from "lucide-react"
 import { soService, type FlatSO, type SOStatus } from "@/lib/pocketbase/services/so"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
@@ -87,7 +88,7 @@ export default function OrderDetailPage({ params }: PageProps) {
     setError(null)
     try {
       const result = await soService.getOne(id, {
-        expand: "project_id,customer_id,created_by",
+        expand: "project_id,project,customer_id,customer,created_by",
       })
       setOrder(result)
     } catch (err: any) {
@@ -112,7 +113,7 @@ export default function OrderDetailPage({ params }: PageProps) {
 
   const handleStatusChange = async (newStatus: SOStatus) => {
     if (!order || newStatus === order.status) return
-    
+
     setStatusLoading(true)
     try {
       await soService.update(order.id, {
@@ -141,6 +142,7 @@ export default function OrderDetailPage({ params }: PageProps) {
     return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       style: 'currency',
       currency: currency || order?.currency || 'USD',
+      currencyDisplay: 'narrowSymbol',
       minimumFractionDigits: 2,
     }).format(amount)
   }
@@ -199,17 +201,17 @@ export default function OrderDetailPage({ params }: PageProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const timestamp = format(new Date(), 'yyyy-MM-dd');
-      a.download = `PI-${order.code}-${timestamp}.xlsx`;
+      const timestamp = format(new Date(), 'yyyyMMdd');
+      a.download = `${timestamp} PI ${order.code} .xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast({
-        title: t('orders.management.piGenerateSuccess'),
-        description: locale === 'zh' ? 'PI Excel 已成功生成并下载' : 'PI Excel has been generated and downloaded',
-      })
+      // toast({
+      //   title: t('orders.management.piGenerateSuccess'),
+      //   description: locale === 'zh' ? 'PI Excel 已成功生成并下载' : 'PI Excel has been generated and downloaded',
+      // })
     } catch (error: any) {
       console.error('Generate PI error:', error)
       toast({
@@ -248,7 +250,7 @@ export default function OrderDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col">
@@ -283,7 +285,22 @@ export default function OrderDetailPage({ params }: PageProps) {
               </Select>
             </div>
           </div>
-
+          <div className="flex items-center gap-2 text-muted-foreground mt-1 ml-12">
+            <Building2 className="w-4 h-4" />
+            <span>{order.customer_name}</span>
+            {(order.expand?.project_id || (order.expand as any)?.project) && (
+              <>
+                <span className="mx-1">•</span>
+                <FolderOpen className="w-4 h-4" />
+                <span>
+                  {(() => {
+                    const p = order.expand?.project_id || (order.expand as any)?.project;
+                    return locale === 'zh' && p.name_cn ? p.name_cn : p.name;
+                  })()}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -327,8 +344,8 @@ export default function OrderDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 space-y-6">
           {/* Order Items */}
           <Card>
             <CardHeader className="pb-3 border-b">
@@ -341,24 +358,26 @@ export default function OrderDetailPage({ params }: PageProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px] pl-6">{t("orders.columns.partNo")}</TableHead>
+                    <TableHead className="w-[60px] pl-6 text-center">{t("orders.columns.seq")}</TableHead>
+                    <TableHead className="w-[150px]">{t("orders.columns.partNo")}</TableHead>
                     <TableHead>{t("orders.columns.description")}</TableHead>
                     <TableHead className="text-right w-[100px]">{t("orders.columns.quantity")}</TableHead>
                     <TableHead className="text-right w-[120px]">{t("orders.columns.unitPrice")}</TableHead>
-                    <TableHead className="text-right pr-6 w-[120px]">{t("orders.columns.totalAmount")}</TableHead>
+                    <TableHead className="text-right pr-6 w-[120px]">{t("orders.columns.subtotal")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {order.items.map((item, idx) => (
                     <TableRow key={idx}>
-                      <TableCell className="pl-6 font-mono text-xs">{item.part_number}</TableCell>
+                      <TableCell className="pl-6 text-center text-muted-foreground font-medium">{idx + 1}</TableCell>
+                      <TableCell className="font-mono text-xs">{item.part_number}</TableCell>
                       <TableCell>
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-2">{item.description_en}</div>
+                        {item.description_en}
+
                       </TableCell>
-                      <TableCell className="text-right">{item.quantity} {item.unit}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                      <TableCell className="text-right pr-6 font-bold">{formatCurrency(item.amount)}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">{item.quantity} {item.unit}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.unit_price)}</TableCell>
+                      <TableCell className="text-right pr-6 font-bold whitespace-nowrap">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -379,50 +398,50 @@ export default function OrderDetailPage({ params }: PageProps) {
             <CardHeader className="pb-3 border-b">
               <CardTitle className="text-base">{t('orders.management.actions')}</CardTitle>
             </CardHeader>
-            <CardContent className="pt-4 space-y-2">
-              <Button onClick={handleGeneratePI} disabled={generatingPI} className="w-full justify-start">
+            <CardContent className="pt-4 space-y-3">
+              <Button variant="outline" onClick={handleGeneratePI} disabled={generatingPI} className="w-full justify-center border-blue-200 text-blue-700 hover:bg-blue-50">
                 {generatingPI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
                 {t('orders.management.generatePI')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/send-email`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/send-email`)}>
                 <Mail className="mr-2 h-4 w-4" />
                 {t('orders.management.sendEmail')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/documents`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/documents`)}>
                 <FolderOpen className="mr-2 h-4 w-4" />
                 {t('orders.management.viewDocuments')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/payments`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/payments`)}>
                 <DollarSign className="mr-2 h-4 w-4" />
                 {t('orders.management.viewPayments')}
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/shipments`)}>
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/shipments`)}>
                 <Truck className="mr-2 h-4 w-4" />
                 {t('orders.management.viewShipments')}
               </Button>
-              <div className="border-t pt-2 mt-2">
-                <Button variant="outline" className="w-full justify-start" onClick={() => router.push(`/orders/${order.id}/edit`)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t("common.edit")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={handleCopy}
-                  disabled={copying}
-                >
-                  {copying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
-                  {t('common.copy')}
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full justify-start"
-                  onClick={() => setShowDeleteConfirmation(true)}
-                  disabled={order.status !== 'draft'}
-                >
-                  {t('common.delete')}
-                </Button>
-              </div>
+
+              <Button variant="outline" className="w-full justify-center" onClick={() => router.push(`/orders/${order.id}/edit`)}>
+                <Edit className="mr-2 h-4 w-4" />
+                {t("common.edit")}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={handleCopy}
+                disabled={copying}
+              >
+                {copying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+                {t('common.copy')}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-center text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setShowDeleteConfirmation(true)}
+                disabled={order.status !== 'draft'}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('common.delete')}
+              </Button>
             </CardContent>
           </Card>
 

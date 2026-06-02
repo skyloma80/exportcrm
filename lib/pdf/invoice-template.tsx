@@ -409,6 +409,7 @@ export interface InvoicePDFData {
     estimated_shipping_date?: string;
     customer_po?: string;
     vendor_code?: string;
+    mode_of_shipment?: string;
   };
   customer?: {
     name: string;
@@ -597,6 +598,24 @@ const countryCodeToName = (code: string): string => {
     'CV': 'Cape Verde',
   };
   return countries[code] || code;
+};
+
+// 格式化运输方式，避免重复的 "By"
+const formatShipmentMode = (mode: string): string => {
+  if (!mode || mode === '-') return '-';
+  
+  // 处理 Express 特殊情况
+  if (mode.toLowerCase() === 'express') {
+    return 'By Express (FedEx/DHL/UPS)';
+  }
+
+  // 如果已经以 "By " 开头（忽略大小写），则直接返回原值
+  if (mode.toLowerCase().startsWith('by ')) {
+    return mode;
+  }
+  
+  // 否则加上 "By " 前缀
+  return `By ${mode}`;
 };
 
 export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
@@ -797,7 +816,9 @@ export const InvoicePDF: React.FC<{ data: InvoicePDFData }> = ({ data }) => {
         </View>
         <View style={styles.termsRow}>
           <Text style={styles.termsLabel}>Mode of Shipment:</Text>
-          <Text style={styles.termsValue}>By {data.terms?.mode_of_shipment ? (data.terms.mode_of_shipment === 'Express' ? 'Express (FedEx/DHL/UPS)' : data.terms.mode_of_shipment) : '-'}</Text>
+          <Text style={styles.termsValue}>
+            {formatShipmentMode(data.terms?.mode_of_shipment || data.order?.mode_of_shipment || '')}
+          </Text>
         </View>
         <View style={styles.termsRow}>
           <Text style={styles.termsLabel}>Time of Delivery:</Text>

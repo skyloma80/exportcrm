@@ -186,6 +186,12 @@ async function generateCodeByPrefix(prefix: string, pbInstance?: PocketBase): Pr
     }
 
     const newSequence = maxSequence + 1;
+    // Check if newSequence exceeds the maximum allowed value for the given number of sequence digits
+    const currentConfig = CODE_PATTERNS[prefix];
+    const maxAllowedSequence = Math.pow(10, currentConfig.seqDigits) - 1;
+    if (newSequence > maxAllowedSequence) {
+      throw new Error(`Failed to generate code for prefix ${prefix}: exceeded maximum sequence value ${maxAllowedSequence} for year ${currentYear}.`);
+    }
     console.log(`[CodeGenerator] Max sequence: ${maxSequence}, new sequence: ${newSequence}`);
     const newCode = formatCodeByType(prefix, newSequence, currentYear, currentMonth);
     console.log(`[CodeGenerator] Generated code: ${newCode}`);

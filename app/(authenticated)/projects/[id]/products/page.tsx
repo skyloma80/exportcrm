@@ -24,6 +24,7 @@ import { DataTable, DataTableColumnHeader } from "@/components/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { Customer } from "@/lib/pocketbase/services/customers"
+import { UNITS } from "@/lib/constants/trade-standards"
 
 interface ProductProject {
   id: string
@@ -87,26 +88,26 @@ interface ProductCreationResult {
  */
 function simulateProductCreation(
   projectId: string,
-  productInput: { name: string; unit: string; [key: string]: any },
+  productInput: { name: string; unit: string;[key: string]: any },
   existingProducts: Array<{ id: string; productId: string; code: string; name: string }>
 ): ProductCreationResult {
   // Simulate product creation - generate a new product ID and code
   const newProductId = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   const newProductCode = `P-${Date.now()}`
-  
+
   const newProduct = {
     id: newProductId,
     name: productInput.name,
     unit: productInput.unit,
     code: newProductCode
   }
-  
+
   // Simulate association creation
   const association = {
     productId: newProductId,
     projectId: projectId
   }
-  
+
   // Simulate the new product-project entry
   const newProductProjectEntry = {
     id: `pp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -114,10 +115,10 @@ function simulateProductCreation(
     code: newProductCode,
     name: productInput.name
   }
-  
+
   // Return updated list with new product added
   const updatedProductList = [...existingProducts, newProductProjectEntry]
-  
+
   return {
     success: true,
     newProduct,
@@ -133,10 +134,10 @@ export default function ProjectProductsPage() {
   const { t, locale } = useI18n()
   const { toast } = useToast()
   const { setItems: setBreadcrumb } = useBreadcrumb()
-  
+
   const id = params.id as string
   const returnTo = searchParams.get('returnTo')
-  
+
   const [project, setProject] = useState<Project | null>(null)
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [products, setProducts] = useState<ProductProject[]>([])
@@ -153,7 +154,7 @@ export default function ProjectProductsPage() {
   useEffect(() => {
     if (project) {
       const projectDisplayName = locale === 'zh' && project.name_cn ? project.name_cn : project.name
-      
+
       if (customer) {
         const customerDisplayName = locale === 'zh' && customer.name_cn ? customer.name_cn : customer.name
         setBreadcrumb([
@@ -223,6 +224,7 @@ export default function ProjectProductsPage() {
     {
       accessorKey: "unit",
       header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
+      cell: ({ row }) => <span>{UNITS[row.getValue("unit") as string]?.name_cn || row.getValue("unit")}</span>,
     },
     {
       accessorKey: "hs_code",

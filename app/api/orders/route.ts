@@ -4,8 +4,13 @@ import { orderService } from '@/lib/pocketbase/services/orders';
 import { setServerPB } from '@/lib/pocketbase/base-service';
 
 /**
- * Orders API Route (POST)
- * 创建订单 API
+ * Create a new order
+ * @description Creates a new sales order with items. Accepts order metadata and an array of line items. Returns the created order record.
+ * @request CreateOrderSchema
+ * @response 200:OrderSchema:The created order
+ * @response 400:ErrorResponse:Invalid input
+ * @response 401:ErrorResponse:Unauthorized
+ * @response 500:ErrorResponse:Server error
  */
 export async function POST(request: NextRequest) {
   try {

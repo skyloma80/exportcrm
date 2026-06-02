@@ -4,22 +4,18 @@
  * Shipment Detail Page
  * 发货详情页
  * 
- * 强制项目上下文和订单上下文：必须通过 URL 参数 `project` 和 `order` 传递，否则返回 404
+ * 通过 URL 参数 `order` 或 shipment expand 数据解析订单上下文
  * Requirements: 1.5, 5.3
  */
 
 import { use, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { notFound } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/use-i18n';
 import { useBreadcrumb } from '@/lib/breadcrumb/context';
 import { useShipment } from '@/hooks/collections/shipments';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Package, Loader2 } from 'lucide-react';
-import { projectService, type Project } from '@/lib/pocketbase/services/projects';
-import { customerService, type Customer } from '@/lib/pocketbase/services/customers';
 import { ShipmentWizardPage } from '@/components/shipments/shipment-wizard-page';
 import { ShipmentStatus as WizardShipmentStatus } from '@/lib/shipment/wizard-config';
 
@@ -28,63 +24,33 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
   const { setItems: setBreadcrumb } = useBreadcrumb();
   const { shipment, isLoading, refetch } = useShipment(id);
-  const orderId = searchParams.get('order');
-  const projectId = searchParams.get('project');
-  
-  // 强制项目上下文和订单上下文：无参数返回 404 (Requirements: 1.5)
-  if (!projectId || !orderId) {
-    notFound();
-  }
-  
-  // Context data
-  const [project, setProject] = useState<Project | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [contextLoading, setContextLoading] = useState(true);
+  const orderIdFromUrl = searchParams.get('order');
 
-  // Load context data
+  const [resolvedOrderId, setResolvedOrderId] = useState<string | null>(orderIdFromUrl);
+
   useEffect(() => {
-    const loadContext = async () => {
-      setContextLoading(true);
-      try {
-        // Load project
-        const projectData = await projectService.getOne(projectId);
-        setProject(projectData);
-        
-        // Load customer from project
-        if (projectData?.customer) {
-          const customerData = await customerService.getOne(projectData.customer);
-          setCustomer(customerData);
-        }
-      } catch (error) {
-        console.error('Failed to load context:', error);
-      } finally {
-        setContextLoading(false);
-      }
-    };
-    
-    loadContext();
-  }, [projectId]);
+    if (resolvedOrderId) return;
+    if (!shipment?.expand?.order) return;
+    setResolvedOrderId(shipment.expand.order.id);
+  }, [shipment, resolvedOrderId]);
 
-  // 计算返回 URL：订单详情页的发货标签页 (Requirements: 5.3)
-  const returnUrl = `/orders/${orderId}/shipments?project=${projectId}`;
+  const returnUrl = resolvedOrderId
+    ? `/orders/${resolvedOrderId}/shipments`
+    : '/orders';
 
-  // 设置面包屑：订单 > 发货编号 (Requirements: 5.3)
-  // 注意：客户和项目信息由 layout 根据 URL 参数自动添加
   useEffect(() => {
-    if (shipment) {
-      const order = shipment.expand?.order;
-      setBreadcrumb([
-        { label: order?.code || orderId, href: `/orders/${orderId}?project=${projectId}` },
-        { label: shipment.code || shipment.id },
-      ]);
-    }
+    if (!shipment || !resolvedOrderId) return;
+    const order = shipment.expand?.order;
+    setBreadcrumb([
+      { label: order?.code || resolvedOrderId, href: `/orders/${resolvedOrderId}` },
+      { label: shipment.code || shipment.id },
+    ]);
     return () => setBreadcrumb([]);
-  }, [shipment, orderId, projectId, setBreadcrumb]);
+  }, [shipment, resolvedOrderId, setBreadcrumb]);
 
-  if (isLoading || contextLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -109,12 +75,10 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  // 向导模式状态更新回调
   const handleWizardStatusChange = (newStatus: WizardShipmentStatus) => {
     refetch();
   };
 
-  // 直接渲染向导模式
   return (
     <div className="p-6">
       <ShipmentWizardPage

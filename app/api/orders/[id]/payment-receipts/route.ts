@@ -5,7 +5,7 @@
  * POST: 上传收款凭证到对应类型目录
  * 
  * 目录结构: Customers/{客户名}/{项目名}/{订单号}/收款凭证/{类型}/
- * 类型: 定金(deposit), 进度款(progress), 尾款(final)
+ * 类型: 预付款(deposit), 进度款(progress), 尾款(final)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -24,6 +24,15 @@ const PAYMENT_TYPE_FOLDERS: Record<string, string> = {
   final: 'final',
 };
 
+/**
+ * 获取收款凭证列表
+ * @description 列出指定订单的所有收款凭证，按类型（deposit/progress/final）分组
+ * @param id {string} 订单ID
+ * @response 200 收款凭证列表（按类型分组）
+ * @response 400 缺少客户或项目信息
+ * @response 404 订单未找到
+ * @response 500 服务器错误
+ */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
@@ -97,6 +106,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * 上传收款凭证
+ * @description 上传收款凭证文件到对应类型目录（deposit/progress/final）
+ * @param id {string} 订单ID
+ * @response 200:SuccessResponse:上传成功，返回文件路径和访问URL
+ * @response 400 请求参数错误（缺少文件或凭证类型无效）
+ * @response 404 订单未找到
+ * @response 500 服务器错误
+ */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;

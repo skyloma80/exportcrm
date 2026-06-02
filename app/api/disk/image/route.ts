@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createStorage } from '@/lib/s3/storage'
 
 /**
- * GET /api/disk/image - 代理图片文件
- * 通过 Next.js 服务端代理从 S3 获取图片，避免 CORS 问题
+ * 代理获取 S3 图片文件
+ * @description 通过 Next.js 服务端代理从 S3 获取图片，避免 CORS 问题。支持长期缓存。
+ * @query {string} path - 图片文件路径
+ * @response 200:FileInfoSchema:返回图片二进制内容，含图片 Content-Type
+ * @response 400:ErrorResponse:未提供路径
+ * @response 404:ErrorResponse:图片文件不存在
+ * @response 500:ErrorResponse:获取图片失败
  */
 export async function GET(request: NextRequest) {
   try {

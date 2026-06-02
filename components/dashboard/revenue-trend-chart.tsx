@@ -50,6 +50,7 @@ export function RevenueTrendChart({
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
+      currencyDisplay: 'narrowSymbol',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);

@@ -14,8 +14,13 @@ interface RouteParams {
 }
 
 /**
- * POST /api/orders/[id]/purchase-orders
- * 从项目成本表生成采购订单
+ * 从成本表生成采购订单
+ * @description 根据项目的已确认成本表，按供应商分组自动生成采购订单及明细
+ * @param id {string} 订单ID
+ * @response 200:SuccessResponse:采购订单创建成功，返回生成的订单列表
+ * @response 400 请求参数错误（订单无项目、无成本表或无供应商）
+ * @response 401 未授权
+ * @response 500 服务器错误
  */
 export async function POST(
   request: NextRequest,

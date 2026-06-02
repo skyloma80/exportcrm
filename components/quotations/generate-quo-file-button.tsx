@@ -22,6 +22,7 @@ interface GenerateQuoFileButtonProps {
   project?: any;
   items?: any[];
   router: any;
+  className?: string;
 }
 
 export function GenerateQuoFileButton({
@@ -29,7 +30,8 @@ export function GenerateQuoFileButton({
   customer,
   project,
   items = [],
-  router
+  router,
+  className
 }: GenerateQuoFileButtonProps) {
   const { toast } = useToast();
   const { uploadPdfToDisk } = usePdfGenerator();
@@ -112,7 +114,7 @@ export function GenerateQuoFileButton({
       variant="outline"
       onClick={handleGenerateQuoFile}
       disabled={isGenerating || !hasRequiredData}
-      className="w-full justify-start"
+      className={`w-full justify-center ${className || ''}`}
     >
       {isGenerating ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

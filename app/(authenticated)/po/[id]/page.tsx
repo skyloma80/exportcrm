@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Edit, FileSpreadsheet, Copy, Loader2, Trash2 } from "lucide-react"
+import { ArrowLeft, Edit, FileSpreadsheet, Copy, Loader2, Trash2, Building2, Calendar, Hash, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { poService, FlatPO } from "@/lib/pocketbase/services/po"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { format } from "date-fns"
+import { UNITS } from "@/lib/constants/trade-standards"
+import { CURRENCIES } from "@/lib/constants/currencies"
 import {
   Table,
   TableBody,
@@ -78,7 +80,8 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `${po?.code || 'PO'}.xlsx`
+      const timestamp = format(new Date(), 'yyyyMMdd');
+      a.download = `${timestamp} ${po?.code || 'PO'}.xlsx`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -147,7 +150,7 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
   if (!po) return <div className="p-6 flex justify-center">找不到采购订单</div>
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.push('/po')}>
@@ -183,27 +186,47 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
       <div className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">基本信息</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-primary" />
+              基本信息
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-muted-foreground">订单号 (PO Code)</div>
-                <div className="font-medium text-lg">{po.code}</div>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="space-y-1.5">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Building2 className="h-3.5 w-3.5" />
+                  供应商
+                </div>
+                <div className="font-semibold text-base">{po.supplier_name}</div>
               </div>
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-muted-foreground">币种</div>
-                <div className="font-medium">{po.currency}</div>
+              
+              <div className="space-y-1.5">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5" />
+                  发货交货日期
+                </div>
+                <div className="font-semibold">
+                  {po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'yyyy-MM-dd') : '-'}
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-muted-foreground">供应商</div>
-                <div className="font-medium">{po.supplier_name}</div>
+
+              <div className="space-y-1.5">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Hash className="h-3.5 w-3.5" />
+                  订单号 (PO Code)
+                </div>
+                <div className="font-mono font-semibold">{po.code}</div>
               </div>
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-muted-foreground">总金额</div>
-                <div className="font-medium text-lg text-primary">{po.currency} {po.total_amount?.toFixed(2) || '0.00'}</div>
+
+              <div className="space-y-1.5">
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Banknote className="h-3.5 w-3.5" />
+                  总金额
+                </div>
+                <div className="font-bold text-lg text-primary">
+                  {CURRENCIES[po.currency]?.symbol || po.currency}{po.total_amount?.toFixed(2) || '0.00'}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -235,9 +258,9 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
                         <TableCell className="whitespace-pre-wrap">{item.description_en}</TableCell>
                         <TableCell className="whitespace-pre-wrap">{item.description_cn}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell>{item.unit}</TableCell>
-                        <TableCell>{item.unit_price}</TableCell>
-                        <TableCell className="font-mono">{item.amount?.toFixed(2)}</TableCell>
+                        <TableCell>{UNITS[item.unit]?.name_cn || item.unit}</TableCell>
+                        <TableCell>{CURRENCIES[po.currency]?.symbol || po.currency}{Number(item.unit_price).toFixed(2)}</TableCell>
+                        <TableCell className="font-mono font-medium">{CURRENCIES[po.currency]?.symbol || po.currency}{item.amount?.toFixed(2)}</TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -253,22 +276,11 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
         
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">交货与备注</CardTitle>
+            <CardTitle className="text-base">备注</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-muted-foreground">交货日期</div>
-                <div className="font-medium">
-                  {po.expected_delivery_date ? format(new Date(po.expected_delivery_date), 'yyyy-MM-dd') : '-'}
-                </div>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-sm font-medium text-muted-foreground">备注</div>
-              <div className="whitespace-pre-wrap mt-1 p-3 bg-muted/30 rounded-md min-h-[60px]">
-                {po.remarks || <span className="text-muted-foreground italic">无备注</span>}
-              </div>
+          <CardContent>
+            <div className="whitespace-pre-wrap p-4 bg-muted/30 rounded-lg min-h-[100px] border">
+              {po.remarks || <span className="text-muted-foreground italic">无备注</span>}
             </div>
           </CardContent>
         </Card>

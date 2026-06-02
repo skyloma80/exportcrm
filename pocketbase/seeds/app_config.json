@@ -81,8 +81,8 @@
     "key": "payment_terms",
     "category": "payment",
     "value": [
-      { "code": "TT30", "name": "30% deposit, 70% before shipment", "name_cn": "30%定金，70%发货前" },
-      { "code": "TT50", "name": "50% deposit, 50% before shipment", "name_cn": "50%定金，50%发货前" },
+      { "code": "TT30", "name": "30% deposit, 70% before shipment", "name_cn": "30%预付款，70%发货前" },
+      { "code": "TT50", "name": "50% deposit, 50% before shipment", "name_cn": "50%预付款，50%发货前" },
       { "code": "TT100", "name": "100% before shipment", "name_cn": "100%发货前付清" },
       { "code": "LC", "name": "Letter of Credit", "name_cn": "信用证" },
       { "code": "OA30", "name": "Open Account 30 days", "name_cn": "月结30天" },

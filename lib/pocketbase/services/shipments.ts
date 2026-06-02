@@ -71,12 +71,10 @@ export interface ShipmentWithExpand extends Shipment {
     order?: {
       id: string;
       code: string;
-      customer: string;
-      project: string;
-      expand?: {
-        customer?: { id: string; code: string; name: string; name_cn?: string };
-        project?: { id: string; code: string; name: string };
-      };
+      customer_name?: string;
+      customer_address?: string;
+      project_id?: string;
+      project_name?: string;
     };
     shipment_items_via_shipment?: ShipmentItemWithExpand[];
   };
@@ -166,11 +164,13 @@ class ShipmentService extends BaseCollectionService<Shipment> {
 
   async createShipment(data: ShipmentCreateInput): Promise<Shipment> {
     const code = await this.generateCode();
-    return this.create({
+    const shipmentData = {
       ...data,
       code,
       status: 'preparing' as ShipmentStatus,
-    });
+    };
+    console.log('Creating shipment with data:', shipmentData);
+    return this.create(shipmentData);
   }
 
   async updateStatus(id: string, status: ShipmentStatus): Promise<Shipment> {

@@ -111,6 +111,7 @@ export default function QuotationsPage() {
     return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       style: 'currency',
       currency: currency || 'USD',
+      currencyDisplay: 'narrowSymbol',
       minimumFractionDigits: 2,
     }).format(amount)
   }

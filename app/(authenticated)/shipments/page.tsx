@@ -84,14 +84,11 @@ export default function ShipmentsPage() {
       },
       {
         id: "customer",
-        accessorFn: (row) => row.expand?.order?.expand?.customer?.name || "",
+        accessorFn: (row) => row.expand?.order?.customer_name || "",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={t("shipments.columns.customer")} />
         ),
-        cell: ({ row }) => {
-          const customer = row.original.expand?.order?.expand?.customer
-          return customer ? getDisplayName(customer) : "-"
-        },
+        cell: ({ row }) => row.original.expand?.order?.customer_name || "-",
       },
       {
         accessorKey: "status",
@@ -157,7 +154,7 @@ export default function ShipmentsPage() {
         id: "actions",
         cell: ({ row }) => {
           const order = row.original.expand?.order;
-          const projectId = order?.project;
+          const projectId = order?.project_id;
           const orderId = order?.id;
           const baseUrl = `/shipments/${row.original.id}`;
           const params = projectId && orderId ? `?order=${orderId}&project=${projectId}` : '';
@@ -249,7 +246,7 @@ export default function ShipmentsPage() {
               ]}
               onRowClick={(row) => {
                 const order = row.expand?.order;
-                const projectId = order?.project;
+                const projectId = order?.project_id;
                 const orderId = order?.id;
                 const params = projectId && orderId ? `?order=${orderId}&project=${projectId}` : '';
                 router.push(`/shipments/${row.id}${params}`);

@@ -17,7 +17,10 @@ const VALID_CURRENCIES = ['USD', 'EUR', 'CNY', 'GBP', 'JPY', 'HKD', 'SGD', 'AUD'
 
 /**
  * Import customers from Excel
- * 从 Excel 导入客户数据
+ * @description 从上传的 Excel 文件导入客户数据，支持新增和更新已有记录
+ * @response 200:ImportResultSchema:导入结果，包含成功/失败数量及错误详情
+ * @response 400 未提供文件或文件为空
+ * @response 500 导入失败，服务器内部错误
  */
 export async function POST(request: NextRequest) {
   try {

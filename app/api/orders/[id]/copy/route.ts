@@ -7,6 +7,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 import { generateOrderCode } from '@/lib/services/code-generator';
 
+/**
+ * 复制销售订单
+ * @description 根据已有订单创建新订单，复制订单信息及明细项，生成新订单编号
+ * @param id {string} 原订单ID
+ * @response 200:SuccessResponse:复制成功，返回新订单ID和编号
+ * @response 404 原订单未找到
+ * @response 500 服务器错误
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

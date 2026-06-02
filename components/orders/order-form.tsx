@@ -36,7 +36,25 @@ import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so
 import type { Product } from "@/lib/pocketbase/services/products"
 import { productService } from "@/lib/pocketbase/services/products"
 import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, GripVertical } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   Table,
   TableBody,
@@ -56,14 +74,161 @@ export interface OrderFormProps {
   isEdit?: boolean
 }
 
+interface SortableRowProps {
+  item: SOItem
+  index: number
+  currency: string
+  QUANTITY_UNITS: any[]
+  updateLocalItem: (index: number, field: keyof SOItem, value: any) => void
+  removeLocalItem: (index: number) => void
+}
+
+function SortableRow({
+  item,
+  index,
+  currency,
+  QUANTITY_UNITS,
+  updateLocalItem,
+  removeLocalItem
+}: SortableRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: item.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  const subtotal = (item.quantity || 0) * (item.unit_price || 0)
+  const currencySymbol = CURRENCIES[currency]?.symbol || currency;
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      <TableCell className="w-[40px]">
+        <div {...attributes} {...listeners} className="flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted rounded p-1">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </TableCell>
+      <TableCell className="text-center font-medium text-muted-foreground">
+        {index + 1}
+      </TableCell>
+      <TableCell>
+        <Input
+          value={item.part_number || ''}
+          onChange={(e) => updateLocalItem(index, 'part_number', e.target.value)}
+          placeholder="Part No."
+          className="h-8 px-2 font-mono text-sm"
+        />
+      </TableCell>
+      <TableCell>
+        <Textarea
+          value={item.description_en || ''}
+          onChange={(e) => updateLocalItem(index, 'description_en', e.target.value)}
+          placeholder="Description"
+          className="min-h-[3rem] h-12 px-2 py-1 text-sm resize-y"
+          rows={2}
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          min="0"
+          step="any"
+          className="h-8 px-2"
+          value={item.quantity || ''}
+          onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+        />
+      </TableCell>
+      <TableCell>
+        <Select
+          value={item.unit || 'PCS'}
+          onValueChange={(value) => updateLocalItem(index, 'unit', value)}
+        >
+          <SelectTrigger className="h-8 px-2 text-sm">
+            <SelectValue placeholder="PCS" />
+          </SelectTrigger>
+          <SelectContent>
+            {QUANTITY_UNITS.map((unit) => (
+              <SelectItem key={unit.code} value={unit.code}>
+                {unit.code}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          min="0"
+          step="any"
+          className="h-8 px-2"
+          value={item.unit_price || ''}
+          onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+        />
+      </TableCell>
+      <TableCell className="text-right whitespace-nowrap">{currencySymbol}{subtotal.toFixed(2)}</TableCell>
+      <TableCell>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLocalItem(index)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  )
+}
+
 export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFormProps) {
   const { t, locale } = useI18n()
   const { toast } = useToast()
 
+  // DND Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   // 使用项目上下文 Hook (Requirements: 3.1, 3.2)
   const { project: contextProject, customer: contextCustomer, isWithinProject, projectId } = useProjectContext()
 
-  const [localItems, setLocalItems] = useState<SOItem[]>(initialData?.items || [])
+  const [localItems, setLocalItems] = useState<SOItem[]>(
+    (initialData?.items || []).map(item => ({
+      ...item,
+      id: item.id || Math.random().toString(36).substr(2, 9)
+    }))
+  )
+
+  // 辅助函数：确保获取的是 ID 字符串 (增强版)
+  const ensureId = (val: any): string => {
+    if (!val) return ""
+    if (Array.isArray(val)) return val[0] || "" // 兼容数组格式
+    if (typeof val === 'string') return val
+    if (typeof val === 'object' && (val as any).id) return (val as any).id
+    return String(val)
+  }
+
+  // 探测 initialData 中的项目字段
+  const getProjectIdFromData = (data: any) => {
+    if (!data) return ""
+    return ensureId(data.project_id || data.project || data.projectId)
+  }
+
+  const getCustomerIdFromData = (data: any) => {
+    if (!data) return ""
+    return ensureId(data.customer_id || data.customer || data.customerId)
+  }
   const [showProductSearch, setShowProductSearch] = useState(false)
 
   const handleAddProduct = async (productIds: string[]) => {
@@ -101,6 +266,17 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
     setLocalItems(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setLocalItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
+
   // 格式化日期为 YYYY-MM-DD（HTML date input 需要的格式）
   const formatDateForInput = (dateStr?: string): string => {
     if (!dateStr) return ""
@@ -109,8 +285,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
 
   const [formData, setFormData] = useState({
     code: initialData?.code || "",
-    project_id: initialData?.project_id || "",
-    customer_id: initialData?.customer_id || "",
+    project_id: getProjectIdFromData(initialData) || projectId || "",
+    customer_id: getCustomerIdFromData(initialData) || contextProject?.customer || "",
     customer_name: initialData?.customer_name || "",
     customer_address: initialData?.customer_address || "",
     customer_tax_id: initialData?.customer_tax_id || "",
@@ -120,7 +296,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
     payment_terms: initialData?.payment_terms || "",
     currency: initialData?.currency || "USD",
     expected_delivery_date: formatDateForInput(initialData?.expected_delivery_date),
-    country_of_origin: initialData?.country_of_origin || "CN",
+    country_of_origin: initialData?.country_of_origin || "China",
     country_of_destination: initialData?.country_of_destination || "",
     mode_of_shipment: initialData?.mode_of_shipment || "",
     bank_info: initialData?.bank_info || "",
@@ -183,17 +359,43 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
     loadExchangeRate()
   }, [formData.currency])
 
-  // 当项目上下文加载完成时，更新表单数据
+  // 当项目上下文加载完成时，或者初始数据变化时，更新表单数据
   useEffect(() => {
-    if (isWithinProject && contextProject && !initialData?.code) {
+    if (initialData) {
+      const extractedProjectId = getProjectIdFromData(initialData);
+      const extractedCustomerId = getCustomerIdFromData(initialData);
+
+      console.log("[OrderForm] initialData fields:", Object.keys(initialData));
+      console.log("[OrderForm] Extracted IDs - Project:", extractedProjectId, "Customer:", extractedCustomerId);
+
       setFormData(prev => ({
         ...prev,
-        project_id: contextProject.id,
-        customer_id: contextProject.customer,
-        customer_name: contextCustomer?.name || "",
-        currency: contextCustomer?.preferred_currency || prev.currency,
-        country_of_destination: contextCustomer?.country || prev.country_of_destination,
+        project_id: extractedProjectId || prev.project_id,
+        customer_id: extractedCustomerId || prev.customer_id,
       }))
+    }
+  }, [initialData])
+
+  useEffect(() => {
+    console.log("[OrderForm] Current formData.project_id:", formData.project_id);
+  }, [formData.project_id])
+
+  useEffect(() => {
+    if (isWithinProject && contextProject) {
+      setFormData(prev => {
+        // 如果当前没有项目 ID，或者正在创建新订单，则使用上下文的项目 ID
+        if (!prev.project_id || !initialData?.code) {
+          return {
+            ...prev,
+            project_id: contextProject.id,
+            customer_id: contextProject.customer,
+            customer_name: contextCustomer?.name || prev.customer_name,
+            currency: contextCustomer?.preferred_currency || prev.currency,
+            country_of_destination: contextCustomer?.country || prev.country_of_destination,
+          }
+        }
+        return prev
+      })
     }
   }, [isWithinProject, contextProject, contextCustomer, initialData?.code])
 
@@ -238,7 +440,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>{t("orders.columns.code")}</Label>
               <Input
@@ -247,37 +449,6 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                 className="flex-1"
                 readOnly
                 disabled
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
-              <CustomerSelect
-                value={formData.customer_id || contextProject?.customer || ""}
-                onChange={(c) => {
-                  if (c) {
-                    setFormData(prev => ({
-                      ...prev,
-                      customer_id: c.id,
-                      customer_name: c.name || "",
-                      customer_address: (c as any).address || "",
-                      customer_tax_id: (c as any).tax_id || ""
-                    }))
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '所属项目' : 'Related Project'}</Label>
-              <ProjectSelect
-                value={formData.project_id || projectId || ""}
-                onChange={(p) => setFormData(prev => ({
-                  ...prev,
-                  project_id: p?.id || "",
-                  customer_id: p?.customer || prev.customer_id
-                }))}
-                placeholder={locale === 'zh' ? '选择项目（可选）' : 'Select project (optional)'}
               />
             </div>
             <div className="space-y-2">
@@ -292,6 +463,85 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '客户名称' : 'Customer Name'} <span className="text-destructive">*</span></Label>
+              <CustomerSelect
+                value={formData.customer_id}
+                onChange={(c) => {
+                  if (c) {
+                    setFormData(prev => ({
+                      ...prev,
+                      customer_id: c.id,
+                      customer_name: c.name || "",
+                      customer_address: (c as any).address || "",
+                      customer_tax_id: (c as any).tax_id || "",
+                      vendor_code: (c as any).supplier_id || prev.vendor_code
+                    }))
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '所属项目' : 'Related Project'}</Label>
+              <ProjectSelect
+                value={formData.project_id}
+                onChange={(p) => setFormData(prev => ({
+                  ...prev,
+                  project_id: p?.id || "",
+                  customer_id: p?.customer || prev.customer_id
+                }))}
+                placeholder={locale === 'zh' ? '选择项目（可选）' : 'Select project (optional)'}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '客户订单号' : 'Customer PO Number'}</Label>
+              <Input
+                value={formData.customer_po}
+                onChange={(e) => setFormData(prev => ({ ...prev, customer_po: e.target.value }))}
+                placeholder="e.g. COMP/20.260.001"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{locale === 'zh' ? '供应商代码' : 'Supplier ID'}</Label>
+              <Input
+                value={formData.vendor_code}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendor_code: e.target.value }))}
+                placeholder="e.g. 40000594"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("orders.columns.currency")} <span className="text-destructive">*</span></Label>
+              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
+                <SelectTrigger className={errors.currency ? "border-destructive" : ""}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_CURRENCIES.map(code => {
+                    const currency = CURRENCIES[code]
+                    return (
+                      <SelectItem key={code} value={code}>
+                        {code} - {locale === 'zh' ? currency.name_cn : currency.name}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("orders.columns.exchangeRate")}</Label>
+              <div className="h-10 px-3 py-2 rounded-md border bg-muted text-sm flex items-center">
+                {rateLoading ? (
+                  <span className="text-muted-foreground">{t("common.loading")}...</span>
+                ) : currentRate ? (
+                  <span>1 {formData.currency} = {currentRate.toFixed(4)} CNY</span>
+                ) : (
+                  <span className="text-muted-foreground">{locale === 'zh' ? '暂无汇率' : 'No rate'}</span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -327,100 +577,54 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[150px]">{locale === 'zh' ? '零件号 (Part No.)' : 'Part Number'}</TableHead>
-                  <TableHead className="min-w-[200px]">{locale === 'zh' ? '描述 (Description)' : 'Description'}</TableHead>
-                  <TableHead className="w-[100px]">{locale === 'zh' ? '数量' : 'Quantity'}</TableHead>
-                  <TableHead className="w-[100px]">{locale === 'zh' ? '单位' : 'Unit'}</TableHead>
-                  <TableHead className="w-[150px]">{locale === 'zh' ? '单价' : 'Unit Price'}</TableHead>
-                  <TableHead className="text-right w-[150px]">{locale === 'zh' ? '小计' : 'Subtotal'}</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {localItems.length === 0 ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
+            >
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      {locale === 'zh' ? '暂无产品，请点击右上角添加' : 'No products added yet'}
-                    </TableCell>
+                    <TableHead className="w-[40px]"></TableHead>
+                    <TableHead className="w-[60px] text-center">{t("orders.columns.seq")}</TableHead>
+                    <TableHead className="w-[150px]">{t("orders.columns.partNo")}</TableHead>
+                    <TableHead className="min-w-[200px]">{t("orders.columns.description")}</TableHead>
+                    <TableHead className="w-[100px]">{t("orders.columns.quantity")}</TableHead>
+                    <TableHead className="w-[100px]">{t("orders.columns.unit")}</TableHead>
+                    <TableHead className="w-[150px]">{t("orders.columns.unitPrice")}</TableHead>
+                    <TableHead className="text-right w-[150px]">{t("orders.columns.subtotal")}</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ) : (
-                  localItems.map((item, index) => {
-                    const subtotal = (item.quantity || 0) * (item.unit_price || 0)
-
-                    return (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <Input
-                            value={item.part_number || ''}
-                            onChange={(e) => updateLocalItem(index, 'part_number', e.target.value)}
-                            placeholder="Part No."
-                            className="h-8 font-mono text-sm"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Textarea
-                            value={item.description_en || ''}
-                            onChange={(e) => updateLocalItem(index, 'description_en', e.target.value)}
-                            placeholder="Description"
-                            className="min-h-[3rem] h-12 text-sm resize-y"
-                            rows={2}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="any"
-                            className="h-8"
-                            value={item.quantity || ''}
-                            onChange={(e) => updateLocalItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.unit || 'PCS'}
-                            onValueChange={(value) => updateLocalItem(index, 'unit', value)}
-                          >
-                            <SelectTrigger className="h-8 text-sm">
-                              <SelectValue placeholder="PCS" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {QUANTITY_UNITS.map((unit) => (
-                                <SelectItem key={unit.code} value={unit.code}>
-                                  {unit.code}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">{formData.currency}</span>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="any"
-                              className="h-8"
-                              value={item.unit_price || ''}
-                              onChange={(e) => updateLocalItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">{formData.currency} {subtotal.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeLocalItem(index)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {localItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                        {locale === 'zh' ? '暂无产品，请点击右上角添加' : 'No products added yet'}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <SortableContext
+                      items={localItems.map(item => item.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {localItems.map((item, index) => (
+                        <SortableRow
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          currency={formData.currency}
+                          QUANTITY_UNITS={QUANTITY_UNITS}
+                          updateLocalItem={updateLocalItem}
+                          removeLocalItem={removeLocalItem}
+                        />
+                      ))}
+                    </SortableContext>
+                  )}
+                </TableBody>
+              </Table>
+            </DndContext>
           </div>
         </CardContent>
       </Card>
@@ -442,60 +646,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 第0行：PO Number & Vendor Code */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '客户订单号 (PO Number)' : 'Customer PO Number'}</Label>
-              <Input
-                value={formData.customer_po}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_po: e.target.value }))}
-                placeholder="e.g. COMP/20.260.001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{locale === 'zh' ? '供应商代码 ' : 'Supplier ID'}</Label>
-              <Input
-                value={formData.vendor_code}
-                onChange={(e) => setFormData(prev => ({ ...prev, vendor_code: e.target.value }))}
-                placeholder="e.g. 40000594"
-              />
-            </div>
-          </div>
 
-          {/* 第一行：币种、汇率 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t("orders.columns.currency")} <span className="text-destructive">*</span></Label>
-              <Select value={formData.currency} onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}>
-                <SelectTrigger className={errors.currency ? "border-destructive" : ""}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {COMMON_CURRENCIES.map(code => {
-                    const currency = CURRENCIES[code]
-                    return (
-                      <SelectItem key={code} value={code}>
-                        {code} - {locale === 'zh' ? currency.name_cn : currency.name}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("orders.columns.exchangeRate")}</Label>
-              <div className="h-10 px-3 py-2 rounded-md border bg-muted text-sm flex items-center">
-                {rateLoading ? (
-                  <span className="text-muted-foreground">{t("common.loading")}...</span>
-                ) : currentRate ? (
-                  <span>1 {formData.currency} = {currentRate.toFixed(4)} CNY</span>
-                ) : (
-                  <span className="text-muted-foreground">{locale === 'zh' ? '暂无汇率' : 'No rate'}</span>
-                )}
-              </div>
-            </div>
-          </div>
 
           {/* 第二行：Incoterm、付款条款 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -597,49 +748,29 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
               <Input
                 value={formData.mode_of_shipment}
                 onChange={(e) => setFormData(prev => ({ ...prev, mode_of_shipment: e.target.value }))}
-
+                placeholder={locale === 'zh' ? '输入或选择运输方式' : 'Enter or select mode'}
               />
               <div className="flex flex-wrap gap-2 mt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Sea' }))}
-                >
-                  Sea
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (FedEx)' }))}
-                >
-                  Air (FedEx)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Air (DHL)' }))}
-                >
-                  Air (DHL)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Land' }))}
-                >
-                  Land
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: 'Express (UPS)' }))}
-                >
-                  Express (UPS)
-                </Button>
+                {[
+                  'By Air',
+                  'By Sea',
+                  'By Courier (Fedex)',
+                  'By Courier (UPS)',
+                  'By Courier (DHL)',
+                  'By Courier',
+                  'By Train'
+                ].map((mode) => (
+                  <Button
+                    key={mode}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({ ...prev, mode_of_shipment: mode }))}
+                    className={formData.mode_of_shipment === mode ? "bg-primary/10 border-primary" : ""}
+                  >
+                    {mode}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>

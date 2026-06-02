@@ -123,7 +123,8 @@
       "addressCn": "地址（中文）",
       "website": "网站",
       "remarks": "备注",
-      "taxId": "税号"
+      "taxId": "税号",
+      "supplierId": "供应商代码"
     },
     "contacts": {
       "title": "联系人",
@@ -184,7 +185,8 @@
       "addressCn": "请输入中文地址",
       "website": "https://example.com",
       "remarks": "请输入备注",
-      "taxId": "请输入税号"
+      "taxId": "请输入税号",
+      "supplierId": "请输入供应商代码"
     }
   },
   "products": {
@@ -208,13 +210,13 @@
     "columns": {
       "code": "编码",
       "name": "名称",
-      "nameCn": "中文名称",
+
       "partNumber": "零件号",
       "category": "分类",
       "unit": "单位",
       "hsCode": "HS编码",
       "description": "描述",
-      "descriptionCn": "中文描述",
+
       "project": "所属项目"
     },
     "stats": {
@@ -1287,7 +1289,7 @@
       "fileRequired": "请上传付款凭证"
     },
     "paymentType": {
-      "deposit": "定金",
+      "deposit": "预付款",
       "progress": "进度款",
       "final": "尾款"
     },
@@ -1380,7 +1382,10 @@
       "partNo": "零件号",
       "description": "描述",
       "quantity": "数量",
-      "unitPrice": "单价"
+      "unitPrice": "单价",
+      "seq": "No.",
+      "unit": "单位",
+      "subtotal": "小计"
     },
     "status": {
       "draft": "草稿",
@@ -1477,7 +1482,7 @@
       "reference": "银行流水号"
     },
     "paymentType": {
-      "deposit": "定金",
+      "deposit": "预付款",
       "progress": "进度款",
       "final": "尾款"
     },
@@ -2476,6 +2481,18 @@
       "testButton": "测试连接",
       "testSuccess": "连接成功",
       "saveSuccess": "AI设置已保存"
+    },
+    "masterData": {
+      "title": "全量数据管理",
+      "description": "统一导出或导入客户、供应商、产品及系统配置数据。支持包含 ext 字段在内的全量数据迁移。",
+      "exportButton": "全量导出 (Excel)",
+      "importButton": "选择并导入 Excel",
+      "updateExisting": "更新已存在的记录 (基于 Code/Key)",
+      "summary": "导入结果汇总",
+      "exportSuccess": "导出成功",
+      "exportSuccessDesc": "所有数据已导出到 Excel 文件",
+      "importSuccess": "导入完成",
+      "importSuccessDesc": "数据已同步到系统"
     }
   },
   "userSettings": {

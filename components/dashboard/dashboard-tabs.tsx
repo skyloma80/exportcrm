@@ -108,8 +108,10 @@ export function DashboardTabs({
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency,
+      currency: 'USD',
+      currencyDisplay: 'narrowSymbol',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -323,7 +325,7 @@ function PaymentsTable({ payments, onRowClick, isZh, formatCurrency, formatDate 
   }
 
   const typeLabels: Record<string, string> = {
-    deposit: isZh ? '定金' : 'Deposit',
+    deposit: isZh ? '预付款' : 'Deposit',
     progress: isZh ? '进度款' : 'Progress',
     final: isZh ? '尾款' : 'Final',
   };

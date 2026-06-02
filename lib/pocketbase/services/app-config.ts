@@ -85,7 +85,7 @@ class AppConfigService extends BaseCollectionService<AppConfig> {
    */
   async set(key: string, value: any, category?: ConfigCategory): Promise<AppConfig> {
     const existing = await this.getFirstListItem(`key = "${key}"`);
-    
+
     if (existing) {
       const updated = await this.update(existing.id, { value });
       this.cache.set(key, value);
@@ -116,18 +116,18 @@ class AppConfigService extends BaseCollectionService<AppConfig> {
   async getAll(): Promise<Record<string, any>> {
     const configs = await this.getFullList();
     const result: Record<string, any> = {};
-    
+
     for (const config of configs) {
       result[config.key] = config.value;
     }
-    
+
     // Merge with defaults
     for (const [key, def] of Object.entries(DEFAULT_CONFIGS)) {
       if (!(key in result)) {
         result[key] = def.value;
       }
     }
-    
+
     return result;
   }
 

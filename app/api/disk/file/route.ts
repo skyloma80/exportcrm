@@ -3,8 +3,13 @@ import { GetObjectCommand } from '@aws-sdk/client-s3'
 import { getS3Client, DEFAULT_BUCKET } from '@/lib/s3/client'
 
 /**
- * GET /api/disk/file?path=xxx
- * 获取 S3 文件内容（用于图片显示等）
+ * 获取 S3 文件内容
+ * @description 直接从S3获取文件内容并返回，主要用于图片显示等场景。支持缓存控制。
+ * @query {string} path - 文件路径
+ * @response 200:FileInfoSchema:返回文件二进制内容，含适当的 Content-Type
+ * @response 400:ErrorResponse:未指定文件路径
+ * @response 404:ErrorResponse:文件不存在
+ * @response 500:ErrorResponse:获取文件失败
  */
 export async function GET(request: NextRequest) {
   try {

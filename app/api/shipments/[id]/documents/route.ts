@@ -51,7 +51,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     let shipment;
     try {
       shipment = await pb.collection('shipments').getOne(id, {
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
     } catch (e: any) {
       if (e.status === 404) {
@@ -60,7 +60,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       throw e;
     }
 
-    // 获取订单详情以获取客户和项目信息
+    // 获取订单详情
     const order = shipment.expand?.order;
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -71,7 +71,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Missing customer or project info' }, { status: 400 });
     }
 
-    // 获取该发货记录在订单中的序号
+    // 获取发货序号
     const allShipments = await pb.collection('shipments').getFullList({
       filter: `order = "${order.id}"`,
       sort: 'id',
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let shipment;
     try {
       shipment = await pb.collection('shipments').getOne(id, {
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
     } catch (e: any) {
       if (e.status === 404) {
@@ -320,7 +320,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     let shipment;
     try {
       shipment = await pb.collection('shipments').getOne(id, {
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
     } catch (e: any) {
       if (e.status === 404) {

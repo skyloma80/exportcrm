@@ -7,9 +7,8 @@
  * Requirements: 需求8.1-8.7
  */
 
-import { useState, useEffect, use } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { notFound } from "next/navigation"
+import { useState, useEffect, use, Suspense } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -30,7 +29,6 @@ import {
 import { soService, type FlatSO } from "@/lib/pocketbase/services/so"
 import type { Shipment } from "@/lib/pocketbase/services/shipments"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
-import { useProjectContext } from "@/hooks/use-project-context"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface PageProps {
@@ -38,32 +36,39 @@ interface PageProps {
 }
 
 export default function OrderShipmentsPage({ params }: PageProps) {
+  return (
+    <Suspense fallback={
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <OrderShipmentsPageInner params={params} />
+    </Suspense>
+  )
+}
+
+function OrderShipmentsPageInner({ params }: PageProps) {
   const { id } = use(params)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
   const { toast } = useToast()
   const { setItems: setBreadcrumbItems } = useBreadcrumb()
-  
-  // Get project context
-  const projectIdFromUrl = searchParams.get("project")
   
   const [order, setOrder] = useState<FlatSO | null>(null)
   const [shipments, setShipments] = useState<Shipment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  // Set breadcrumb
   useEffect(() => {
     if (order) {
       setBreadcrumbItems([
         { label: t("nav.orders"), href: "/orders" },
-        { label: order.code || t("orders.detail"), href: `/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}` },
+        { label: order.code || t("orders.detail"), href: `/orders/${id}` },
         { label: t('shipments.title') },
       ])
     }
     return () => setBreadcrumbItems([])
-  }, [order, setBreadcrumbItems, id, projectIdFromUrl, t])
+  }, [order, setBreadcrumbItems, id, t])
 
   useEffect(() => {
     loadData()
@@ -75,13 +80,11 @@ export default function OrderShipmentsPage({ params }: PageProps) {
     try {
       const pb = getPocketBase()
       
-      // Load order
       const orderData = await pb.collection("so").getOne<FlatSO>(id, {
         expand: "project_id,customer_id",
       })
       setOrder(orderData)
       
-      // Load shipments
       const shipmentsData = await pb.collection("shipments").getFullList<Shipment>({
         filter: `order = "${id}"`,
       })
@@ -96,8 +99,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
   }
 
   const handleCreateShipment = () => {
-    // Navigate to new shipment page with order and project context
-    router.push(`/shipments/new?order=${id}${projectIdFromUrl ? `&project=${projectIdFromUrl}` : ''}`)
+    router.push(`/shipments/new?order=${id}`)
   }
 
   const getShippingIcon = (method: string) => {
@@ -145,9 +147,8 @@ export default function OrderShipmentsPage({ params }: PageProps) {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
-         <Button variant="ghost" size="icon" onClick={() => router.push(`/orders/${id}${projectIdFromUrl ? `?project=${projectIdFromUrl}` : ''}`)}>
+         <Button variant="ghost" size="icon" onClick={() => router.push(`/orders/${id}`)}>
             <ArrowLeft className="w-5 h-5" />
          </Button>
          <div>
@@ -158,7 +159,6 @@ export default function OrderShipmentsPage({ params }: PageProps) {
          </div>
       </div>
 
-      {/* Shipments List */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -199,7 +199,7 @@ export default function OrderShipmentsPage({ params }: PageProps) {
                     <TableRow 
                       key={shipment.id}
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => router.push(`/shipments/${shipment.id}?order=${id}${projectIdFromUrl ? `&project=${projectIdFromUrl}` : ''}`)}
+                      onClick={() => router.push(`/shipments/${shipment.id}?order=${id}`)}
                     >
                       <TableCell className="font-mono font-medium">{shipment.code}</TableCell>
                       <TableCell>

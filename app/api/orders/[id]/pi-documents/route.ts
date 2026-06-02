@@ -8,8 +8,13 @@ interface RouteParams {
 }
 
 /**
- * GET /api/orders/[id]/pi-documents
- * Load PI documents for an order
+ * 获取PI文档列表
+ * @description 获取指定订单的Proforma Invoice（PI）PDF文档列表
+ * @param id {string} 订单ID
+ * @response 200:DocumentSchema:PI文档列表
+ * @response 400 缺少客户或项目信息
+ * @response 401 未授权
+ * @response 500 服务器错误
  */
 export async function GET(
   request: NextRequest,

@@ -17,7 +17,7 @@ export const PORTS = [
   { code: 'CNDLC', name: 'Dalian', name_cn: '大连港', country: 'China', country_cn: '中国', type: 'sea' },
   { code: 'CNLYG', name: 'Lianyungang', name_cn: '连云港', country: 'China', country_cn: '中国', type: 'sea' },
   { code: 'CNFOC', name: 'Fuzhou', name_cn: '福州港', country: 'China', country_cn: '中国', type: 'sea' },
-  
+
   // 美国港口
   { code: 'USLAX', name: 'Los Angeles', name_cn: '洛杉矶港', country: 'United States', country_cn: '美国', type: 'sea' },
   { code: 'USLGB', name: 'Long Beach', name_cn: '长滩港', country: 'United States', country_cn: '美国', type: 'sea' },
@@ -25,14 +25,14 @@ export const PORTS = [
   { code: 'USSEA', name: 'Seattle', name_cn: '西雅图港', country: 'United States', country_cn: '美国', type: 'sea' },
   { code: 'USOAK', name: 'Oakland', name_cn: '奥克兰港', country: 'United States', country_cn: '美国', type: 'sea' },
   { code: 'USSAV', name: 'Savannah', name_cn: '萨凡纳港', country: 'United States', country_cn: '美国', type: 'sea' },
-  
+
   // 欧洲港口
   { code: 'NLRTM', name: 'Rotterdam', name_cn: '鹿特丹港', country: 'Netherlands', country_cn: '荷兰', type: 'sea' },
   { code: 'DEHAM', name: 'Hamburg', name_cn: '汉堡港', country: 'Germany', country_cn: '德国', type: 'sea' },
   { code: 'BEANR', name: 'Antwerp', name_cn: '安特卫普港', country: 'Belgium', country_cn: '比利时', type: 'sea' },
   { code: 'GBFXT', name: 'Felixstowe', name_cn: '费利克斯托港', country: 'United Kingdom', country_cn: '英国', type: 'sea' },
   { code: 'GBLGP', name: 'London Gateway', name_cn: '伦敦门户港', country: 'United Kingdom', country_cn: '英国', type: 'sea' },
-  
+
   // 亚洲其他港口
   { code: 'SGSIN', name: 'Singapore', name_cn: '新加坡港', country: 'Singapore', country_cn: '新加坡', type: 'sea' },
   { code: 'HKHKG', name: 'Hong Kong', name_cn: '香港港', country: 'Hong Kong', country_cn: '香港', type: 'sea' },
@@ -42,11 +42,11 @@ export const PORTS = [
   { code: 'MYPKG', name: 'Port Klang', name_cn: '巴生港', country: 'Malaysia', country_cn: '马来西亚', type: 'sea' },
   { code: 'THBKK', name: 'Bangkok', name_cn: '曼谷港', country: 'Thailand', country_cn: '泰国', type: 'sea' },
   { code: 'VNSGN', name: 'Ho Chi Minh', name_cn: '胡志明港', country: 'Vietnam', country_cn: '越南', type: 'sea' },
-  
+
   // 中东港口
   { code: 'AEJEA', name: 'Jebel Ali', name_cn: '杰贝阿里港', country: 'UAE', country_cn: '阿联酋', type: 'sea' },
   { code: 'AEDXB', name: 'Dubai', name_cn: '迪拜港', country: 'UAE', country_cn: '阿联酋', type: 'sea' },
-  
+
   // 澳洲港口
   { code: 'AUSYD', name: 'Sydney', name_cn: '悉尼港', country: 'Australia', country_cn: '澳大利亚', type: 'sea' },
   { code: 'AUMEL', name: 'Melbourne', name_cn: '墨尔本港', country: 'Australia', country_cn: '澳大利亚', type: 'sea' },
@@ -95,11 +95,11 @@ export type CurrencyCode = typeof CURRENCIES[number]['code']
 // ==================== 付款条款 ====================
 export const PAYMENT_TERMS = [
   { code: 'TT_ADVANCE', name: 'T/T in Advance', name_cn: '预付电汇', description: '发货前全额付款' },
-  { code: 'TT_30_70', name: 'T/T 30% advance, 70% before shipment', name_cn: '30%预付，70%发货前', description: '30%定金，70%发货前付清' },
-  { code: 'TT_30_70_BL', name: 'T/T 30% advance, 70% against B/L', name_cn: '30%预付，70%见提单', description: '30%定金，70%见提单副本付款' },
+  { code: 'TT_30_70', name: 'T/T 30% advance, 70% before shipment', name_cn: '30%预付，70%发货前', description: '30%预付款，70%发货前付清' },
+  { code: 'TT_30_70_BL', name: 'T/T 30% advance, 70% against B/L', name_cn: '30%预付，70%见提单', description: '30%预付款，70%见提单副本付款' },
   { code: 'TT100', name: 'T/T 100% before shipment', name_cn: '发货前付清', description: '发货前支付100%' },
-  { code: 'TT50', name: 'T/T 50% deposit, 50% before shipment', name_cn: '50%定金，50%发货前', description: '50%定金，50%发货前付清' },
-  { code: 'TT30', name: 'T/T 30% deposit, 70% before shipment', name_cn: '30%定金，70%发货前', description: '30%定金，70%发货前付清' },
+  { code: 'TT50', name: 'T/T 50% deposit, 50% before shipment', name_cn: '50%预付款，50%发货前', description: '50%预付款，50%发货前付清' },
+  { code: 'TT30', name: 'T/T 30% deposit, 70% before shipment', name_cn: '30%预付款，70%发货前', description: '30%预付款，70%发货前付清' },
   { code: 'LC_SIGHT', name: 'L/C at Sight', name_cn: '即期信用证', description: '即期不可撤销信用证' },
   { code: 'LC_30', name: 'L/C 30 Days', name_cn: '30天信用证', description: '30天远期信用证' },
   { code: 'LC_60', name: 'L/C 60 Days', name_cn: '60天信用证', description: '60天远期信用证' },
@@ -186,7 +186,7 @@ export interface PalletMaterial {
 // ==================== 单位 ====================
 export const UNITS = [
   // 数量单位
-  { code: 'PCS', name: 'Pieces', name_cn: '件', category: 'quantity' },
+  { code: 'PCS', name: 'Pieces', name_cn: '个', category: 'quantity' },
   { code: 'SETS', name: 'Sets', name_cn: '套', category: 'quantity' },
   { code: 'PAIRS', name: 'Pairs', name_cn: '双', category: 'quantity' },
   { code: 'DOZ', name: 'Dozens', name_cn: '打', category: 'quantity' },

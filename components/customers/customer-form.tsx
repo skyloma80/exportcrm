@@ -50,7 +50,8 @@ export function CustomerForm({ initialData, onSubmit, onCancel, isLoading }: Cus
     address_cn: initialData?.address_cn || "",
     website: initialData?.website || "",
     remarks: initialData?.remarks || "",
-    tax_id: initialData?.tax_id || "",  // 税号 (Requirements: 2.1)
+    tax_id: initialData?.tax_id || "",
+    supplier_id: initialData?.supplier_id || "",
   })
   
   const [errors, setErrors] = useState<ValidationErrors>({})
@@ -199,7 +200,7 @@ export function CustomerForm({ initialData, onSubmit, onCancel, isLoading }: Cus
             </div>
           </div>
 
-          {/* Tax ID - 税号 (Requirements: 2.1) */}
+          {/* Tax ID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="tax_id">{t("customers.form.taxId")}</Label>
@@ -208,6 +209,15 @@ export function CustomerForm({ initialData, onSubmit, onCancel, isLoading }: Cus
                 value={formData.tax_id}
                 onChange={(e) => handleChange("tax_id", e.target.value)}
                 placeholder={t("customers.placeholders.taxId")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="supplier_id">{t("customers.form.supplierId")}</Label>
+              <Input
+                id="supplier_id"
+                value={formData.supplier_id}
+                onChange={(e) => handleChange("supplier_id", e.target.value)}
+                placeholder={t("customers.placeholders.supplierId")}
               />
             </div>
           </div>

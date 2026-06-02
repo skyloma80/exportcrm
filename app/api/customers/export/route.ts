@@ -21,7 +21,10 @@ interface Customer {
 
 /**
  * Export customers to Excel
- * 导出客户数据到 Excel
+ * @description 导出客户数据到 Excel 文件，返回二进制 xlsx 流
+ * @response 200:CustomerSchema:导出的客户 Excel 文件（二进制附件）
+ * @response 404 没有找到客户数据
+ * @response 500 导出失败，服务器内部错误
  */
 export async function GET() {
   try {

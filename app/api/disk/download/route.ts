@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createStorage } from '@/lib/s3/storage'
 
 /**
- * GET /api/disk/download - 代理下载文件
- * 通过 Next.js 服务端代理从 S3 下载文件，避免 presigned URL 签名问题
+ * 代理下载 S3 文件
+ * @description 通过 Next.js 服务端代理从 S3 下载文件，避免 presigned URL 签名问题。返回文件流供客户端下载。
+ * @query {string} path - 文件路径
+ * @response 200:FileInfoSchema:返回文件二进制流，含 Content-Disposition 下载头
+ * @response 400:ErrorResponse:未提供文件路径
+ * @response 404:ErrorResponse:文件不存在
+ * @response 500:ErrorResponse:下载失败
  */
 export async function GET(request: NextRequest) {
   try {

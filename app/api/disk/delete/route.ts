@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createStorage } from '@/lib/s3/storage'
 
-// DELETE /api/disk/delete - 删除 S3 文件或文件夹
+/**
+ * 删除 S3 文件或文件夹
+ * @description 支持删除单个文件或整个文件夹（含所有子文件）
+ * @response 200:SuccessResponse:删除成功
+ * @response 400:ErrorResponse:未指定路径
+ * @response 500:ErrorResponse:删除失败
+ */
 export async function DELETE(request: NextRequest) {
   try {
     const body = await request.json()

@@ -68,8 +68,8 @@ export default function EditOrderPage({ params }: PageProps) {
         description: t("orders.edit.saveSuccessDesc"),
       })
 
-      // 重新加载数据以显示更新后的值
-      await loadOrder()
+      // 跳转回详情页
+      router.push(`/orders/${order.id}`)
     } catch (err: any) {
       console.error("Update error:", err)
       toast({
@@ -112,17 +112,9 @@ export default function EditOrderPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 space-y-6">
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/orders/${id}`)}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("common.back")}
-        </Button>
+         
         
         <div>
           <h1 className="text-3xl font-bold">{t("common.edit")}</h1>

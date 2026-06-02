@@ -913,6 +913,25 @@ export function calculateMixedPalletPlan(
   const totalVolume = allPallets.reduce((sum, pallet) => sum + calculatePalletChargeableVolume(pallet), 0)
   const utilizationPercent = totalVolume > 0 ? (netVolume / totalVolume) * 100 : 0
 
+  // 验证：确保 palletBreakdown 中的数量与 allPallets 数量一致
+  // 如果不一致，说明代码有bug，使用 allPallets 重新构建
+  const expectedTotalPallets = allPallets.length
+  let calculatedTotalPallets = 0
+  for (const count of palletCounts.values()) {
+    calculatedTotalPallets += count
+  }
+  
+  // 如果数量不一致，使用 allPallets 重新计算
+  if (calculatedTotalPallets !== expectedTotalPallets) {
+    console.warn(`[calculateMixedPalletPlan] palletBreakdown count mismatch: expected ${expectedTotalPallets}, got ${calculatedTotalPallets}. Rebuilding from allPallets.`)
+    palletCounts.clear()
+    for (const pallet of allPallets) {
+      if (pallet.palletSpec) {
+        palletCounts.set(pallet.palletSpec.code, (palletCounts.get(pallet.palletSpec.code) || 0) + 1)
+      }
+    }
+  }
+
   // 计算单一最大托盘方案的体积（用于比较节省了多少）
   const largestSpec = [...palletSpecs].sort((a, b) => (b.length * b.width) - (a.length * a.width))[0]
   const singleConfig: StackingConfig = {
@@ -930,6 +949,34 @@ export function calculateMixedPalletPlan(
     const spec = palletSpecs.find(s => s.code === code)
     if (spec) {
       palletBreakdown.push({ spec, count })
+    }
+  }
+
+  // 最终验证：如果 palletBreakdown 的总数仍然与 allPallets 不一致，直接从 allPallets 构建
+  let breakdownTotal = 0
+  for (const item of palletBreakdown) {
+    breakdownTotal += item.count
+  }
+  if (breakdownTotal !== expectedTotalPallets) {
+    console.error(`[calculateMixedPalletPlan] Final palletBreakdown count mismatch: expected ${expectedTotalPallets}, got ${breakdownTotal}. Using allPallets directly.`)
+    // 直接从 allPallets 统计
+    const directCounts = new Map<string, { spec: typeof palletSpecs[0]; count: number }>()
+    for (const pallet of allPallets) {
+      if (pallet.palletSpec) {
+        const spec = palletSpecs.find(s => s.code === pallet.palletSpec!.code)
+        if (spec) {
+          const existing = directCounts.get(pallet.palletSpec.code)
+          if (existing) {
+            existing.count++
+          } else {
+            directCounts.set(pallet.palletSpec.code, { spec, count: 1 })
+          }
+        }
+      }
+    }
+    palletBreakdown.length = 0
+    for (const [, value] of directCounts) {
+      palletBreakdown.push({ spec: value.spec, count: value.count })
     }
   }
 

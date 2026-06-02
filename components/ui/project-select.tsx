@@ -61,6 +61,24 @@ export function ProjectSelect({
     }
   }
 
+  // 独立请求逻辑：如果传入了 value 但列表中没有，则单独加载该项目
+  useEffect(() => {
+    const fetchSingleProject = async () => {
+      if (value && projects.length > 0 && !projects.find(p => p.id === value)) {
+        try {
+          console.log("[ProjectSelect] Value not in list, fetching specifically:", value);
+          const p = await projectService.getWithRelations(value);
+          if (p) {
+            setProjects(prev => [...prev, p]);
+          }
+        } catch (error) {
+          console.error("[ProjectSelect] Error fetching single project:", error);
+        }
+      }
+    };
+    fetchSingleProject();
+  }, [value, projects.length]);
+
   const getDisplayName = (project: ProjectWithRelations) => {
     if (locale === "zh" && project.name_cn) return project.name_cn
     return project.name
@@ -74,6 +92,12 @@ export function ProjectSelect({
   }
 
   const selectedProject = projects.find((p) => p.id === value)
+  
+  useEffect(() => {
+    if (value) {
+      console.log("[ProjectSelect] Value prop:", value, "Found project:", selectedProject?.name || "none");
+    }
+  }, [value, projects.length])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

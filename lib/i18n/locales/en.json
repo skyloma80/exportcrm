@@ -123,7 +123,8 @@
       "addressCn": "Address (Chinese)",
       "website": "Website",
       "remarks": "Remarks",
-      "taxId": "Tax ID"
+      "taxId": "Tax ID",
+      "supplierId": "Supplier ID"
     },
     "contacts": {
       "title": "Contacts",
@@ -184,7 +185,8 @@
       "addressCn": "Enter Chinese address",
       "website": "https://example.com",
       "remarks": "Enter remarks",
-      "taxId": "Enter tax ID"
+      "taxId": "Enter tax ID",
+      "supplierId": "Enter supplier ID"
     }
   },
   "products": {
@@ -1373,7 +1375,14 @@
       "exchangeRate": "Exchange Rate",
       "totalAmount": "Total Amount",
       "paidAmount": "Paid Amount",
-      "expectedDelivery": "Expected Delivery"
+      "expectedDelivery": "Expected Delivery",
+      "partNo": "Part Number",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit Price",
+      "seq": "No.",
+      "unit": "Unit",
+      "subtotal": "Subtotal"
     },
     "status": {
       "draft": "Draft",
@@ -2497,7 +2506,19 @@
     "importConfig": "Import Config",
     "importSuccess": "Import successful! Created {{created}}, updated {{updated}}",
     "importError": "Import failed",
-    "selectJsonFile": "Please select a JSON file"
+    "selectJsonFile": "Please select a JSON file",
+    "masterData": {
+      "title": "Master Data Management",
+      "description": "Export or import customers, suppliers, products, and system config data in one place. Supports full migration including ext fields.",
+      "exportButton": "Export All (Excel)",
+      "importButton": "Select and Import Excel",
+      "updateExisting": "Update existing records (based on Code/Key)",
+      "summary": "Import Summary",
+      "exportSuccess": "Export Successful",
+      "exportSuccessDesc": "All data has been exported to an Excel file",
+      "importSuccess": "Import Completed",
+      "importSuccessDesc": "Data has been synchronized to the system"
+    }
   },
   "userSettings": {
     "title": "User Settings",

@@ -40,7 +40,9 @@ export class ExcelPiService {
 
     const items = Array.isArray(order.items) ? order.items : [];
     const templateRow = 11;
-    const templateRowCount = 1;
+    const originalProductRows = 1; // 模板中现在只有 1 个产品行 (第 11 行)
+    const totalRowStart = 12;      // 模板中 Total 所在的起始行 (12-13 行)
+
     // 清空模板行占位符
     const row11 = worksheet.getRow(templateRow);
     for (let c = 1; c <= 8; c++) {
@@ -48,90 +50,160 @@ export class ExcelPiService {
     }
 
     // 填充头部信息
-    worksheet.getCell('G2').value = order.vendor_code || '';
-    worksheet.getCell('G3').value = order.customer_po || '';
-    worksheet.getCell('G4').value = order.code || '';
+    worksheet.getCell('G2').value = ''+order.vendor_code ;
+    worksheet.getCell('G3').value = ''+order.customer_po;
+    worksheet.getCell('G4').value = ''+order.code;
     worksheet.getCell('G5').value = order.created
       ? format(new Date(order.created), 'MMM dd, yyyy')
       : format(new Date(), 'MMM dd, yyyy');
 
-    worksheet.getCell('B6').value = order.customer_name || '';
-    worksheet.getCell('B7').value = order.customer_address || '';
-    worksheet.getCell('B8').value = order.customer_tax_id || '';
+    const nameCell = worksheet.getCell('B6');
+    const addrCell = worksheet.getCell('B7');
+    const taxCell = worksheet.getCell('B8');
 
-    // 2. 产品行处理：处理多行合并
-    const rowsInserted = items.length > templateRowCount ? items.length - templateRowCount : 0;
+    nameCell.value = order.customer_name || '';
+    addrCell.value = order.customer_address || '';
+    taxCell.value = order.customer_tax_id || '';
 
-    if (rowsInserted > 0) {
-      worksheet.unMergeCells('B11:C11');
-      worksheet.spliceRows(templateRow + templateRowCount, 0, ...Array(rowsInserted).fill([]));
+    // 设置自动换行
+    [nameCell, addrCell, taxCell].forEach(cell => {
+      cell.alignment = { ...cell.alignment, wrapText: true, vertical: 'top' };
+    });
+
+    // 根据姓名内容调整行高 (第6行)
+    if (order.customer_name) {
+      const nameRow = worksheet.getRow(6);
+      const cleanName = (order.customer_name || '').trim();
+      const manualLines = cleanName.split('\n').length;
+      const wrappedLines = Math.ceil(cleanName.length / 80);
+      const totalLines = Math.max(manualLines, wrappedLines);
+      nameRow.height = totalLines * 15 + 8; // 增加 8px 边距
+    }
+
+    // 根据地址内容调整行高 (第7行)
+    if (order.customer_address) {
+      const addrRow = worksheet.getRow(7);
+      const cleanAddr = (order.customer_address || '').trim();
+      const manualLines = cleanAddr.split('\n').length;
+      const wrappedLines = Math.ceil(cleanAddr.length / 80);
+      const totalLines = Math.max(manualLines, wrappedLines);
+      addrRow.height = totalLines * 15 + 10; // 增加 10px 边距
+    }
+
+    // 2. 产品行处理：根据需要插入新行并复制样式
+    const extraRows = items.length > originalProductRows ? items.length - originalProductRows : 0;
+
+    if (extraRows > 0) {
+      // 重要：先解除合计行（12-13行）的合并，防止拉伸冲突
+      try { worksheet.unMergeCells('A12:C13'); } catch (e) { }
+      try { worksheet.unMergeCells('F12:F13'); } catch (e) { }
+      try { worksheet.unMergeCells('G12:G13'); } catch (e) { }
+      try { worksheet.unMergeCells('H12:H13'); } catch (e) { }
+
+      // 批量插入行
+      worksheet.spliceRows(totalRowStart, 0, ...Array(extraRows).fill([]));
 
       const sourceRow = worksheet.getRow(templateRow);
-      for (let i = 0; i < rowsInserted; i++) {
-        const newRowNumber = templateRow + templateRowCount + i;
-        const newRow = worksheet.getRow(newRowNumber);
-        newRow.height = sourceRow.height;
-
-        sourceRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          const targetCell = newRow.getCell(colNumber);
-          targetCell.style = { ...cell.style };
-        });
-
-        const merges = (worksheet as any)._merges;
-        if (merges) {
-          delete merges[`B${newRowNumber}`];
-          delete merges[`C${newRowNumber}`];
+      for (let i = 0; i < extraRows; i++) {
+        const currentRowNum = totalRowStart + i;
+        const currentRow = worksheet.getRow(currentRowNum);
+        currentRow.height = sourceRow.height;
+        // 复制样式
+        for (let c = 1; c <= 8; c++) {
+          const sourceCell = sourceRow.getCell(c);
+          const targetCell = currentRow.getCell(c);
+          targetCell.style = sourceCell.style;
         }
       }
-
-      worksheet.mergeCells('B11:C11');
     }
 
     // 3. 填充产品数据
+    const sourceRowStyle = worksheet.getRow(templateRow);
     items.forEach((item, index) => {
       const rowNumber = templateRow + index;
       const row = worksheet.getRow(rowNumber);
 
+      if (rowNumber !== templateRow) {
+        for (let c = 1; c <= 8; c++) {
+          row.getCell(c).style = sourceRowStyle.getCell(c).style;
+        }
+      }
+
       const partNumber = item.part_number || (item as any).product_code || '';
-      const description = item.description_en   || '';
+      const description = item.description_en || '';
 
       row.getCell(1).value = index + 1;
       row.getCell(2).value = partNumber;
-      row.getCell(4).value = item.description_en;
+      row.getCell(4).value = description;
       row.getCell(5).value = item.quantity;
       row.getCell(6).value = item.unit || 'PCS';
       row.getCell(7).value = item.unit_price;
       row.getCell(8).value = item.amount;
 
-      // 行高调整
-      let lines = 1;
-      if (description) lines = Math.ceil(description.length / 40) + 1;
-      row.height = Math.max(20, lines * 15);
+      // 动态计算产品行高度 (使用更严谨的估算)
+      const cleanDesc = (description || '').trim();
+      const manualLines = cleanDesc.split('\n').length;
+      const wrappedLines = Math.ceil(cleanDesc.length / 30);
+      const totalLines = Math.max(manualLines, wrappedLines);
+      row.height = totalLines * 18 + 8;
+
+      const descCell = row.getCell(4);
+      if (descCell.alignment) {
+        descCell.alignment = { ...descCell.alignment, wrapText: true };
+      }
     });
 
-    for (let i = 0; i < items.length; i++) {
-      const rowNumber = templateRow + i;
-      if (rowNumber === templateRow) continue;
-
-      try {
-        worksheet.mergeCells(`B${rowNumber}:C${rowNumber}`);
-      } catch (e) {
-        // 已经合并则跳过
-      }
-    }
-
-    const totalRowIndex = 15 + rowsInserted;
+    const totalRowIndex = totalRowStart + extraRows;
     const totalCell = worksheet.getRow(totalRowIndex).getCell(8);
     totalCell.value = {
       formula: `SUM(H${templateRow}:H${templateRow + items.length - 1})`,
       result: order.total_amount,
     };
 
-    // 5. 贸易条款
-    const termsStartRow = 17 + rowsInserted;
+    // --- 强力合并管理：环境无关方案 ---
+    // 1. 收集所有原始合并信息
+    const originalMerges = worksheet.model.merges ? [...worksheet.model.merges] : [];
+
+    // 2. 彻底清除插入点及其下方的所有合并，防止冲突
+    if (worksheet.model.merges) {
+      const mergesToClear = originalMerges.filter(m => {
+        const match = m.match(/(\d+)/);
+        return match && parseInt(match[1]) >= templateRow;
+      });
+      mergesToClear.forEach(m => {
+        try { worksheet.unMergeCells(m); } catch (e) { }
+      });
+    }
+
+    // 3. 为每一款产品行重建 B:C 合并
+    for (let i = 0; i < items.length; i++) {
+      const rowNum = templateRow + i;
+      try { worksheet.mergeCells(`B${rowNum}:C${rowNum}`); } catch (e) { }
+    }
+
+    // 4. 计算并应用底部所有合并的偏移
+    // 逻辑：原行号 >= totalRowStart 的，全部增加 extraRows
+    originalMerges.forEach(m => {
+      const match = m.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+      if (match) {
+        const [, colStart, rowStartStr, colEnd, rowEndStr] = match;
+        let rowStart = parseInt(rowStartStr);
+        let rowEnd = parseInt(rowEndStr);
+
+        // 如果该合并在插入点或其下方，则进行偏移
+        if (rowStart >= totalRowStart) {
+          try {
+            worksheet.mergeCells(`${colStart}${rowStart + extraRows}:${colEnd}${rowEnd + extraRows}`);
+          } catch (e) { }
+        }
+      }
+    });
+
+    // 5. 贸易条款数据填充
+    const termsStartRow = 14 + extraRows;
     worksheet.getRow(termsStartRow + 1).getCell(3).value = order.payment_terms || '';
     worksheet.getRow(termsStartRow + 2).getCell(3).value = order.incoterm || '';
-    const originCountryInfo = getCountryInfo(order.country_of_origin || 'CN');
+    const originCountryInfo = getCountryInfo(order.country_of_origin || 'China');
     const destCountryInfo = getCountryInfo(order.country_of_destination || '');
     worksheet.getRow(termsStartRow + 3).getCell(3).value = originCountryInfo?.label || order.country_of_origin || 'China';
     worksheet.getRow(termsStartRow + 4).getCell(3).value = destCountryInfo?.label || order.country_of_destination || '';
@@ -142,45 +214,29 @@ export class ExcelPiService {
       ? format(new Date(order.estimated_shipping_date), 'yyyy-MM-dd')
       : '';
 
-    // 6. 汇款信息 (Remittance)：保持单行样式，内容带序号和换行
-    const remittanceTemplateRow = 28 + rowsInserted;
-
-    // 获取模板样式：即使行移动了，我们也需要确保样式被正确应用
-    // 我们可以从偏移后的行重新获取样式，或者在操作前备份
+    // 6. 汇款信息填充
+    const remittanceTemplateRow = 25 + extraRows;
     const bankInfo = order.bank_info || '';
     const bankLines = typeof bankInfo === 'string' ? bankInfo.split('\n').filter(l => l.trim()) : [];
 
     if (bankLines.length > 0) {
-      // 将所有行合并成带序号的单行文本，使用换行符，并在行首添加4个空格
       const formattedBankInfo = bankLines.map((line, idx) => `    ${idx + 1}. ${line}`).join('\n');
       const row = worksheet.getRow(remittanceTemplateRow);
       const cell = row.getCell(1);
-
-      // 直接写入值，ExcelJS 会保留该位置原有的 style (字体、边框、背景)
       cell.value = formattedBankInfo;
-
-      // 增量修改对齐属性，不覆盖整个 style 对象
-      if (!cell.alignment) {
-        cell.alignment = { horizontal: 'left', vertical: 'top' };
-      }
+      if (!cell.alignment) cell.alignment = { horizontal: 'left', vertical: 'top' };
       cell.alignment.wrapText = true;
       cell.alignment.vertical = 'top';
       cell.alignment.horizontal = 'left';
-
-      // 调整行高
       row.height = Math.max(25, bankLines.length * 15);
     }
 
-    // 7. 生成并导出
-    const tempPath = path.join(process.cwd(), 'excel-template', `PI-temp-${Date.now()}.xlsx`);
-    await workbook.xlsx.writeFile(tempPath);
-
-    const newZip = await JSZip.loadAsync(fs.readFileSync(tempPath));
+    const buffer = await workbook.xlsx.writeBuffer();
+    const newZip = await JSZip.loadAsync(buffer);
     for (const [fileName, data] of Object.entries(originalMedia)) newZip.file(fileName, data);
     for (const [fileName, data] of Object.entries(originalDrawings)) newZip.file(fileName, data);
     for (const [fileName, data] of Object.entries(originalDrawingRels)) newZip.file(fileName, data);
 
-    // 关系修复逻辑
     const workbookXmlFile = newZip.file('xl/workbook.xml');
     if (workbookXmlFile) {
       const workbookXml = await workbookXmlFile.async('string');
@@ -209,9 +265,7 @@ export class ExcelPiService {
       }
     }
 
-    const outputBuffer = await newZip.generateAsync({ type: 'nodebuffer' });
-    fs.unlinkSync(tempPath);
-    return outputBuffer as unknown as Buffer;
+    return await newZip.generateAsync({ type: 'nodebuffer' }) as Buffer;
   }
 }
 
