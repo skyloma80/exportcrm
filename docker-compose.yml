@@ -13,7 +13,7 @@ services:
       - exportcrm-network
 
   nextjs:
-    image: crm:latest
+    image: ${DOCKER_IMAGE:-crm:latest}
     container_name: crm
     restart: unless-stopped
     expose:
