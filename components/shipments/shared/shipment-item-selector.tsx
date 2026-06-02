@@ -17,6 +17,7 @@ export interface OrderItemWithShipped {
     id: string;
     name: string;
     code: string;
+    description?: string;
   };
   quantity: number;        // 订单数量
   shippedQuantity: number; // 已发数量
@@ -114,6 +115,11 @@ function ItemRow({
               {orderItem.product.code}
             </span>
           </div>
+          {orderItem.product.description && (
+            <div className="text-xs text-muted-foreground mt-0.5 truncate">
+              {orderItem.product.description}
+            </div>
+          )}
           <div className="text-sm text-muted-foreground mt-0.5">
             {t('shipments.wizard.itemSelector.orderQty')}: {orderItem.quantity} | {t('shipments.wizard.itemSelector.shippedQty')}: {orderItem.shippedQuantity} | 
             <span className={cn(

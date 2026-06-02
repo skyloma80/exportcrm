@@ -123,7 +123,8 @@
       "addressCn": "地址（中文）",
       "website": "网站",
       "remarks": "备注",
-      "taxId": "税号"
+      "taxId": "税号",
+      "supplierId": "供应商代码"
     },
     "contacts": {
       "title": "联系人",
@@ -184,7 +185,8 @@
       "addressCn": "请输入中文地址",
       "website": "https://example.com",
       "remarks": "请输入备注",
-      "taxId": "请输入税号"
+      "taxId": "请输入税号",
+      "supplierId": "请输入供应商代码"
     }
   },
   "products": {
@@ -1287,7 +1289,7 @@
       "fileRequired": "请上传付款凭证"
     },
     "paymentType": {
-      "deposit": "定金",
+      "deposit": "预付款",
       "progress": "进度款",
       "final": "尾款"
     },
@@ -1480,7 +1482,7 @@
       "reference": "银行流水号"
     },
     "paymentType": {
-      "deposit": "定金",
+      "deposit": "预付款",
       "progress": "进度款",
       "final": "尾款"
     },

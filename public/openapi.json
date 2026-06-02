@@ -1,0 +1,6529 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AlustarsCRM API",
+    "version": "1.0.0",
+    "description": "AlustarsCRM 客户关系管理系统 API 文档"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3333",
+      "description": "Local development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "CostTableResponse": {},
+      "CreateOrderSchema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "payment_terms": {
+            "type": "string"
+          },
+          "delivery_date": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemSchema"
+            }
+          }
+        },
+        "required": [
+          "customer_id",
+          "items"
+        ]
+      },
+      "CustomerSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "name_cn": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "agent",
+              "distributor"
+            ]
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "preferred_currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "address": {
+            "type": "string"
+          },
+          "address_cn": {
+            "type": "string"
+          },
+          "website": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "country",
+          "type",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "DocumentSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "EmailResultSchema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "EmailSchema": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "format": "email"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "to",
+          "subject"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "FileInfoSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "lastModified": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "path",
+          "size",
+          "lastModified"
+        ]
+      },
+      "FolderInfoSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "path"
+        ]
+      },
+      "FolderTreeSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FolderTreeSchema"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "path",
+          "children"
+        ]
+      },
+      "ImportResultSchema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number"
+          },
+          "success": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "created": {
+            "type": "number"
+          },
+          "updated": {
+            "type": "number"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row": {
+                  "type": "number"
+                },
+                "error": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "row",
+                "error"
+              ]
+            }
+          }
+        },
+        "required": [
+          "total",
+          "success",
+          "failed",
+          "created",
+          "updated",
+          "errors"
+        ]
+      },
+      "object": {},
+      "OrderItemSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "product": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "product_code": {
+            "type": "string"
+          },
+          "part_number": {
+            "type": "string"
+          },
+          "description_en": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unit_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cost_price": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "product",
+          "product_name",
+          "product_code",
+          "quantity",
+          "unit",
+          "unit_price"
+        ]
+      },
+      "OrderSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total_amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "payment_terms": {
+            "type": "string"
+          },
+          "delivery_date": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "customer_id",
+          "status",
+          "total_amount",
+          "currency",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "PurchaseOrder": {},
+      "PurchaseOrderPayment": {},
+      "RecordModel": {},
+      "ShipmentStepHistory": {},
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      }
+    },
+    "responses": {
+      "400": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Invalid request parameters"
+                }
+              }
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Authentication required"
+                }
+              }
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Access denied"
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Resource not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Conflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "Resource already exists"
+                }
+              }
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/customers/export": {
+      "get": {
+        "operationId": "get-customers-export",
+        "summary": "Export customers to Excel",
+        "description": "导出客户数据到 Excel 文件，返回二进制 xlsx 流",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "导出的客户 Excel 文件（二进制附件）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/customers/import": {
+      "post": {
+        "operationId": "post-customers-import",
+        "summary": "Import customers from Excel",
+        "description": "从上传的 Excel 文件导入客户数据，支持新增和更新已有记录",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "导入结果，包含成功/失败数量及错误详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResultSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/delete": {
+      "delete": {
+        "operationId": "delete-disk-delete",
+        "summary": "删除 S3 文件或文件夹",
+        "description": "支持删除单个文件或整个文件夹（含所有子文件）",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/download": {
+      "get": {
+        "operationId": "get-disk-download",
+        "summary": "代理下载 S3 文件",
+        "description": "通过 Next.js 服务端代理从 S3 下载文件，避免 presigned URL 签名问题。返回文件流供客户端下载。",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "返回文件二进制流，含 Content-Disposition 下载头",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileInfoSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/ensure-folder": {
+      "post": {
+        "operationId": "post-disk-ensure-folder",
+        "summary": "确保文件夹存在",
+        "description": "在 S3 存储中创建文件夹（通过创建 .keep 占位文件实现）。如果文件夹已存在则返回成功。",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "创建成功或已存在，返回路径和创建状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/file": {
+      "get": {
+        "operationId": "get-disk-file",
+        "summary": "获取 S3 文件内容",
+        "description": "直接从S3获取文件内容并返回，主要用于图片显示等场景。支持缓存控制。",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "返回文件二进制内容，含适当的 Content-Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileInfoSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/folders": {
+      "get": {
+        "operationId": "get-disk-folders",
+        "summary": "获取文件夹树结构",
+        "description": "一次性获取所有S3对象，在内存中构建树形文件夹结构，避免递归API调用",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "返回 { folders:FolderTreeSchema[] } 格式的树形文件夹结构",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/image": {
+      "get": {
+        "operationId": "get-disk-image",
+        "summary": "代理获取 S3 图片文件",
+        "description": "通过 Next.js 服务端代理从 S3 获取图片，避免 CORS 问题。支持长期缓存。",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "返回图片二进制内容，含图片 Content-Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileInfoSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/list": {
+      "get": {
+        "operationId": "get-disk-list",
+        "summary": "列出 S3 存储目录内容",
+        "description": "根据前缀列出文件和文件夹，支持递归模式获取所有文件",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "返回 { folders:FolderInfoSchema[], files:FileInfoSchema[] } 格式的目录内容",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/disk/upload": {
+      "post": {
+        "operationId": "post-disk-upload",
+        "summary": "上传文件到 S3存储",
+        "description": "支持直接上传文件到S3，可指定文件夹或完整路径。文件大小限制为100MB。",
+        "tags": [
+          "Disk"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "上传成功，返回文件路径、名称、大小等信息",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/exchange-rates/refresh": {
+      "get": {
+        "operationId": "get-exchange-rates-refresh",
+        "summary": "GET /api/exchange-rates/refresh",
+        "description": "",
+        "tags": [
+          "Exchange-rates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-exchange-rates-refresh",
+        "summary": "POST /api/exchange-rates/refresh",
+        "description": "",
+        "tags": [
+          "Exchange-rates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "object"
+                    },
+                    "timestamp": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "source",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/invoices/{id}/send-email": {
+      "post": {
+        "operationId": "post-invoices-{id}-send-email",
+        "summary": "POST /api/invoices/[id]/send-email - 发送形式发票邮件",
+        "description": "",
+        "tags": [
+          "Invoices"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/items/export": {
+      "get": {
+        "operationId": "get-items-export",
+        "summary": "导出 Items 数据到 Excel",
+        "description": "",
+        "tags": [
+          "Items"
+        ],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/items/import": {
+      "post": {
+        "operationId": "post-items-import",
+        "summary": "从 Excel 导入 Items 数据",
+        "description": "",
+        "tags": [
+          "Items"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "success": {
+                          "type": "object"
+                        },
+                        "failed": {
+                          "type": "object"
+                        },
+                        "created": {
+                          "type": "object"
+                        },
+                        "updated": {
+                          "type": "object"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "object"
+                              },
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "error"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "success",
+                        "failed",
+                        "created",
+                        "updated",
+                        "errors"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/items/template": {
+      "get": {
+        "operationId": "get-items-template",
+        "summary": "下载 Items 导入模板",
+        "description": "",
+        "tags": [
+          "Items"
+        ],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "operationId": "post-orders",
+        "summary": "Create a new order",
+        "description": "Creates a new sales order with items. Accepts order metadata and an array of line items. Returns the created order record.",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The created order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/from-template": {
+      "post": {
+        "operationId": "post-orders-from-template",
+        "summary": "Create an order from a template",
+        "description": "Creates a new sales order by copying data from a saved template. Generates a compact order code, applies customer/project overrides, and copies template items into the new order.",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Order created from template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/send-email": {
+      "post": {
+        "operationId": "post-orders-send-email",
+        "summary": "Send an order email with PI attachment",
+        "description": "Sends a branded email for a sales order, optionally attaching a PDF/XLSX PI document. Validates the order exists, builds branded HTML, and dispatches via the email service.",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Email sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailResultSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/templates": {
+      "get": {
+        "operationId": "get-orders-templates",
+        "summary": "List all order templates",
+        "description": "Retrieves all saved order templates, sorted by creation date descending.",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Order templates list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/200 templates"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-orders-templates",
+        "summary": "Create an order template from an existing order",
+        "description": "Creates a reusable template by copying data and items from an existing sales order. Requires a name and source order ID.",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Template created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/200 template"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/{id}/copy": {
+      "post": {
+        "operationId": "post-orders-{id}-copy",
+        "summary": "复制销售订单",
+        "description": "根据已有订单创建新订单，复制订单信息及明细项，生成新订单编号",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "复制成功，返回新订单ID和编号",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/{id}/documents": {
+      "get": {
+        "operationId": "get-orders-{id}-documents",
+        "summary": "获取订单文档列表",
+        "description": "根据类型（order/po/shipment）获取订单相关的文档文件列表",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "文档列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-orders-{id}-documents",
+        "summary": "上传订单文档",
+        "description": "上传文件到订单的指定文档类型目录",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "上传成功，返回文件路径",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/{id}/items-with-shipped": {
+      "get": {
+        "operationId": "get-orders-{id}-items-with-shipped",
+        "summary": "获取订单项及已发货数量",
+        "description": "获取指定订单的所有明细项，并计算每项的已发货数量和剩余数量",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "订单项列表（含已发货数量）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderItemSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/{id}/payment-receipts": {
+      "get": {
+        "operationId": "get-orders-{id}-payment-receipts",
+        "summary": "获取收款凭证列表",
+        "description": "列出指定订单的所有收款凭证，按类型（deposit/progress/final）分组",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/200 收款凭证列表（按类型分组）"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-orders-{id}-payment-receipts",
+        "summary": "上传收款凭证",
+        "description": "上传收款凭证文件到对应类型目录（deposit/progress/final）",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "上传成功，返回文件路径和访问URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/{id}/pi-documents": {
+      "get": {
+        "operationId": "get-orders-{id}-pi-documents",
+        "summary": "获取PI文档列表",
+        "description": "获取指定订单的Proforma Invoice（PI）PDF文档列表",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PI文档列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/orders/{id}/purchase-orders": {
+      "post": {
+        "operationId": "post-orders-{id}-purchase-orders",
+        "summary": "从成本表生成采购订单",
+        "description": "根据项目的已确认成本表，按供应商分组自动生成采购订单及明细",
+        "tags": [
+          "Orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "采购订单创建成功，返回生成的订单列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/po/{id}/copy": {
+      "post": {
+        "operationId": "post-po-{id}-copy",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Po"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "order": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "code"
+                      ]
+                    },
+                    "message": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "order",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/po/{id}/export-excel": {
+      "get": {
+        "operationId": "get-po-{id}-export-excel",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Po"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/products/export": {
+      "get": {
+        "operationId": "get-products-export",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/products/import": {
+      "post": {
+        "operationId": "post-products-import",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "success": {
+                          "type": "object"
+                        },
+                        "failed": {
+                          "type": "object"
+                        },
+                        "created": {
+                          "type": "object"
+                        },
+                        "updated": {
+                          "type": "object"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "object"
+                              },
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "error"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "success",
+                        "failed",
+                        "created",
+                        "updated",
+                        "errors"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/projects/{id}/cost-table": {
+      "get": {
+        "operationId": "get-projects-{id}-cost-table",
+        "summary": "GET /api/projects/[id]/cost-table",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "aggregated": {
+                      "type": "object",
+                      "properties": {
+                        "products": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "object"
+                              },
+                              "name": {
+                                "type": "object"
+                              },
+                              "nameCn": {
+                                "oneOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              "unit": {
+                                "type": "object"
+                              },
+                              "quantity": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "code",
+                              "name",
+                              "unit",
+                              "quantity"
+                            ]
+                          }
+                        },
+                        "suppliers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "object"
+                              },
+                              "code": {
+                                "type": "object"
+                              },
+                              "name": {
+                                "type": "object"
+                              },
+                              "nameCn": {
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "code",
+                              "name"
+                            ]
+                          }
+                        },
+                        "quotations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "object"
+                              },
+                              "rfqId": {
+                                "type": "object"
+                              },
+                              "rfqCode": {
+                                "type": "object"
+                              },
+                              "rfqItemId": {
+                                "type": "object"
+                              },
+                              "productId": {
+                                "type": "object"
+                              },
+                              "supplierId": {
+                                "type": "object"
+                              },
+                              "unitPrice": {
+                                "type": "object"
+                              },
+                              "moq": {
+                                "oneOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              "leadTimeDays": {
+                                "type": "object"
+                              },
+                              "validUntil": {
+                                "type": "object"
+                              },
+                              "remarks": {
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "rfqId",
+                              "rfqCode",
+                              "rfqItemId",
+                              "productId",
+                              "supplierId",
+                              "unitPrice"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "products",
+                        "suppliers",
+                        "quotations"
+                      ]
+                    },
+                    "costTable": {
+                      "type": "object",
+                      "properties": {
+                        "expand": {
+                          "oneOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "project": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "object"
+                                        },
+                                        "code": {
+                                          "type": "object"
+                                        },
+                                        "name": {
+                                          "type": "object"
+                                        },
+                                        "name_cn": {
+                                          "type": "object"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "code",
+                                        "name"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "code": {
+                          "type": "object"
+                        },
+                        "project": {
+                          "type": "object"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "confirmed"
+                          ]
+                        },
+                        "currency": {
+                          "type": "object"
+                        },
+                        "total_amount": {
+                          "type": "object"
+                        },
+                        "collectionId": {
+                          "type": "object"
+                        },
+                        "collectionName": {
+                          "type": "object"
+                        },
+                        "id": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "project",
+                        "status",
+                        "currency",
+                        "total_amount",
+                        "collectionId",
+                        "collectionName",
+                        "id"
+                      ],
+                      "nullable": true
+                    },
+                    "selections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "productId": {
+                            "type": "object"
+                          },
+                          "supplierId": {
+                            "type": "object",
+                            "nullable": true
+                          },
+                          "rfqQuotationId": {
+                            "type": "object"
+                          },
+                          "quantity": {
+                            "type": "object"
+                          },
+                          "unitPrice": {
+                            "type": "object"
+                          },
+                          "leadTimeDays": {
+                            "type": "object",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "productId",
+                          "supplierId",
+                          "rfqQuotationId",
+                          "quantity",
+                          "unitPrice",
+                          "leadTimeDays"
+                        ]
+                      }
+                    },
+                    "completion": {
+                      "type": "object",
+                      "properties": {
+                        "complete": {
+                          "type": "boolean"
+                        },
+                        "missingProducts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "object"
+                              },
+                              "name": {
+                                "type": "object"
+                              },
+                              "nameCn": {
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "totalProducts": {
+                          "type": "object"
+                        },
+                        "selectedProducts": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "complete",
+                        "missingProducts",
+                        "totalProducts",
+                        "selectedProducts"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "aggregated",
+                    "costTable",
+                    "selections",
+                    "completion"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-projects-{id}-cost-table",
+        "summary": "POST /api/projects/[id]/cost-table",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "costTable": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "project": {
+                          "type": "object"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "confirmed"
+                          ]
+                        },
+                        "currency": {
+                          "type": "object"
+                        },
+                        "total_amount": {
+                          "type": "number"
+                        },
+                        "collectionId": {
+                          "type": "object"
+                        },
+                        "collectionName": {
+                          "type": "object"
+                        },
+                        "expand": {
+                          "oneOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        },
+                        "id": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "project",
+                        "status",
+                        "currency",
+                        "total_amount",
+                        "collectionId",
+                        "collectionName",
+                        "id"
+                      ]
+                    },
+                    "completion": {
+                      "type": "object",
+                      "properties": {
+                        "complete": {
+                          "type": "boolean"
+                        },
+                        "missingProducts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "object"
+                              },
+                              "name": {
+                                "type": "object"
+                              },
+                              "nameCn": {
+                                "oneOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "type": "object"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "totalProducts": {
+                          "type": "object"
+                        },
+                        "selectedProducts": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "complete",
+                        "missingProducts",
+                        "totalProducts",
+                        "selectedProducts"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "costTable",
+                    "completion"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/projects/{id}/documents": {
+      "get": {
+        "operationId": "get-projects-{id}-documents",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/projects/{id}/supplier-files": {
+      "get": {
+        "operationId": "get-projects-{id}-supplier-files",
+        "summary": "GET - 列出所有供应商的报价文件",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "required": [
+                    "files"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-projects-{id}-supplier-files",
+        "summary": "POST - 上传供应商报价文件",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "supplierId": {
+                      "type": "string"
+                    },
+                    "fileName": {
+                      "type": "object"
+                    },
+                    "filePath": {
+                      "type": "object"
+                    },
+                    "fileUrl": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "supplierId",
+                    "fileName",
+                    "filePath",
+                    "fileUrl"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete-projects-{id}-supplier-files",
+        "summary": "DELETE - 删除供应商报价文件",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/projects/{id}/cost-table/confirm": {
+      "post": {
+        "operationId": "post-projects-{id}-cost-table-confirm",
+        "summary": "POST /api/projects/[id]/cost-table/confirm",
+        "description": "",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "costTable": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "project": {
+                          "type": "object"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "confirmed"
+                          ]
+                        },
+                        "currency": {
+                          "type": "object"
+                        },
+                        "total_amount": {
+                          "type": "number"
+                        },
+                        "collectionId": {
+                          "type": "object"
+                        },
+                        "collectionName": {
+                          "type": "object"
+                        },
+                        "expand": {
+                          "oneOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "object"
+                              }
+                            }
+                          ]
+                        },
+                        "id": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "project",
+                        "status",
+                        "currency",
+                        "total_amount",
+                        "collectionId",
+                        "collectionName",
+                        "id"
+                      ]
+                    },
+                    "completion": {
+                      "type": "object",
+                      "properties": {
+                        "complete": {
+                          "type": "boolean"
+                        },
+                        "missingProducts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "object"
+                              },
+                              "name": {
+                                "type": "object"
+                              },
+                              "nameCn": {
+                                "oneOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "type": "object"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "totalProducts": {
+                          "type": "object"
+                        },
+                        "selectedProducts": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "complete",
+                        "missingProducts",
+                        "totalProducts",
+                        "selectedProducts"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "costTable",
+                    "completion"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/purchase-orders": {
+      "get": {
+        "operationId": "get-purchase-orders",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "expand": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "supplier": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string"
+                                          },
+                                          "code": {
+                                            "type": "object"
+                                          },
+                                          "name": {
+                                            "type": "object"
+                                          },
+                                          "name_cn": {
+                                            "oneOf": [
+                                              {
+                                                "type": "object"
+                                              },
+                                              {
+                                                "type": "object"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "code",
+                                          "name"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "order": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "object"
+                                          },
+                                          "code": {
+                                            "type": "object"
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "code"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "rfq": {
+                                    "type": "object"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "code": {
+                            "type": "object"
+                          },
+                          "supplier": {
+                            "type": "object"
+                          },
+                          "order": {
+                            "type": "object"
+                          },
+                          "rfq": {
+                            "type": "object"
+                          },
+                          "status": {
+                            "oneOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "draft"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "confirmed"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "sent"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "in_production"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "shipped"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "delivered"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "completed"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "cancelled"
+                                ]
+                              }
+                            ]
+                          },
+                          "currency": {
+                            "type": "object"
+                          },
+                          "total_amount": {
+                            "type": "number"
+                          },
+                          "paid_amount": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "expected_delivery_date": {
+                            "type": "object"
+                          },
+                          "remarks": {
+                            "type": "object"
+                          },
+                          "collectionId": {
+                            "type": "object"
+                          },
+                          "collectionName": {
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "supplier",
+                          "status",
+                          "currency",
+                          "total_amount",
+                          "collectionId",
+                          "collectionName",
+                          "id"
+                        ]
+                      }
+                    },
+                    "totalItems": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "totalItems"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-purchase-orders",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrder"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{id}/export-po": {
+      "get": {
+        "operationId": "get-purchase-orders-{id}-export-po",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{id}/payment-receipts": {
+      "get": {
+        "operationId": "get-purchase-orders-{id}-payment-receipts",
+        "summary": "GET /api/purchase-orders/[id]/payment-receipts?payment_id={id}",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hasFile": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    }
+                  },
+                  "required": [
+                    "hasFile"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-purchase-orders-{id}-payment-receipts",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "path": {
+                      "oneOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "relativePath": {
+                      "type": "object"
+                    },
+                    "fileName": {
+                      "type": "object"
+                    },
+                    "url": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "path",
+                    "relativePath",
+                    "fileName",
+                    "url"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{id}/payments": {
+      "get": {
+        "operationId": "get-purchase-orders-{id}-payments",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PurchaseOrderPayment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-purchase-orders-{id}-payments",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchaseOrderPayment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/purchase-orders/{id}/send-email": {
+      "post": {
+        "operationId": "post-purchase-orders-{id}-send-email",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Purchase-orders"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/quotations/{id}/convert-to-order": {
+      "post": {
+        "operationId": "post-quotations-{id}-convert-to-order",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "order": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "code"
+                      ]
+                    },
+                    "message": {
+                      "type": "object"
+                    },
+                    "isExisting": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "order",
+                    "message",
+                    "isExisting"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/quotations/{id}/revise": {
+      "post": {
+        "operationId": "post-quotations-{id}-revise",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "quotationId": {
+                      "type": "string"
+                    },
+                    "quotationCode": {
+                      "type": "object"
+                    },
+                    "version": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "quotationId",
+                    "quotationCode",
+                    "version"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/quotations/{id}/send-email": {
+      "post": {
+        "operationId": "post-quotations-{id}-send-email",
+        "summary": "POST /api/quotations/[id]/send-email - 发送报价单邮件",
+        "description": "",
+        "tags": [
+          "Quotations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/merge-preview": {
+      "post": {
+        "operationId": "post-rfqs-merge-preview",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rfqs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "object"
+                          },
+                          "project": {
+                            "type": "object"
+                          },
+                          "projectName": {
+                            "type": "object"
+                          },
+                          "itemCount": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "code",
+                          "project",
+                          "projectName",
+                          "itemCount"
+                        ]
+                      }
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "object"
+                        },
+                        "name": {
+                          "type": "object"
+                        },
+                        "customer": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "customer"
+                      ]
+                    },
+                    "products": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "productId": {
+                            "type": "object"
+                          },
+                          "productCode": {
+                            "type": "object"
+                          },
+                          "productName": {
+                            "type": "object"
+                          },
+                          "quantity": {
+                            "type": "object"
+                          },
+                          "unit": {
+                            "type": "object"
+                          },
+                          "suppliers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "supplierId": {
+                                  "type": "object"
+                                },
+                                "supplierName": {
+                                  "type": "object"
+                                },
+                                "unitPrice": {
+                                  "type": "object"
+                                },
+                                "rfqId": {
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "supplierId",
+                                "supplierName",
+                                "unitPrice",
+                                "rfqId"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "productId",
+                          "productCode",
+                          "productName",
+                          "quantity",
+                          "unit",
+                          "suppliers"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "rfqs",
+                    "project",
+                    "products"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/merge-to-quotation": {
+      "post": {
+        "operationId": "post-rfqs-merge-to-quotation",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "quotationId": {
+                      "type": "string"
+                    },
+                    "quotationCode": {
+                      "type": "object"
+                    },
+                    "itemCount": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "quotationId",
+                    "quotationCode",
+                    "itemCount"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/ai-analyze": {
+      "post": {
+        "operationId": "post-rfqs-{id}-ai-analyze",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "analysis": {
+                      "type": "object",
+                      "properties": {
+                        "summary": {
+                          "type": "string"
+                        },
+                        "recommendation": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "single"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "mixed"
+                              ]
+                            }
+                          ]
+                        },
+                        "recommended_supplier_id": {
+                          "oneOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "recommended_supplier_name": {
+                          "type": "object"
+                        },
+                        "item_recommendations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "rfq_item_id": {
+                                "type": "object"
+                              },
+                              "product_name": {
+                                "type": "object"
+                              },
+                              "best_supplier_id": {
+                                "type": "object"
+                              },
+                              "best_supplier_name": {
+                                "type": "object"
+                              },
+                              "unit_price": {
+                                "type": "number"
+                              },
+                              "reason": {
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "rfq_item_id",
+                              "product_name",
+                              "best_supplier_id",
+                              "best_supplier_name",
+                              "unit_price",
+                              "reason"
+                            ]
+                          }
+                        },
+                        "cost_analysis": {
+                          "type": "object",
+                          "properties": {
+                            "single_supplier_total": {
+                              "oneOf": [
+                                {
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "object"
+                                }
+                              ]
+                            },
+                            "mixed_supplier_total": {
+                              "type": "object"
+                            },
+                            "potential_savings": {
+                              "type": "object"
+                            },
+                            "savings_percentage": {
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "mixed_supplier_total"
+                          ]
+                        },
+                        "risk_assessment": {
+                          "type": "object"
+                        },
+                        "additional_notes": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "summary",
+                        "recommendation",
+                        "item_recommendations",
+                        "cost_analysis",
+                        "risk_assessment",
+                        "additional_notes"
+                      ]
+                    },
+                    "quotation_count": {
+                      "type": "object"
+                    },
+                    "supplier_count": {
+                      "type": "object"
+                    },
+                    "item_count": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "analysis",
+                    "quotation_count",
+                    "supplier_count",
+                    "item_count"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/cost-table": {
+      "get": {
+        "operationId": "get-rfqs-{id}-cost-table",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostTableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/generate-purchase-orders": {
+      "post": {
+        "operationId": "post-rfqs-{id}-generate-purchase-orders",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "object"
+                          },
+                          "code": {
+                            "type": "object"
+                          },
+                          "supplier_id": {
+                            "type": "object"
+                          },
+                          "supplier_name": {
+                            "type": "object"
+                          },
+                          "total_amount": {
+                            "type": "number"
+                          },
+                          "items_count": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "code",
+                          "supplier_id",
+                          "supplier_name",
+                          "total_amount",
+                          "items_count"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "orders"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "existingCount": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "existingCount"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/pdf": {
+      "get": {
+        "operationId": "get-rfqs-{id}-pdf",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/quotations": {
+      "get": {
+        "operationId": "get-rfqs-{id}-quotations",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "quotations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "collectionId": {
+                            "type": "string"
+                          },
+                          "collectionName": {
+                            "type": "object"
+                          },
+                          "expand": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "object"
+                                }
+                              }
+                            ]
+                          },
+                          "id": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectionId",
+                          "collectionName",
+                          "id"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "quotations"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-rfqs-{id}-quotations",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "results": {
+                      "type": "object",
+                      "properties": {
+                        "created": {
+                          "type": "number"
+                        },
+                        "updated": {
+                          "type": "object"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "created",
+                        "updated",
+                        "errors"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/send-email": {
+      "post": {
+        "operationId": "post-rfqs-{id}-send-email",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "totalSent": {
+                      "type": "number"
+                    },
+                    "totalFailed": {
+                      "type": "object"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "supplierId": {
+                            "type": "string"
+                          },
+                          "supplierName": {
+                            "type": "object"
+                          },
+                          "email": {
+                            "type": "object"
+                          },
+                          "success": {
+                            "type": "object"
+                          },
+                          "error": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "supplierId",
+                          "supplierName",
+                          "email",
+                          "success"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "totalSent",
+                    "totalFailed",
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/quotations/import": {
+      "post": {
+        "operationId": "post-rfqs-{id}-quotations-import",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "success": {
+                          "type": "object"
+                        },
+                        "failed": {
+                          "type": "object"
+                        },
+                        "quotationsCreated": {
+                          "type": "object"
+                        },
+                        "moldQuotationsCreated": {
+                          "type": "object"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "object"
+                              },
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "error"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "success",
+                        "failed",
+                        "quotationsCreated",
+                        "moldQuotationsCreated",
+                        "errors"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/rfqs/{id}/quotations/template": {
+      "get": {
+        "operationId": "get-rfqs-{id}-quotations-template",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Rfqs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/seed": {
+      "get": {
+        "operationId": "get-seed",
+        "summary": "GET /api/seed",
+        "description": "",
+        "tags": [
+          "Seed"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-seed",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Seed"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "results": {
+                      "type": "object",
+                      "properties": {
+                        "created": {
+                          "type": "number"
+                        },
+                        "updated": {
+                          "type": "object"
+                        },
+                        "failed": {
+                          "type": "object"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "items": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "created",
+                        "updated",
+                        "failed",
+                        "errors",
+                        "items"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/seed/import": {
+      "get": {
+        "operationId": "get-seed-import",
+        "summary": "GET /api/seed/import",
+        "description": "",
+        "tags": [
+          "Seed"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-seed-import",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Seed"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "number"
+                          },
+                          "updated": {
+                            "type": "object"
+                          },
+                          "failed": {
+                            "type": "object"
+                          },
+                          "errors": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "created",
+                          "updated",
+                          "failed",
+                          "errors"
+                        ]
+                      }
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "totalCreated": {
+                          "type": "object"
+                        },
+                        "totalUpdated": {
+                          "type": "object"
+                        },
+                        "totalFailed": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "totalCreated",
+                        "totalUpdated",
+                        "totalFailed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "results",
+                    "summary"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/settings/master-data/export": {
+      "get": {
+        "operationId": "get-settings-master-data-export",
+        "summary": "Master Data Export API Route",
+        "description": "",
+        "tags": [
+          "Settings"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "customers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "customer_contacts": {
+                      "type": "object"
+                    },
+                    "suppliers": {
+                      "type": "object"
+                    },
+                    "supplier_contacts": {
+                      "type": "object"
+                    },
+                    "supplier_bank_accounts": {
+                      "type": "object"
+                    },
+                    "products": {
+                      "type": "object"
+                    },
+                    "app_config": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "customers",
+                    "customer_contacts",
+                    "suppliers",
+                    "supplier_contacts",
+                    "supplier_bank_accounts",
+                    "products",
+                    "app_config"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/settings/master-data/import": {
+      "post": {
+        "operationId": "post-settings-master-data-import",
+        "summary": "Master Data Import API Route",
+        "description": "",
+        "tags": [
+          "Settings"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "results": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/shipments/{id}/documents": {
+      "get": {
+        "operationId": "get-shipments-{id}-documents",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "shipmentId": {
+                      "type": "string"
+                    },
+                    "shipmentCode": {
+                      "type": "object"
+                    },
+                    "shipmentIndex": {
+                      "type": "number"
+                    },
+                    "orderCode": {
+                      "type": "object"
+                    },
+                    "domestic_freight": {
+                      "type": "object"
+                    },
+                    "documents": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "oneOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "pending"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "uploaded"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "not_applicable"
+                                ]
+                              }
+                            ]
+                          },
+                          "files": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "object"
+                                },
+                                "path": {
+                                  "type": "object"
+                                },
+                                "size": {
+                                  "type": "object"
+                                },
+                                "url": {
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "path",
+                                "size",
+                                "url"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "files"
+                        ]
+                      }
+                    },
+                    "documentTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "oneOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CI"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "transport_docs"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PL"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BL"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "customs_dec"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "tax_refund"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "pod"
+                                ]
+                              }
+                            ]
+                          },
+                          "label": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "label"
+                        ]
+                      }
+                    },
+                    "progress": {
+                      "type": "object",
+                      "properties": {
+                        "completed": {
+                          "type": "object"
+                        },
+                        "total": {
+                          "type": "number",
+                          "enum": [
+                            7
+                          ]
+                        }
+                      },
+                      "required": [
+                        "completed",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "shipmentId",
+                    "shipmentCode",
+                    "shipmentIndex",
+                    "orderCode",
+                    "domestic_freight",
+                    "documents",
+                    "documentTypes",
+                    "progress"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-shipments-{id}-documents",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "status": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "pending"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "uploaded"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "not_applicable"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patch-shipments-{id}-documents",
+        "summary": "PATCH: 更新发货记录的 domestic_freight 字段",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "domestic_freight": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "domestic_freight"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete-shipments-{id}-documents",
+        "summary": "DELETE: 重置\"不适用\"状态（删除 .na 文件）",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "status": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "pending"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "uploaded"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "not_applicable"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/shipments/{id}/items": {
+      "get": {
+        "operationId": "get-shipments-{id}-items",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "shipment": {
+                            "type": "object"
+                          },
+                          "order_item": {
+                            "type": "object"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          },
+                          "packages": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "gross_weight": {
+                            "type": "object"
+                          },
+                          "net_weight": {
+                            "type": "object"
+                          },
+                          "volume": {
+                            "type": "object"
+                          },
+                          "package_length": {
+                            "type": "object"
+                          },
+                          "package_width": {
+                            "type": "object"
+                          },
+                          "package_height": {
+                            "type": "object"
+                          },
+                          "part_number": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "product_code": {
+                            "type": "object"
+                          },
+                          "product_name": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "shipment",
+                          "order_item",
+                          "quantity",
+                          "packages",
+                          "gross_weight",
+                          "net_weight",
+                          "volume",
+                          "package_length",
+                          "package_width",
+                          "package_height",
+                          "part_number",
+                          "product_code",
+                          "product_name"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-shipments-{id}-items",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "collectionId": {
+                            "type": "string"
+                          },
+                          "collectionName": {
+                            "type": "object"
+                          },
+                          "expand": {
+                            "oneOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "object"
+                                }
+                              }
+                            ]
+                          },
+                          "id": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectionId",
+                          "collectionName",
+                          "id"
+                        ]
+                      }
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/shipments/{id}/photos": {
+      "get": {
+        "operationId": "get-shipments-{id}-photos",
+        "summary": "GET - 列出装柜照片",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "required": [
+                    "photos"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-shipments-{id}-photos",
+        "summary": "POST - 上传装柜照片",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "path": {
+                      "oneOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "url": {
+                      "type": "object"
+                    },
+                    "name": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "path",
+                    "url",
+                    "name"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/shipments/{id}/snapshots": {
+      "get": {
+        "operationId": "get-shipments-{id}-snapshots",
+        "summary": "GET /api/shipments/[id]/snapshots",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentStepHistory"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-shipments-{id}-snapshots",
+        "summary": "POST /api/shipments/[id]/snapshots",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "snapshot": {
+                      "type": "object",
+                      "properties": {
+                        "stepId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "oneOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "shipped"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "delivered"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "preparing"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "booking"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "customs_clearance"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "loaded"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "handed_over"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "in_transit"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "arrived"
+                              ]
+                            }
+                          ]
+                        },
+                        "completedAt": {
+                          "type": "object"
+                        },
+                        "data": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object"
+                          }
+                        },
+                        "completedBy": {
+                          "oneOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "object"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "stepId",
+                        "status",
+                        "completedAt",
+                        "data"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "snapshot"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/shipments/{id}/status": {
+      "patch": {
+        "operationId": "patch-shipments-{id}-status",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/shipments/{id}/documents/generate": {
+      "post": {
+        "operationId": "post-shipments-{id}-documents-generate",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Shipments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "path": {
+                      "oneOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "url": {
+                      "type": "object"
+                    },
+                    "fileName": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "path",
+                    "url",
+                    "fileName"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          },
+          "501": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/so/{id}/export-pi": {
+      "get": {
+        "operationId": "get-so-{id}-export-pi",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "So"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 123,
+            "description": "Path parameter: id"
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/suppliers/export": {
+      "get": {
+        "operationId": "get-suppliers-export",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/suppliers/import": {
+      "post": {
+        "operationId": "post-suppliers-import",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Suppliers"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "success": {
+                          "type": "object"
+                        },
+                        "failed": {
+                          "type": "object"
+                        },
+                        "created": {
+                          "type": "object"
+                        },
+                        "updated": {
+                          "type": "object"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "object"
+                              },
+                              "error": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "error"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "success",
+                        "failed",
+                        "created",
+                        "updated",
+                        "errors"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Customers"
+    },
+    {
+      "name": "Disk"
+    },
+    {
+      "name": "Exchange-rates"
+    },
+    {
+      "name": "Invoices"
+    },
+    {
+      "name": "Items"
+    },
+    {
+      "name": "Orders"
+    },
+    {
+      "name": "Po"
+    },
+    {
+      "name": "Products"
+    },
+    {
+      "name": "Projects"
+    },
+    {
+      "name": "Purchase-orders"
+    },
+    {
+      "name": "Quotations"
+    },
+    {
+      "name": "Rfqs"
+    },
+    {
+      "name": "Seed"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Shipments"
+    },
+    {
+      "name": "So"
+    },
+    {
+      "name": "Suppliers"
+    }
+  ]
+}

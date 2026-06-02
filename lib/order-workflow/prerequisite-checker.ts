@@ -70,7 +70,7 @@ async function checkConfirmedToInProduction(orderId: string): Promise<Prerequisi
   const pb = getPocketBase()
   const checks: PrerequisiteCheck[] = []
   
-  // 检查: 必须有已审批的收款（定金）
+  // 检查: 必须有已审批的收款（预付款）
   try {
     const payments = await pb.collection('order_payments').getList(1, 1, {
       filter: `order = "${orderId}" && status = "approved"`,

@@ -123,7 +123,8 @@
       "addressCn": "Address (Chinese)",
       "website": "Website",
       "remarks": "Remarks",
-      "taxId": "Tax ID"
+      "taxId": "Tax ID",
+      "supplierId": "Supplier ID"
     },
     "contacts": {
       "title": "Contacts",
@@ -184,7 +185,8 @@
       "addressCn": "Enter Chinese address",
       "website": "https://example.com",
       "remarks": "Enter remarks",
-      "taxId": "Enter tax ID"
+      "taxId": "Enter tax ID",
+      "supplierId": "Enter supplier ID"
     }
   },
   "products": {

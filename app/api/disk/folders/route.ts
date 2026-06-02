@@ -7,8 +7,12 @@ interface FolderTreeItem {
   children: FolderTreeItem[]
 }
 
-// GET /api/disk/folders - 获取文件夹树结构
-// 优化：一次性获取所有对象，在内存中构建树结构，避免递归 API 调用
+/**
+ * 获取文件夹树结构
+ * @description 一次性获取所有S3对象，在内存中构建树形文件夹结构，避免递归API调用
+ * @response 200:object:返回 { folders: FolderTreeSchema[] } 格式的树形文件夹结构
+ * @response 500:ErrorResponse:获取文件夹列表失败
+ */
 export async function GET() {
   try {
     const storage = createStorage()

@@ -25,6 +25,7 @@
 | website | url | - | - | 网站 |
 | remarks | text(2000) | - | - | 备注 |
 | tax_id | text(50) | - | - | 税号 |
+| supplier_id | text(100) | - | - | 本公司在客户系统中的供应商代码 |
 
  
 

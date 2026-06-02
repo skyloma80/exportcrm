@@ -38,8 +38,6 @@ export function PackingListButton({ shipment, items }: PackingListButtonProps) {
   const [branding, setBranding] = useState<DocumentBranding | null>(null);
 
   const order = shipment.expand?.order;
-  const customer = order?.expand?.customer;
-  const project = order?.expand?.project;
 
   // Load branding config on mount
   useEffect(() => {
@@ -97,10 +95,10 @@ export function PackingListButton({ shipment, items }: PackingListButtonProps) {
         name: branding?.primaryOffice?.name || 'Company Name',
         address: branding?.primaryOffice?.address,
       },
-      // Consignee info from customer - Requirements: 4.2
+      // Consignee info from SO - Requirements: 4.2
       consignee: {
-        name: customer?.name || '-',
-        address: (customer as any)?.address,
+        name: order?.customer_name || '-',
+        address: order?.customer_address,
       },
       // Items with package details - Requirements: 4.2, 4.3
       items: items.map(item => {
@@ -175,8 +173,8 @@ export function PackingListButton({ shipment, items }: PackingListButtonProps) {
       data.branding = brandingData || undefined;
       
       // Build folder path: Customers/{CustomerName}/{ProjectName}/Packing Lists/
-      const customerName = customer?.name || 'Unknown';
-      const projectName = project?.name || 'Unknown';
+      const customerName = order?.customer_name || 'Unknown';
+      const projectName = order?.project_name || 'Unknown';
       const folder = `Customers/${customerName}/${projectName}/Packing Lists`;
       
       // Ensure folder exists

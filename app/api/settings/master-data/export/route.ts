@@ -6,10 +6,12 @@ import { createServerPocketBase } from "@/lib/pocketbase/server";
  * Master Data Export API Route
  * 全量数据导出接口
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const pb = await createServerPocketBase();
-    
+    const { searchParams } = new URL(request.url);
+    const format = searchParams.get("format") || "json";
+
     // 1. Fetch all data with expands for relations
     const [
       customers,
@@ -29,7 +31,7 @@ export async function GET() {
       pb.collection("app_config").getFullList({ sort: "key" }),
     ]);
 
-    // Helper to recursively strip large/unwanted fields
+    // Helper to recursively strip base64 fields
     const stripLargeFields = (obj: any): any => {
       if (obj === null || typeof obj !== 'object') return obj;
       if (Array.isArray(obj)) return obj.map(stripLargeFields);
@@ -44,17 +46,28 @@ export async function GET() {
       return result;
     };
 
-    // Helper to format data for Excel, specifically handling objects and 'ext' field
+    if (format === "json") {
+      const data = {
+        customers: customers.map(stripLargeFields),
+        customer_contacts: customerContacts.map(stripLargeFields),
+        suppliers: suppliers.map(stripLargeFields),
+        supplier_contacts: supplierContacts.map(stripLargeFields),
+        supplier_bank_accounts: supplierBankAccounts.map(stripLargeFields),
+        products: products.map(stripLargeFields),
+        app_config: appConfigs.map(stripLargeFields),
+      };
+      return NextResponse.json(data);
+    }
+
+    // Helper to format data for Excel, specifically handling objects
     const formatForExcel = (items: any[], collectionName?: string) => {
       const EXCEL_LIMIT = 32000;
 
       return items.map(item => {
-        // First strip large fields
         const stripped = stripLargeFields(item);
         const flatItem: any = {};
         
         for (const [key, value] of Object.entries(stripped)) {
-          // Skip internal PocketBase fields
           if (['collectionId', 'collectionName', 'expand', 'proxyModel'].includes(key)) continue;
           
           let cellValue: any = value;
@@ -62,7 +75,6 @@ export async function GET() {
             cellValue = JSON.stringify(value);
           }
 
-          // Handle Excel cell length limit
           if (typeof cellValue === 'string' && cellValue.length > EXCEL_LIMIT) {
             cellValue = cellValue.substring(0, EXCEL_LIMIT) + "...[TRUNCATED]";
           }
@@ -70,7 +82,6 @@ export async function GET() {
           flatItem[key] = cellValue;
         }
 
-        // Add parent codes for related entities
         if (collectionName === 'customer_contacts' && (item as any).expand?.customer) {
           flatItem.customer_code = (item as any).expand.customer.code;
         }
@@ -88,7 +99,6 @@ export async function GET() {
     // 2. Create Workbook
     const workbook = XLSX.utils.book_new();
 
-    // Add Sheets
     const sheetsData = [
       { name: "Customers", data: formatForExcel(customers) },
       { name: "Customer Contacts", data: formatForExcel(customerContacts, 'customer_contacts') },

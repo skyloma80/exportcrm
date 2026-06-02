@@ -475,7 +475,8 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                       customer_id: c.id,
                       customer_name: c.name || "",
                       customer_address: (c as any).address || "",
-                      customer_tax_id: (c as any).tax_id || ""
+                      customer_tax_id: (c as any).tax_id || "",
+                      vendor_code: (c as any).supplier_id || prev.vendor_code
                     }))
                   }
                 }}

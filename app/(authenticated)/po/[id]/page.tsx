@@ -80,7 +80,8 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `${po?.code || 'PO'}.xlsx`
+      const timestamp = format(new Date(), 'yyyyMMdd');
+      a.download = `${timestamp} ${po?.code || 'PO'}.xlsx`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)

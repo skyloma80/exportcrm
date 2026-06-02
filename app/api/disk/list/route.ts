@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createStorage } from '@/lib/s3/storage'
 
-// GET /api/disk/list - 列出 S3 目录内容
+/**
+ * 列出 S3 存储目录内容
+ * @description 根据前缀列出文件和文件夹，支持递归模式获取所有文件
+ * @query {string} prefix - 目录前缀，用于指定要列出的路径
+ * @query {boolean} [recursive=false] - 是否递归列出所有子目录文件
+ * @response 200:object:返回 { folders: FolderInfoSchema[], files: FileInfoSchema[] } 格式的目录内容
+ * @response 500:ErrorResponse:获取文件列表失败，检查S3配置
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

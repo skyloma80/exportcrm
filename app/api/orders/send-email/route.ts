@@ -1,8 +1,3 @@
-/**
- * API Route: Send Order Email with PI Attachment
- * 发送订单邮件（附带PI文档）
- */
-
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerPocketBase } from '@/lib/pocketbase/server'
 import { createEmailService } from '@/lib/services/email-service'
@@ -10,6 +5,16 @@ import { brandingService } from '@/lib/services/branding-service'
 import { generateBrandedEmailHTML } from '@/lib/email/branded-template'
 import { createStorage } from '@/lib/s3/storage'
 
+/**
+ * Send an order email with PI attachment
+ * @description Sends a branded email for a sales order, optionally attaching a PDF/XLSX PI document. Validates the order exists, builds branded HTML, and dispatches via the email service.
+ * @request EmailSchema
+ * @response 200:EmailResultSchema:Email sent successfully
+ * @response 400:ErrorResponse:Missing required fields
+ * @response 401:ErrorResponse:Unauthorized
+ * @response 404:ErrorResponse:Order not found
+ * @response 500:ErrorResponse:Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const pb = await createServerPocketBase()

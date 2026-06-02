@@ -95,11 +95,11 @@ export type CurrencyCode = typeof CURRENCIES[number]['code']
 // ==================== 付款条款 ====================
 export const PAYMENT_TERMS = [
   { code: 'TT_ADVANCE', name: 'T/T in Advance', name_cn: '预付电汇', description: '发货前全额付款' },
-  { code: 'TT_30_70', name: 'T/T 30% advance, 70% before shipment', name_cn: '30%预付，70%发货前', description: '30%定金，70%发货前付清' },
-  { code: 'TT_30_70_BL', name: 'T/T 30% advance, 70% against B/L', name_cn: '30%预付，70%见提单', description: '30%定金，70%见提单副本付款' },
+  { code: 'TT_30_70', name: 'T/T 30% advance, 70% before shipment', name_cn: '30%预付，70%发货前', description: '30%预付款，70%发货前付清' },
+  { code: 'TT_30_70_BL', name: 'T/T 30% advance, 70% against B/L', name_cn: '30%预付，70%见提单', description: '30%预付款，70%见提单副本付款' },
   { code: 'TT100', name: 'T/T 100% before shipment', name_cn: '发货前付清', description: '发货前支付100%' },
-  { code: 'TT50', name: 'T/T 50% deposit, 50% before shipment', name_cn: '50%定金，50%发货前', description: '50%定金，50%发货前付清' },
-  { code: 'TT30', name: 'T/T 30% deposit, 70% before shipment', name_cn: '30%定金，70%发货前', description: '30%定金，70%发货前付清' },
+  { code: 'TT50', name: 'T/T 50% deposit, 50% before shipment', name_cn: '50%预付款，50%发货前', description: '50%预付款，50%发货前付清' },
+  { code: 'TT30', name: 'T/T 30% deposit, 70% before shipment', name_cn: '30%预付款，70%发货前', description: '30%预付款，70%发货前付清' },
   { code: 'LC_SIGHT', name: 'L/C at Sight', name_cn: '即期信用证', description: '即期不可撤销信用证' },
   { code: 'LC_30', name: 'L/C 30 Days', name_cn: '30天信用证', description: '30天远期信用证' },
   { code: 'LC_60', name: 'L/C 60 Days', name_cn: '60天信用证', description: '60天远期信用证' },

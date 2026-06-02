@@ -5,7 +5,13 @@ import { createStorage } from '@/lib/s3/storage'
 export const runtime = 'nodejs'
 export const maxDuration = 60 // 60 seconds timeout
 
-// POST /api/disk/upload - 上传文件到 S3
+/**
+ * 上传文件到 S3存储
+ * @description 支持直接上传文件到S3，可指定文件夹或完整路径。文件大小限制为100MB。
+ * @response 200:SuccessResponse:上传成功，返回文件路径、名称、大小等信息
+ * @response 400:ErrorResponse:未提供文件或文件大小超过限制
+ * @response 500:ErrorResponse:上传失败，可能为S3/MinIO配置问题
+ */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()

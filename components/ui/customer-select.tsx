@@ -32,6 +32,7 @@ interface Customer {
   name_cn?: string
   country?: string
   contact_person?: string
+  supplier_id?: string
 }
 
 interface CustomerSelectProps {

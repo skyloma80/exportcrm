@@ -337,7 +337,7 @@ export default function PaymentsPage() {
       cell: ({ row }) => {
         const type = row.original.type;
         const typeLabels: Record<string, string> = {
-          deposit: locale === 'zh' ? '定金' : 'Deposit',
+          deposit: locale === 'zh' ? '预付款' : 'Deposit',
           progress: locale === 'zh' ? '进度款' : 'Progress',
           final: locale === 'zh' ? '尾款' : 'Final',
         };

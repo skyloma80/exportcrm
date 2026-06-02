@@ -33,7 +33,7 @@ export async function POST(
 
     // 更新采购订单的已付金额
     const payments = await purchaseOrderPaymentService.getByPO(poId);
-    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalPaid = Math.round(payments.reduce((sum, p) => sum + p.amount, 0) * 100) / 100;
     await purchaseOrderService.update(poId, { paid_amount: totalPaid });
 
     return NextResponse.json(payment);

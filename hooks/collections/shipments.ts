@@ -51,7 +51,7 @@ export function useShipments(options: UseShipmentsOptions = {}) {
       const result = await pb.collection('shipments').getList<ShipmentWithExpand>(page, perPage, {
         filter,
         sort: '-id',
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
 
       setShipments(result.items);
@@ -91,7 +91,7 @@ export function useShipment(id: string | null) {
     try {
       const pb = getPocketBase();
       const result = await pb.collection('shipments').getOne<ShipmentWithExpand>(id, {
-        expand: 'order,order.customer,order.project,shipment_items_via_shipment,shipment_items_via_shipment.order_item,shipment_items_via_shipment.order_item.product',
+        expand: 'order,shipment_items_via_shipment,shipment_items_via_shipment.order_item,shipment_items_via_shipment.order_item.product',
       });
       setShipment(result);
       setItems(result.expand?.shipment_items_via_shipment || []);

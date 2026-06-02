@@ -4,7 +4,7 @@
  * Payment Manager Component
  * 订单收款管理组件
  * 
- * 收款凭证按类型分目录存储：定金、进度款、尾款
+ * 收款凭证按类型分目录存储：预付款、进度款、尾款
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -163,7 +163,7 @@ export function PaymentManager({ orderId, orderCode, customerId, projectId, tota
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, { zh: string; en: string }> = {
-      deposit: { zh: '定金', en: 'Deposit' },
+      deposit: { zh: '预付款', en: 'Deposit' },
       progress: { zh: '进度款', en: 'Progress' },
       final: { zh: '尾款', en: 'Final' },
     };

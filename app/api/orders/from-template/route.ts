@@ -1,12 +1,16 @@
-/**
- * Create Order from Template API
- * 从模板创建订单API
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 import { generateOrderCode, setCodeGeneratorPb } from '@/lib/services/code-generator';
 
+/**
+ * Create an order from a template
+ * @description Creates a new sales order by copying data from a saved template. Generates a compact order code, applies customer/project overrides, and copies template items into the new order.
+ * @response 200:OrderSchema:Order created from template
+ * @response 400:ErrorResponse:template_id is required
+ * @response 401:ErrorResponse:Unauthorized
+ * @response 404:ErrorResponse:Template not found
+ * @response 500:ErrorResponse:Server error
+ */
 export async function POST(request: NextRequest) {
   try {
     const pb = await createServerPocketBase();

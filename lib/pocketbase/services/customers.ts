@@ -25,7 +25,8 @@ export interface Customer extends RecordModel {
   address_cn?: string;
   website?: string;
   remarks?: string;
-  tax_id?: string;  // 税号 (Requirements: 2.1)
+  tax_id?: string;
+  supplier_id?: string;
 }
 
 export interface CustomerContact extends RecordModel {
@@ -55,7 +56,8 @@ export interface CustomerCreateInput {
   address_cn?: string;
   website?: string;
   remarks?: string;
-  tax_id?: string;  // 税号
+  tax_id?: string;
+  supplier_id?: string;
 }
 
 export interface CustomerUpdateInput extends Partial<CustomerCreateInput> {}

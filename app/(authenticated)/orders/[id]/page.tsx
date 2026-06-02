@@ -202,7 +202,7 @@ export default function OrderDetailPage({ params }: PageProps) {
       const a = document.createElement('a');
       a.href = url;
       const timestamp = format(new Date(), 'yyyyMMdd');
-      a.download = `PI ${order.code} ${timestamp}.xlsx`;
+      a.download = `${timestamp} PI ${order.code} .xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

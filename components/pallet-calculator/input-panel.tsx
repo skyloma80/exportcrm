@@ -244,7 +244,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
     // 如果有混合托盘，使用第一个托盘的规格作为主规格
     const primarySpecCode = result.palletBreakdown.length > 0 
       ? result.palletBreakdown[0].spec.code 
-      : selectedPalletSpec.code
+      : (selectedPalletSpec?.code || PALLET_SPECS[4].code)
     
     setPalletSpecCode(primarySpecCode)
     
@@ -264,7 +264,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
         volumeSaved: result.totalVolumeSaved
       }
     }, parseResult)
-  }, [parseResult, maxHeight, overhangTolerance, heightTolerance, selectedMaterial, selectedPalletSpec.code, boxDimensionsText, averageBoxWeight, onCalculate, allPalletSpecs])
+  }, [parseResult, maxHeight, overhangTolerance, heightTolerance, selectedMaterial, selectedPalletSpec?.code, boxDimensionsText, averageBoxWeight, onCalculate, allPalletSpecs])
 
   return (
     <Card className="h-full">

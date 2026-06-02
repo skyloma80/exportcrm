@@ -325,7 +325,7 @@ function PaymentsTable({ payments, onRowClick, isZh, formatCurrency, formatDate 
   }
 
   const typeLabels: Record<string, string> = {
-    deposit: isZh ? '定金' : 'Deposit',
+    deposit: isZh ? '预付款' : 'Deposit',
     progress: isZh ? '进度款' : 'Progress',
     final: isZh ? '尾款' : 'Final',
   };

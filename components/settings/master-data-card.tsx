@@ -21,14 +21,16 @@ export function MasterDataCard() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch('/api/settings/master-data/export');
+      const response = await fetch('/api/settings/master-data/export?format=json');
       if (!response.ok) throw new Error('Export failed');
       
-      const blob = await response.blob();
+      const data = await response.json();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `MasterData_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = `MasterData_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

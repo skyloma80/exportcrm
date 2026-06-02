@@ -9,6 +9,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 
+interface SOItem {
+  id: string;
+  part_number: string;
+  product_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  amount: number;
+}
+
 interface ShipmentItem {
   id: string;
   shipment: string;
@@ -34,12 +44,10 @@ export async function GET(
     const { id: shipmentId } = await params;
     const pb = await createServerPocketBase();
 
-    // 获取发货明细
     const items = await pb.collection('shipment_items').getFullList<ShipmentItem>({
       filter: `shipment = "${shipmentId}"`,
     });
 
-    // 转换为前端期望的格式
     const formattedItems = items.map((item) => ({
       id: item.id,
       shipment: item.shipment,
@@ -85,13 +93,25 @@ export async function POST(
 
     const pb = await createServerPocketBase();
 
-    // 获取现有的发货明细
+    // 获取发货单关联的 SO 订单，用于查找产品信息
+    const shipment = await pb.collection('shipments').getOne<{ order: string }>(shipmentId);
+    let soItemsMap = new Map<string, SOItem>();
+    if (shipment.order) {
+      try {
+        const so = await pb.collection('so').getOne<{ items: SOItem[] }>(shipment.order);
+        if (Array.isArray(so.items)) {
+          so.items.forEach(item => soItemsMap.set(item.id, item));
+        }
+      } catch (e) {
+        // SO not found, items stored without product info
+      }
+    }
+
     const existingItems = await pb.collection('shipment_items').getFullList<ShipmentItem>({
       filter: `shipment = "${shipmentId}"`,
     });
     const existingMap = new Map(existingItems.map(item => [item.order_item, item]));
 
-    // 处理每个项目
     const results = [];
     const processedOrderItems = new Set<string>();
 
@@ -99,26 +119,31 @@ export async function POST(
       const { orderItemId, quantity } = item;
       processedOrderItems.add(orderItemId);
 
+      const soItem = soItemsMap.get(orderItemId);
+
       const existing = existingMap.get(orderItemId);
-      
+
       if (existing) {
-        // 更新现有记录
         const updated = await pb.collection('shipment_items').update(existing.id, {
           quantity,
+          part_number: soItem?.part_number,
+          product_name: soItem?.product_name,
+          product_code: soItem?.part_number,
         });
         results.push(updated);
       } else {
-        // 创建新记录
         const created = await pb.collection('shipment_items').create({
           shipment: shipmentId,
           order_item: orderItemId,
           quantity,
+          part_number: soItem?.part_number,
+          product_name: soItem?.product_name,
+          product_code: soItem?.part_number,
         });
         results.push(created);
       }
     }
 
-    // 删除不再选中的项目
     for (const existing of existingItems) {
       if (!processedOrderItems.has(existing.order_item)) {
         await pb.collection('shipment_items').delete(existing.id);

@@ -37,7 +37,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     let shipment;
     try {
       shipment = await pb.collection('shipments').getOne(id, {
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
     } catch (e: any) {
       if (e.status === 404) {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let shipment;
     try {
       shipment = await pb.collection('shipments').getOne(id, {
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
     } catch (e: any) {
       if (e.status === 404) {

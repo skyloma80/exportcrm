@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777787007148,
+  "lastScanned": 1780113528891,
   "projectRoot": "D:\\exportcrm",
   "techStack": {
     "languages": [
@@ -57,16 +57,18 @@
     "lintCommand": "yarn lint",
     "devCommand": "yarn dev",
     "scripts": {
-      "dev": "next dev --turbo",
+      "dev": "next dev -p 3333",
       "build": "next build",
-      "start": "next start",
+      "start": "next start -p 3333",
       "lint": "next lint",
       "test": "vitest --run",
       "test:watch": "vitest",
       "test:e2e": "playwright test",
       "test:e2e:ui": "playwright test --ui",
       "test:e2e:report": "playwright show-report",
-      "cleanup:business-data": "tsx scripts/cleanup-business-data.ts"
+      "cleanup:business-data": "tsx scripts/cleanup-business-data.ts",
+      "generate:openapi": "openapi-gen generate",
+      "generate:openapi:watch": "openapi-gen generate --watch"
     }
   },
   "conventions": {
@@ -93,7 +95,7 @@
       "path": "app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1777787007043,
+      "lastAccessed": 1780113528819,
       "keyFiles": [
         "globals.css",
         "layout.tsx",
@@ -104,7 +106,7 @@
       "path": "components",
       "purpose": "UI components",
       "fileCount": 2,
-      "lastAccessed": 1777787007043,
+      "lastAccessed": 1780113528820,
       "keyFiles": [
         "auth-provider.tsx",
         "theme-provider.tsx"
@@ -114,26 +116,25 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 0,
-      "lastAccessed": 1777787007063,
+      "lastAccessed": 1780113528838,
       "keyFiles": []
     },
     "excel-template": {
       "path": "excel-template",
       "purpose": null,
-      "fileCount": 4,
-      "lastAccessed": 1777787007063,
+      "fileCount": 3,
+      "lastAccessed": 1780113528838,
       "keyFiles": [
         "PI-template.xlsx",
-        "PI-test.xlsx",
-        "PO-template.xlsx",
-        "~$PO-template.xlsx"
+        "PO-A2605-001 (2).xlsx",
+        "PO-template.xlsx"
       ]
     },
     "hooks": {
       "path": "hooks",
       "purpose": null,
       "fileCount": 9,
-      "lastAccessed": 1777787007063,
+      "lastAccessed": 1780113528839,
       "keyFiles": [
         "use-collection.tsx",
         "use-mobile.tsx",
@@ -146,7 +147,7 @@
       "path": "lib",
       "purpose": "Library code",
       "fileCount": 1,
-      "lastAccessed": 1777787007064,
+      "lastAccessed": 1780113528841,
       "keyFiles": [
         "utils.ts"
       ]
@@ -155,7 +156,7 @@
       "path": "migrations",
       "purpose": "Database migrations",
       "fileCount": 1,
-      "lastAccessed": 1777787007064,
+      "lastAccessed": 1780113528844,
       "keyFiles": [
         "030_create_customer_tracking_collection.go"
       ]
@@ -164,14 +165,14 @@
       "path": "modules",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1777787007065,
+      "lastAccessed": 1780113528846,
       "keyFiles": []
     },
     "pocketbase": {
       "path": "pocketbase",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1777787007067,
+      "lastAccessed": 1780113528850,
       "keyFiles": [
         "README.md"
       ]
@@ -179,26 +180,36 @@
     "public": {
       "path": "public",
       "purpose": "Public files",
-      "fileCount": 4,
-      "lastAccessed": 1777787007068,
+      "fileCount": 5,
+      "lastAccessed": 1780113528862,
       "keyFiles": [
         "email-preview-rfq.html",
         "email-preview.html",
-        "logo.png"
+        "logo.png",
+        "openapi.json"
+      ]
+    },
+    "scratch": {
+      "path": "scratch",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780113528863,
+      "keyFiles": [
+        "test_merges.js"
       ]
     },
     "app\\api": {
       "path": "app\\api",
       "purpose": "API routes",
       "fileCount": 0,
-      "lastAccessed": 1777787007069,
+      "lastAccessed": 1780113528872,
       "keyFiles": []
     },
     "pocketbase\\seeds": {
       "path": "pocketbase\\seeds",
       "purpose": "Database seeds",
       "fileCount": 10,
-      "lastAccessed": 1777787007071,
+      "lastAccessed": 1780113528884,
       "keyFiles": [
         "app_config.json",
         "customers.json",
@@ -208,166 +219,46 @@
   },
   "hotPaths": [
     {
-      "path": "pocketbase\\pb_data\\types.d.ts",
-      "accessCount": 27,
-      "lastAccessed": 1777789289190,
-      "type": "directory"
+      "path": "app\\(authenticated)\\shipments\\new\\page.tsx",
+      "accessCount": 19,
+      "lastAccessed": 1780113826369,
+      "type": "file"
     },
     {
-      "path": "lib\\i18n\\locales\\en.json",
-      "accessCount": 20,
-      "lastAccessed": 1777792862863,
-      "type": "directory"
-    },
-    {
-      "path": "pocketbase\\pb_migrations",
-      "accessCount": 16,
-      "lastAccessed": 1777790856248,
-      "type": "directory"
+      "path": "lib\\pocketbase\\services\\shipments.ts",
+      "accessCount": 3,
+      "lastAccessed": 1780114028809,
+      "type": "file"
     },
     {
       "path": "lib\\services\\code-generator.ts",
-      "accessCount": 15,
-      "lastAccessed": 1777790272560,
-      "type": "file"
-    },
-    {
-      "path": "components\\quotations\\quotation-items-table.tsx",
-      "accessCount": 15,
-      "lastAccessed": 1777793541403,
-      "type": "directory"
-    },
-    {
-      "path": "components\\orders\\product-select-dialog.tsx",
-      "accessCount": 13,
-      "lastAccessed": 1777791813567,
-      "type": "file"
-    },
-    {
-      "path": "app\\(authenticated)\\quotations\\new\\page.tsx",
-      "accessCount": 10,
-      "lastAccessed": 1777793290263,
-      "type": "file"
-    },
-    {
-      "path": "components\\orders\\order-form.tsx",
-      "accessCount": 8,
-      "lastAccessed": 1777793386201,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\054_add_quotation_to_so.js",
-      "accessCount": 7,
-      "lastAccessed": 1777788598677,
-      "type": "file"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\053_migrate_quotation_items_to_jsonb.js",
-      "accessCount": 7,
-      "lastAccessed": 1777789330381,
-      "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 6,
-      "lastAccessed": 1777789971583,
-      "type": "directory"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\052_add_quotation_items_jsonb.js",
-      "accessCount": 5,
-      "lastAccessed": 1777787259582,
-      "type": "file"
-    },
-    {
-      "path": "components\\quotations\\quotation-form.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1777791173424,
-      "type": "directory"
-    },
-    {
-      "path": "lib\\i18n\\locales\\zh.json",
-      "accessCount": 5,
-      "lastAccessed": 1777792925857,
-      "type": "directory"
-    },
-    {
-      "path": "app",
       "accessCount": 3,
-      "lastAccessed": 1777790903311,
-      "type": "directory"
-    },
-    {
-      "path": "components",
-      "accessCount": 3,
-      "lastAccessed": 1777791462156,
-      "type": "directory"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\025_add_order_po_vendor_fields.js",
-      "accessCount": 2,
-      "lastAccessed": 1777788508220,
+      "lastAccessed": 1780114036995,
       "type": "file"
     },
     {
-      "path": "lib\\pocketbase\\services\\projects.ts",
+      "path": "pocketbase\\pb_migrations\\DATABASE_SCHEMA.md",
       "accessCount": 2,
-      "lastAccessed": 1777789991192,
+      "lastAccessed": 1780114044569,
       "type": "file"
     },
     {
       "path": "lib\\pocketbase\\base-service.ts",
-      "accessCount": 2,
-      "lastAccessed": 1777790117076,
-      "type": "directory"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\055_remove_code_validation.js",
-      "accessCount": 2,
-      "lastAccessed": 1777791328052,
+      "accessCount": 1,
+      "lastAccessed": 1780113582196,
       "type": "file"
     },
     {
-      "path": "components\\shared\\product-items-columns.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1777794769549,
-      "type": "directory"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\005_create_products.js",
+      "path": "components\\ui\\toast.tsx",
       "accessCount": 1,
-      "lastAccessed": 1777787124733,
-      "type": "directory"
-    },
-    {
-      "path": "app\\(authenticated)\\projects\\new\\page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1777789809804,
+      "lastAccessed": 1780113734287,
       "type": "file"
     },
     {
-      "path": "lib\\pocketbase\\auth.ts",
+      "path": "lib\\constants\\trade-constants.ts",
       "accessCount": 1,
-      "lastAccessed": 1777790077852,
-      "type": "directory"
-    },
-    {
-      "path": "pocketbase\\pb_migrations\\008_create_quotations.js",
-      "accessCount": 1,
-      "lastAccessed": 1777790882810,
-      "type": "directory"
-    },
-    {
-      "path": "public",
-      "accessCount": 1,
-      "lastAccessed": 1777791840150,
-      "type": "directory"
-    },
-    {
-      "path": "lib\\quotation\\calculations.ts",
-      "accessCount": 1,
-      "lastAccessed": 1777794800649,
-      "type": "directory"
+      "lastAccessed": 1780113862796,
+      "type": "file"
     }
   ],
   "userDirectives": []

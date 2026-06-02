@@ -2,6 +2,8 @@
  * Order Items with Shipped Quantities API
  * 获取订单项及其已发货数量
  * 
+ * 从 SO 集合的 JSONB items 字段读取，代替旧的 order_items 表
+ * 
  * GET /api/orders/[id]/items-with-shipped
  * Query params:
  *   - excludeShipmentId: 排除指定发货单的数量（用于编辑发货单时）
@@ -10,20 +12,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerPocketBase } from '@/lib/pocketbase/server';
 
-interface OrderItemWithExpand {
+interface SOItem {
   id: string;
-  order: string;
-  product: string;
+  part_number: string;
+  product_name: string;
+  description_en?: string;
   quantity: number;
+  unit: string;
   unit_price: number;
   amount: number;
-  expand?: {
-    product?: {
-      id: string;
-      code: string;
-      name: string;
-    };
-  };
 }
 
 interface ShipmentItem {
@@ -44,35 +41,31 @@ export async function GET(
 
     const pb = await createServerPocketBase();
 
-    // 获取订单项
-    const orderItems = await pb.collection('order_items').getFullList<OrderItemWithExpand>({
-      filter: `order = "${orderId}"`,
-      expand: 'product',
-    });
+    // 从 SO 集合读取 JSONB items
+    const so = await pb.collection('so').getOne<{ items: SOItem[] }>(orderId);
+    const items = Array.isArray(so.items) ? so.items : [];
 
     // 获取每个订单项的已发货数量
     const itemsWithShipped = await Promise.all(
-      orderItems.map(async (item) => {
-        // 获取该订单项的所有发货记录
-        const filter = excludeShipmentId 
+      items.map(async (item) => {
+        const filter = excludeShipmentId
           ? `order_item = "${item.id}" && shipment != "${excludeShipmentId}"`
           : `order_item = "${item.id}"`;
-        
+
         const shipmentItems = await pb.collection('shipment_items').getFullList<ShipmentItem>({
           filter,
         });
 
-        // 计算已发货总数
         const shippedQuantity = shipmentItems.reduce((sum, si) => sum + si.quantity, 0);
         const remainingQuantity = item.quantity - shippedQuantity;
 
-        // 返回符合 OrderItemWithShipped 接口的格式
         return {
           id: item.id,
           product: {
-            id: item.product,
-            name: item.expand?.product?.name || '-',
-            code: item.expand?.product?.code || '-',
+            id: item.id,
+            name: item.product_name || '-',
+            code: item.part_number || '-',
+            description: item.description_en || '',
           },
           quantity: item.quantity,
           shippedQuantity,

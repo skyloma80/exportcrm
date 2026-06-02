@@ -626,14 +626,14 @@ class OrderService extends BaseCollectionService<Order> {
     const orders = await this.getByProject(projectId);
     const activeOrders = orders.filter(o => o.status !== 'cancelled');
 
-    const total_amount = activeOrders.reduce((sum, o) => sum + o.total_amount, 0);
-    const paid_amount = activeOrders.reduce((sum, o) => sum + (o.paid_amount || 0), 0);
+    const total_amount = Math.round(activeOrders.reduce((sum, o) => sum + o.total_amount, 0) * 100) / 100;
+    const paid_amount = Math.round(activeOrders.reduce((sum, o) => sum + (o.paid_amount || 0), 0) * 100) / 100;
 
     return {
       count: activeOrders.length,
       total_amount,
       paid_amount,
-      pending_amount: total_amount - paid_amount,
+      pending_amount: Math.round((total_amount - paid_amount) * 100) / 100,
     };
   }
 
@@ -681,14 +681,14 @@ class OrderService extends BaseCollectionService<Order> {
    * Get remaining amount to be paid
    */
   getRemainingAmount(order: Order): number {
-    return order.total_amount - (order.paid_amount || 0);
+    return Math.round((order.total_amount - (order.paid_amount || 0)) * 100) / 100;
   }
 
   /**
    * Check if order is fully paid
    */
   isFullyPaid(order: Order): boolean {
-    return (order.paid_amount || 0) >= order.total_amount;
+    return Math.round((order.paid_amount || 0) * 100) >= Math.round(order.total_amount * 100);
   }
 }
 
@@ -799,7 +799,7 @@ class OrderPaymentService extends BaseCollectionService<OrderPayment> {
     if (!order) throw new Error('Order not found');
 
     const remainingAmount = orderService.getRemainingAmount(order);
-    if (data.amount > remainingAmount) {
+    if (Math.round(data.amount * 100) > Math.round(remainingAmount * 100)) {
       throw new Error(`Payment amount exceeds remaining balance of ${remainingAmount}`);
     }
 
@@ -852,9 +852,10 @@ class OrderPaymentService extends BaseCollectionService<OrderPayment> {
    */
   async getTotalApprovedPayments(orderId: string): Promise<number> {
     const payments = await this.getByOrder(orderId);
-    return payments
+    const total = payments
       .filter(p => p.status === 'approved')
       .reduce((sum, p) => sum + p.amount, 0);
+    return Math.round(total * 100) / 100;
   }
 
   /**

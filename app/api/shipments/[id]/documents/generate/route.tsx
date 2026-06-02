@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let shipment;
     try {
       shipment = await pb.collection('shipments').getOne(id, {
-        expand: 'order,order.customer,order.project',
+        expand: 'order',
       });
     } catch (e: any) {
       if (e.status === 404) {
@@ -49,11 +49,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const order = shipment.expand?.order;
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    const customer = order.expand?.customer;
-    if (!customer) {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
 
     const pathInfo = extractOrderPathInfo(order);
@@ -102,8 +97,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           address: branding?.primaryOffice?.address,
         },
         consignee: {
-          name: customer.name,
-          address: customer.address,
+          name: order.customer_name || '',
+          address: order.customer_address || '',
         },
         items: shipmentItems.map(item => {
           const orderItem = item.expand?.order_item;
