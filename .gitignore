@@ -42,3 +42,13 @@ coverage/
 # PocketBase data (if running locally)
 pocketbase/pb_data/
 !pocketbase/pb_data/.gitkeep
+
+# Large build artifacts / deploy artifacts
+crm.tar
+*.tar
+
+# Temporary test/output files
+*.xlsx
+!excel-template/*.xlsx
+test-*.xlsx
+manual-merge.xlsx
