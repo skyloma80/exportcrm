@@ -9,6 +9,14 @@ import { createStorage } from '@/lib/s3/storage'
  * @response 500:ErrorResponse:删除失败
  */
 export async function DELETE(request: NextRequest) {
+  return handleDelete(request)
+}
+
+export async function POST(request: NextRequest) {
+  return handleDelete(request)
+}
+
+async function handleDelete(request: NextRequest) {
   try {
     const body = await request.json()
     const { path, isFolder } = body
