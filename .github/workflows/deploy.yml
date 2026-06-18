@@ -7,6 +7,10 @@ env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USER }}/crm:latest
   GHCR_IMAGE: ghcr.io/${{ github.repository }}:latest
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
