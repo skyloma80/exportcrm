@@ -5,6 +5,7 @@ on:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USER }}/crm:latest
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}:latest
 
 jobs:
   build-and-deploy:
@@ -21,21 +22,29 @@ jobs:
         run: |
           echo "$ENV_PRODUCTION" > .env.production
 
-      # 2. 登录 Docker Hub
+      # 2. 登录 Docker Hub & GitHub Container Registry
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. 构建并推送镜像（GitHub 上编译，无需本地编译）
+      # 3. 构建并推送镜像到两个仓库
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
 
       # 4. 部署配置文件至服务器
       - name: Copy config files to server
@@ -59,25 +68,26 @@ jobs:
           target: "/home/ubuntu/exportcrm/pocketbase/pb_migrations"
           strip_components: 1
 
-      # 6. 远程部署
+      # 6. 远程部署（从 GHCR 拉取，中国服务器可访问）
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DOCKER_PASSWORD,DOCKER_USER,DOCKER_IMAGE
+          envs: GHCR_IMAGE,GITHUB_TOKEN
           script: |
             cd /home/ubuntu/exportcrm
-            # 登录 Docker Hub
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+            # 登录 GHCR
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "skyloma80" --password-stdin
             # 拉取最新镜像
-            docker compose pull
+            docker pull $GHCR_IMAGE
+            # 重新 tag 为本地名，兼容 docker-compose 默认配置
+            docker tag $GHCR_IMAGE crm:latest
             # 重新创建并启动容器
             docker compose up -d --force-recreate
             # 清理旧镜像
             docker image prune -f
         env:
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          DOCKER_USER: ${{ secrets.DOCKER_USER }}
-          DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          GHCR_IMAGE: ${{ env.GHCR_IMAGE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
