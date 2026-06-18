@@ -6,7 +6,7 @@ on:
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USER }}/crm:latest
   GHCR_IMAGE: ghcr.io/${{ github.repository }}:latest
-  IMAGE_TAR: /tmp/crm-image.tar.gz
+  IMAGE_TAR: ./crm-image.tar.gz
 
 permissions:
   contents: read
@@ -90,7 +90,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "${{ env.IMAGE_TAR }}"
           target: "/home/ubuntu/exportcrm/"
-          strip_components: 1
 
       # 8. 远程加载镜像并部署
       - name: Deploy via SSH
