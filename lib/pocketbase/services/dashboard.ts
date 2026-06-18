@@ -31,43 +31,56 @@ class DashboardService {
   async getKPIStats(timeRange: TimeRange = '30d'): Promise<KPIStats> {
     const currentStart = getTimeRangeStartDate(timeRange);
     const previousStart = getPreviousPeriodStartDate(timeRange);
-    const currentStartStr = currentStart.toISOString();
-    const previousStartStr = previousStart.toISOString();
 
-    // Get current period orders
+    // Fetch all orders and filter client-side
     let currentOrders: any[] = [];
     let previousOrders: any[] = [];
     try {
-      currentOrders = await this.pb.collection('orders').getFullList({
-        filter: `created >= "${currentStartStr}" && status != "cancelled"`,
+      const allOrders = await this.pb.collection('so').getFullList({
+        batch: 200,
       });
-      previousOrders = await this.pb.collection('orders').getFullList({
-        filter: `created >= "${previousStartStr}" && created < "${currentStartStr}" && status != "cancelled"`,
+      const now = new Date();
+      currentOrders = allOrders.filter((o: any) => {
+        const created = new Date(o.created);
+        return created >= currentStart && created <= now && o.status !== 'cancelled';
       });
-    } catch (e) {
-      console.error('Failed to load orders for KPI:', e);
+      previousOrders = allOrders.filter((o: any) => {
+        const created = new Date(o.created);
+        return created >= previousStart && created < currentStart && o.status !== 'cancelled';
+      });
+    } catch (e: any) {
+      console.error('Failed to load orders for KPI:', e?.message || e?.status, e);
     }
 
-    // Get current period RFQs
+    // Fetch all RFQs and filter client-side
     let currentRfqs: any[] = [];
     let previousRfqs: any[] = [];
     try {
-      currentRfqs = await this.pb.collection('rfqs').getFullList({
-        filter: `created >= "${currentStartStr}"`,
+      const allRfqs = await this.pb.collection('rfqs').getFullList({
+        batch: 200,
       });
-      previousRfqs = await this.pb.collection('rfqs').getFullList({
-        filter: `created >= "${previousStartStr}" && created < "${currentStartStr}"`,
+      const now = new Date();
+      currentRfqs = allRfqs.filter((r: any) => {
+        const created = new Date(r.created);
+        return created >= currentStart && created <= now;
+      });
+      previousRfqs = allRfqs.filter((r: any) => {
+        const created = new Date(r.created);
+        return created >= previousStart && created < currentStart;
       });
     } catch (e) {
       console.error('Failed to load RFQs for KPI:', e);
     }
 
-    // Get tasks
+    // Fetch all tasks and filter client-side
     let tasks: any[] = [];
     try {
-      tasks = await this.pb.collection('tasks').getFullList({
-        filter: 'status != "completed" && status != "cancelled"',
+      const allTasks = await this.pb.collection('tasks').getFullList({
+        batch: 200,
       });
+      tasks = allTasks.filter((t: any) => 
+        t.status !== 'completed' && t.status !== 'cancelled'
+      );
     } catch (e) {
       console.error('Failed to load tasks for KPI:', e);
     }
@@ -104,14 +117,19 @@ class DashboardService {
     const startDate = getTimeRangeStartDate(timeRange);
     
     try {
-      const orders = await this.pb.collection('orders').getFullList<{ created: string; total_amount: number }>({
-        filter: `created >= "${startDate.toISOString()}" && status != "cancelled"`,
-        sort: 'created',
+      // Fetch all non-cancelled orders and filter client-side
+      const orders = await this.pb.collection('so').getFullList({
+        sort: '-created',
+        batch: 200,
       });
       
-      return aggregateOrdersByTimeRange(orders, timeRange);
-    } catch (e) {
-      console.error('Failed to load revenue trend:', e);
+      const filtered: { created: string; total_amount: number }[] = orders.filter((o: any) => 
+        o.status !== 'cancelled' && new Date(o.created) >= startDate
+      ).map((o: any) => ({ created: o.created, total_amount: o.total_amount || 0 }));
+      
+      return aggregateOrdersByTimeRange(filtered, timeRange);
+    } catch (e: any) {
+      console.error('Failed to load revenue trend:', e?.message || e?.status, e);
       return [];
     }
   }
@@ -121,22 +139,23 @@ class DashboardService {
    */
   async getRecentTasks(limit: number = 10): Promise<TaskSummary[]> {
     try {
-      // 先检查 tasks 集合是否存在
-      const tasks = await this.pb.collection('tasks').getList(1, limit, {
-        filter: 'status != "completed" && status != "cancelled"',
+      const allTasks = await this.pb.collection('tasks').getFullList({
         sort: '-created',
+        batch: 200,
       });
 
-      return tasks.items.map(t => ({
-        id: t.id,
-        title: t.title,
-        status: t.status,
-        priority: t.priority,
-        due_date: t.due_date,
-        assigneeName: undefined, // assignee expand 可能不可用
-      }));
+      return allTasks
+        .filter((t: any) => t.status !== 'completed' && t.status !== 'cancelled')
+        .slice(0, limit)
+        .map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          due_date: t.due_date,
+          assigneeName: undefined,
+        }));
     } catch (e: any) {
-      // 如果集合不存在，静默返回空数组
       if (e?.status === 400 || e?.status === 404) {
         console.warn('Tasks collection may not exist yet');
         return [];
@@ -151,9 +170,9 @@ class DashboardService {
    */
   async getRecentOrders(limit: number = 10): Promise<OrderSummary[]> {
     try {
-      const orders = await this.pb.collection('orders').getList(1, limit, {
+      const orders = await this.pb.collection('so').getList(1, limit, {
         sort: '-created',
-        expand: 'customer',
+
       });
 
       return orders.items.map(o => ({
@@ -204,22 +223,25 @@ class DashboardService {
    */
   async getUpcomingShipments(limit: number = 10): Promise<ShipmentSummary[]> {
     try {
-      const shipments = await this.pb.collection('shipments').getList(1, limit, {
-        filter: 'status != "delivered"',
+      const allShipments = await this.pb.collection('shipments').getFullList({
         sort: 'etd',
         expand: 'order,order.customer',
+        batch: 200,
       });
 
-      return shipments.items.map(s => ({
-        id: s.id,
-        code: s.code,
-        order: s.order,
-        orderCode: s.expand?.order?.code,
-        customerName: s.expand?.order?.expand?.customer?.name,
-        status: s.status,
-        etd: s.etd,
-        eta: s.eta,
-      }));
+      return allShipments
+        .filter((s: any) => s.status !== 'delivered')
+        .slice(0, limit)
+        .map((s: any) => ({
+          id: s.id,
+          code: s.code,
+          order: s.order,
+          orderCode: s.expand?.order?.code,
+          customerName: s.expand?.order?.expand?.customer?.name,
+          status: s.status,
+          etd: s.etd,
+          eta: s.eta,
+        }));
     } catch (e) {
       console.error('Failed to load upcoming shipments:', e);
       return [];

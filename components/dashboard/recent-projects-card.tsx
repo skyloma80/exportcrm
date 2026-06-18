@@ -55,7 +55,7 @@ async function inferStageFromRelations(projectId: string): Promise<ProjectStage>
   try {
     // 检查是否有非草稿订单（negotiation 阶段）
     // 草稿订单不应该影响项目阶段
-    const orders = await pb.collection('orders').getList(1, 1, {
+    const orders = await pb.collection('so').getList(1, 1, {
       filter: `project = "${projectId}" && status != "draft"`,
     });
     if (orders.totalItems > 0) {

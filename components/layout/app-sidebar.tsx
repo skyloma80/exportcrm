@@ -62,6 +62,7 @@ const baseNavGroups: NavGroup[] = [
       { titleKey: "nav.products", url: "/products", icon: Package },
       { titleKey: "nav.disk", url: "/disk", icon: HardDrive },
       { titleKey: "nav.palletCalculator", url: "/pallet-calculator", icon: Calculator },
+      { titleKey: "nav.palletCalculatorV2", url: "http://42.194.150.84:3005", icon: Calculator, external: true },
     ],
   },
 ]

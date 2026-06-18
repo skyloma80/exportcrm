@@ -91,12 +91,14 @@ function Pallet({ spec, material }: { spec: PalletSpec; material: PalletMaterial
 function Box({ 
   placedBox, 
   colorIndex,
+  boxIndex,
   onHover,
   palletLength,
   palletWidth
 }: { 
   placedBox: PlacedBox
   colorIndex: number
+  boxIndex: number
   onHover: (box: PlacedBox | null) => void
   palletLength: number
   palletWidth: number
@@ -112,8 +114,6 @@ function Box({
   const h = dimension.height
   
   // 转换位置 (从mm到Three.js单位)
-  // position.x/y 是相对于托盘左下角(0,0)的坐标
-  // 需要转换为相对于托盘中心的坐标
   const x = (position.x + l / 2 - palletLength / 2) * SCALE
   const y = (position.z + h / 2) * SCALE
   const z = (position.y + w / 2 - palletWidth / 2) * SCALE
@@ -150,12 +150,35 @@ function Box({
         <lineBasicMaterial color={isOverhanging ? '#FF6600' : '#333'} linewidth={isOverhanging ? 2 : 1} />
       </lineSegments>
       
-      {/* 悬停提示 */}
+      {/* 编号标签 - 悬停显示 */}
       {hovered && (
-        <Html position={[0, h * SCALE / 2 + 0.1, 0]} center>
-          <div className="bg-black/80 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
-            {dimension.length} × {dimension.width} × {dimension.height} mm
-            {isOverhanging && <span className="text-orange-400 ml-1">(悬空)</span>}
+        <Html position={[0, h * SCALE / 2 + 0.08, 0]} center transform occlude={false}>
+          <div 
+            className="pointer-events-none select-none font-bold text-white px-1 py-0.5 rounded"
+            style={{ 
+              fontSize: '10px', 
+              lineHeight: '12px',
+              background: 'rgba(0,0,0,0.7)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            #{boxIndex + 1}
+          </div>
+        </Html>
+      )}
+      
+      {/* 悬停详情 */}
+      {hovered && (
+        <Html position={[0, h * SCALE / 2 + 0.12, 0]} center>
+          <div className="bg-black/85 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
+            <div className="font-bold">#{boxIndex + 1} {dimension.length}×{dimension.width}×{dimension.height}</div>
+            <div className="text-gray-300 mt-0.5">
+              坐标: ({position.x}, {position.y}, {position.z}) mm
+            </div>
+            <div className="text-gray-300">
+              旋转: {rotation} | 层: {placedBox.layerIndex}
+            </div>
+            {isOverhanging && <span className="text-orange-400"> (悬空)</span>}
           </div>
         </Html>
       )}
@@ -170,7 +193,8 @@ function PalletStack({
   material,
   onBoxHover,
   palletIndex,
-  showLabel
+  showLabel,
+  boxTypeColorMap
 }: { 
   pallet: PalletPlan
   spec: PalletSpec
@@ -178,6 +202,7 @@ function PalletStack({
   onBoxHover: (box: PlacedBox | null) => void
   palletIndex?: number
   showLabel?: boolean
+  boxTypeColorMap: Map<string, number>
 }) {
   // 如果托盘有自己的规格信息，使用它；否则使用传入的默认规格
   const actualSpec = pallet.palletSpec ? {
@@ -211,16 +236,25 @@ function PalletStack({
       
       {/* 箱子 - 位置已经是相对于托盘中心的 */}
       <group position={[0, actualSpec.height * SCALE, 0]}>
-        {pallet.placedBoxes.map((box, index) => (
-          <Box 
-            key={box.dimension.id} 
-            placedBox={box} 
-            colorIndex={index}
-            onHover={onBoxHover}
-            palletLength={actualSpec.length}
-            palletWidth={actualSpec.width}
-          />
-        ))}
+        {pallet.placedBoxes.map((box, boxIdx) => {
+          const { length, width, height } = box.dimension
+          const l = Math.max(length, width)
+          const w = Math.min(length, width)
+          const key = `${l}x${w}x${height}`
+          const colorIndex = boxTypeColorMap.get(key) ?? 0
+
+          return (
+            <Box 
+              key={box.dimension.id} 
+              placedBox={box} 
+              colorIndex={colorIndex}
+              boxIndex={boxIdx}
+              onHover={onBoxHover}
+              palletLength={actualSpec.length}
+              palletWidth={actualSpec.width}
+            />
+          )
+        })}
       </group>
     </group>
   )
@@ -238,6 +272,25 @@ function Scene({
   
   const pallets = stackingPlan?.pallets || []
   const palletCount = pallets.length
+  
+  // 建立全局纸箱规格到颜色索引的映射，确保所有托盘上的同种规格箱子颜色一致
+  const boxTypeColorMap = useMemo(() => {
+    const map = new Map<string, number>()
+    if (!stackingPlan) return map
+    let colorIndex = 0
+    stackingPlan.pallets.forEach(pallet => {
+      pallet.placedBoxes.forEach(box => {
+        const { length, width, height } = box.dimension
+        const l = Math.max(length, width)
+        const w = Math.min(length, width)
+        const key = `${l}x${w}x${height}`
+        if (!map.has(key)) {
+          map.set(key, colorIndex++)
+        }
+      })
+    })
+    return map
+  }, [stackingPlan])
   
   // 计算多托盘布局的位置
   const palletPositions = useMemo(() => {
@@ -308,6 +361,7 @@ function Scene({
               onBoxHover={setHoveredBox}
               palletIndex={index}
               showLabel={palletCount > 1}
+              boxTypeColorMap={boxTypeColorMap}
             />
           </group>
         ))
@@ -318,6 +372,7 @@ function Scene({
           spec={palletSpec}
           material={material}
           onBoxHover={setHoveredBox}
+          boxTypeColorMap={boxTypeColorMap}
         />
       ) : (
         // 如果没有堆放方案，只显示空托盘

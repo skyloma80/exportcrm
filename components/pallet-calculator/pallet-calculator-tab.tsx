@@ -14,7 +14,7 @@ import {
   PALLET_SPECS,
   PALLET_MATERIALS
 } from '@/lib/pallet-calculator'
-import { Box } from 'lucide-react'
+import { Box, ExternalLink } from 'lucide-react'
 
 // 动态导入3D组件
 const PalletViewer3D = dynamic(
@@ -65,7 +65,9 @@ export function PalletCalculatorTab() {
           palletHeight: newConfig.palletSpec.height,
           effectiveHeight,
           overhangTolerance: newConfig.overhangTolerance,
-          heightTolerance: newConfig.heightTolerance
+          heightTolerance: newConfig.heightTolerance,
+          prioritizeFullLayers: newConfig.prioritizeFullLayers,
+          averageBoxWeight: newConfig.averageBoxWeight
         })
         
         setStackingPlan(plan)
@@ -97,6 +99,15 @@ export function PalletCalculatorTab() {
                   - {t('palletCalculator.summary.pallet') || '托盘'} {selectedPalletIndex + 1}/{stackingPlan.pallets.length}
                 </span>
               )}
+              <a
+                href="http://42.194.150.84:3005"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                智能托盘优化
+              </a>
             </CardTitle>
           </CardHeader>
           <CardContent>

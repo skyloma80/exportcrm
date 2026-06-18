@@ -37,7 +37,6 @@ import {
   type OrderPathInfo,
 } from "@/lib/services/shipment-document-path"
 import type { FlatSO } from "@/lib/pocketbase/services/so"
-import type { PurchaseOrder } from "@/lib/pocketbase/services/purchase-orders"
 import type { Shipment } from "@/lib/pocketbase/services/shipments"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { navigateToDisk } from "@/lib/disk/ensure-folder"

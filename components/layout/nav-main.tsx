@@ -17,6 +17,7 @@ export interface NavItem {
   titleKey: string
   url: string
   icon: LucideIcon
+  external?: boolean
 }
 
 export interface NavGroup {
@@ -44,10 +45,17 @@ export function NavMain({ groups }: NavMainProps) {
               return (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton asChild isActive={isActive} tooltip={t(item.titleKey)}>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{t(item.titleKey)}</span>
-                    </Link>
+                    {item.external ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <item.icon />
+                        <span>{t(item.titleKey)}</span>
+                      </a>
+                    ) : (
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{t(item.titleKey)}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )

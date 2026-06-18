@@ -20,8 +20,7 @@ export interface SOItem {
 
 export interface SOCreateInput {
   code?: string;
-  customer_id?: string;
-  customer_name: string;
+   customer_name: string;
   customer_address?: string;
   customer_tax_id?: string;
   customer_po?: string;
@@ -39,16 +38,17 @@ export interface SOCreateInput {
   expected_delivery_date?: string;
   estimated_shipping_date?: string;
   remarks?: string;
-  project_id?: string;
+
   project?: string;
   customer?: string;
   total_amount: number;
   paid_amount?: number;
   status: SOStatus;
   items: SOItem[];
+  created?:string;
 }
 
-export interface FlatSO extends SOCreateInput, RecordModel {}
+export interface FlatSO extends SOCreateInput, RecordModel { }
 
 export class SOService extends BaseCollectionService<FlatSO> {
   constructor() {
@@ -66,11 +66,11 @@ export class SOService extends BaseCollectionService<FlatSO> {
 
   async create(data: Partial<FlatSO>): Promise<FlatSO> {
     const pb = getPocketBase();
-    
+
     if (!data.code) {
       data.code = await generateOrderCode(pb);
     }
-    
+
     return pb.collection('so').create<FlatSO>(data);
   }
 }

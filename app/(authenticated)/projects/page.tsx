@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { DataTable, DataTableColumnHeader, DataTableRowActions } from "@/components/data-table"
+import { DataTable, DataTableColumnHeader } from "@/components/data-table"
 import { getPocketBase } from "@/lib/pocketbase/auth"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { Plus, FolderKanban, Building2, Calendar } from "lucide-react"
@@ -113,31 +113,8 @@ export default function ProjectsPage() {
         )
       },
     },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DataTableRowActions
-          row={row}
-          onView={(item) => router.push(`/projects/${item.id}`)}
-          onEdit={(item) => router.push(`/projects/${item.id}/edit`)}
-          onDelete={(item) => handleDelete(item)}
-        />
-      ),
-    },
   ], [t, locale, router])
 
-
-  const handleDelete = async (project: Project) => {
-    if (!confirm(t("projects.deleteConfirm"))) return
-    try {
-      const pb = getPocketBase()
-      await pb.collection("projects").delete(project.id)
-      loadData()
-    } catch (err) {
-      console.error("Delete error:", err)
-      alert(t("projects.deleteError"))
-    }
-  }
 
   // Stats by stage
   const wonCount = data.filter(p => p.stage === 'won').length
@@ -199,33 +176,26 @@ export default function ProjectsPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("projects.listTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
-            </div>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={data}
-              searchKey="name"
-              filterableColumns={[
-                {
-                  id: "stage",
-                  title: t("projects.columns.stage"),
-                  options: PROJECT_STAGES.map(s => ({ label: t(`projects.stages.${s.value}`), value: s.value })),
-                },
-              ]}
-              onRowClick={(row) => router.push(`/projects/${row.id}`)}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          searchKey="name"
+          filterableColumns={[
+            {
+              id: "stage",
+              title: t("projects.columns.stage"),
+              options: PROJECT_STAGES.map(s => ({ label: t(`projects.stages.${s.value}`), value: s.value })),
+            },
+          ]}
+          onRowClick={(row) => router.push(`/projects/${row.id}`)}
+        />
+      )}
     </div>
   )
 }

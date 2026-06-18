@@ -550,15 +550,6 @@ class OrderService extends BaseCollectionService<Order> {
       for (const payment of orderPayments) {
         await this.pb.collection('order_payments').delete(payment.id);
       }
-
-      // Delete related purchase orders
-      const purchaseOrders = await this.pb.collection('purchase_orders').getFullList({
-        filter: `order = "${id}"`
-      });
-
-      for (const po of purchaseOrders) {
-        await this.pb.collection('purchase_orders').delete(po.id);
-      }
     } catch (e) {
       console.error('Failed to delete related records:', e);
       throw new Error('Failed to delete related order records');

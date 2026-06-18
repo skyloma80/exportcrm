@@ -21,6 +21,7 @@
     "proformaInvoices": "形式发票",
     "shipments": "发货管理",
     "palletCalculator": "托盘计算器",
+    "palletCalculatorV2": "托盘计算器V2",
     "payments": "收款管理",
     "documents": "文档管理",
     "disk": "文件管理",
@@ -2717,6 +2718,8 @@
     "calculating": "计算中...",
     "smartCalculate": "智能计算最优方案",
     "smartCalculateHint": "自动选择最优托盘组合（支持混合规格）",
+    "prioritizeFullLayers": "优先整层堆叠",
+    "prioritizeFullLayersHint": "同规箱子尽量按整层摆放，其余尾箱在顶部混拼，堆叠更稳定",
     "customSpec": {
       "addButton": "自定义",
       "title": "添加自定义托盘规格",

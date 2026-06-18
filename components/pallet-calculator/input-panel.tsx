@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
 import { Calculator, AlertCircle, Package, Sparkles, Plus, Trash2 } from 'lucide-react'
 import {
   PALLET_SPECS,
@@ -41,6 +42,7 @@ export interface CalculatorConfig {
   heightTolerance: number
   boxDimensionsText: string
   averageBoxWeight: number
+  prioritizeFullLayers?: boolean
   // 智能计算结果
   smartResult?: {
     plan: StackingPlan
@@ -77,6 +79,7 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
   const [heightTolerance, setHeightTolerance] = useState(DEFAULT_CONFIG.heightTolerance)
   const [boxDimensionsText, setBoxDimensionsText] = useState('')
   const [averageBoxWeight, setAverageBoxWeight] = useState(15)
+  const [prioritizeFullLayers, setPrioritizeFullLayers] = useState(true)
   
   // Load custom specs from localStorage
   useEffect(() => {
@@ -222,9 +225,10 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
       overhangTolerance,
       heightTolerance,
       boxDimensionsText,
-      averageBoxWeight
+      averageBoxWeight,
+      prioritizeFullLayers
     }, parseResult)
-  }, [canCalculate, onCalculate, selectedPalletSpec, selectedMaterial, maxHeight, overhangTolerance, heightTolerance, boxDimensionsText, averageBoxWeight, parseResult])
+  }, [canCalculate, onCalculate, selectedPalletSpec, selectedMaterial, maxHeight, overhangTolerance, heightTolerance, boxDimensionsText, averageBoxWeight, prioritizeFullLayers, parseResult])
 
   // 智能计算最优方案（混合托盘）
   const handleSmartCalculate = useCallback(() => {
@@ -235,9 +239,11 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
       parseResult.boxes,
       allPalletSpecs.map(s => ({ code: s.code, name_cn: s.name_cn, length: s.length, width: s.width, height: s.height })),
       {
-        effectiveHeight: maxHeight - 150, // 使用平均托盘高度
+        effectiveHeight: maxHeight - (selectedPalletSpec?.height || 150),
         overhangTolerance,
-        heightTolerance
+        heightTolerance,
+        prioritizeFullLayers,
+        averageBoxWeight
       }
     )
     
@@ -258,13 +264,14 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
       heightTolerance,
       boxDimensionsText,
       averageBoxWeight,
+      prioritizeFullLayers,
       smartResult: {
         plan: result.plan,
         palletBreakdown: result.palletBreakdown,
         volumeSaved: result.totalVolumeSaved
       }
     }, parseResult)
-  }, [parseResult, maxHeight, overhangTolerance, heightTolerance, selectedMaterial, selectedPalletSpec?.code, boxDimensionsText, averageBoxWeight, onCalculate, allPalletSpecs])
+  }, [parseResult, maxHeight, overhangTolerance, heightTolerance, selectedMaterial, selectedPalletSpec?.code, boxDimensionsText, averageBoxWeight, prioritizeFullLayers, onCalculate, allPalletSpecs])
 
   return (
     <Card className="h-full">
@@ -381,6 +388,23 @@ export function InputPanel({ onCalculate, isCalculating }: InputPanelProps) {
             onChange={e => setAverageBoxWeight(Number(e.target.value))}
             min={0}
             step={0.5}
+          />
+        </div>
+
+        {/* Prioritize Full Layers Switch */}
+        <div className="flex items-center justify-between space-x-2 py-2">
+          <div className="flex flex-col space-y-1">
+            <Label htmlFor="prioritize-full-layers">
+              {t('palletCalculator.prioritizeFullLayers') || '优先整层堆叠'}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {t('palletCalculator.prioritizeFullLayersHint') || '同规箱子尽量按整层摆放，其余尾箱在顶部混拼，堆叠更稳定'}
+            </p>
+          </div>
+          <Switch
+            id="prioritize-full-layers"
+            checked={prioritizeFullLayers}
+            onCheckedChange={setPrioritizeFullLayers}
           />
         </div>
 

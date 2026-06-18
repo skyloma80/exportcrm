@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { getPocketBase } from "@/lib/pocketbase/auth"
-import { ArrowLeft, Package, Loader2, Plus, Upload, Eye, Trash2, ChevronUp, X } from "lucide-react"
+import { ArrowLeft, Package, Loader2, Plus, Upload, ChevronUp, X } from "lucide-react"
 import { Project, productProjectService } from "@/lib/pocketbase/services/projects"
 import { Product, productService, ProductCreateInput } from "@/lib/pocketbase/services/products"
 import { ProductImportDialog } from "@/components/projects/product-import-dialog"
@@ -231,19 +231,6 @@ export default function ProjectProductsPage() {
       header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.hsCode")} />,
       cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("hs_code") || "-"}</span>,
     },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => router.push(`/products/${row.original.productId}?project=${id}`)}>
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(row.original.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
   ], [t, locale, router, id])
 
   useEffect(() => { loadData() }, [id])
@@ -443,46 +430,33 @@ export default function ProjectProductsPage() {
       )}
 
       {/* Product List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {t("projects.products.title")}
-          </CardTitle>
-          <CardDescription>
-            {t('projectProducts.listDescription', { count: String(products.length) })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {products.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-muted rounded-lg bg-muted/20">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                {t('projectProducts.emptyTitle')}
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                {t('projectProducts.emptyDescription')}
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button variant="outline" size="lg" onClick={() => setImportDialogOpen(true)}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t('projectProducts.importFromLibrary')}
-                </Button>
-                <Button size="lg" onClick={() => setShowCreateForm(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('projectProducts.createNew')}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <DataTable
-              columns={productColumns}
-              data={productTableData}
-              searchKey="name"
-            />
-          )}
-        </CardContent>
-      </Card>
+      {products.length === 0 ? (
+        <div className="text-center py-12 border-2 border-dashed border-muted rounded-lg bg-muted/20">
+          <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">
+            {t('projectProducts.emptyTitle')}
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            {t('projectProducts.emptyDescription')}
+          </p>
+          <div className="flex justify-center gap-3">
+            <Button variant="outline" size="lg" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              {t('projectProducts.importFromLibrary')}
+            </Button>
+            <Button size="lg" onClick={() => setShowCreateForm(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('projectProducts.createNew')}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <DataTable
+          columns={productColumns}
+          data={productTableData}
+          searchKey="name"
+        />
+      )}
 
       {/* Product Import Dialog */}
       <ProductImportDialog

@@ -58,7 +58,9 @@ export default function PalletCalculatorPage() {
         palletHeight: newConfig.palletSpec.height,
         effectiveHeight,
         overhangTolerance: newConfig.overhangTolerance,
-        heightTolerance: newConfig.heightTolerance
+        heightTolerance: newConfig.heightTolerance,
+        prioritizeFullLayers: newConfig.prioritizeFullLayers,
+        averageBoxWeight: newConfig.averageBoxWeight
       })
       
       setStackingPlan(plan)

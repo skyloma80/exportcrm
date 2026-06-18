@@ -1957,7 +1957,8 @@
       "items": "Items",
       "photos": "Loading Photos",
       "customs": "Customs",
-      "palletCalculator": "Pallet Calculator",
+    "palletCalculator": "Pallet Calculator",
+    "palletCalculatorV2": "Pallet Calculator V2",
       "documents": "Documents"
     },
     "info": {
@@ -2740,6 +2741,8 @@
     "calculating": "Calculating...",
     "smartCalculate": "Smart Calculate Optimal Plan",
     "smartCalculateHint": "Auto-select best pallet combination (supports mixed specs)",
+    "prioritizeFullLayers": "Prioritize Full Layers",
+    "prioritizeFullLayersHint": "Stack same-size boxes in full layers first, putting leftovers on the top layer for more stability",
     "customSpec": {
       "addButton": "Custom",
       "title": "Add Custom Pallet Specification",

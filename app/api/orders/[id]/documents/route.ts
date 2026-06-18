@@ -10,7 +10,7 @@ import {
   getShipmentDocumentPath,
   extractOrderPathInfo,
 } from "@/lib/services/shipment-document-path"
-import type { PurchaseOrder } from "@/lib/pocketbase/services/purchase-orders"
+import type { FlatPO } from "@/lib/pocketbase/services/po"
 import type { Shipment } from "@/lib/pocketbase/services/shipments"
 
 /**
@@ -71,15 +71,13 @@ export async function GET(
 
     if (type === "po" && poId) {
       // Load purchase order documents
-      const po = await pb.collection("po").getOne<PurchaseOrder>(poId, {
-        expand: "supplier",
-      })
+      const po = await pb.collection("po").getOne<FlatPO>(poId)
       
-      if (!po.expand?.supplier) {
-        return NextResponse.json({ error: "Supplier not found" }, { status: 404 })
+      if (!po.supplier_name) {
+        return NextResponse.json({ error: "Supplier name not found" }, { status: 404 })
       }
       
-      const supplierName = po.expand.supplier.name
+      const supplierName = po.supplier_name
       const path = getPODocumentPath(pathInfo, supplierName)
       
       const { data: files } = await storage.list({ prefix: path, delimiter: "" })

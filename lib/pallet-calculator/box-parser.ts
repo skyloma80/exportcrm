@@ -8,7 +8,9 @@ export interface BoxDimension {
   length: number  // mm
   width: number   // mm
   height: number  // mm
+  weight?: number // kg（可选，用于重量限制检查）
   id: string      // unique identifier
+  isLeftover?: boolean // 是否为尾数纸箱
 }
 
 export interface ParseError {

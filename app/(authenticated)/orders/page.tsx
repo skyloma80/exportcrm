@@ -133,25 +133,7 @@ case 'delivered': return 'outline'
             {row.original.created ? format(new Date(row.original.created), 'yyyy-MM-dd') : "-"}
           </span>
         ),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DataTableRowActions
-          row={row}
-          onView={(item) => router.push(`/orders/${item.id}`)}
-          onEdit={(item) => router.push(`/orders/${item.id}/edit`)}
-          extraActions={[
-            {
-                label: "Export PI (Excel)",
-                icon: Download,
-                onClick: (item) => window.open(`/api/so/${item.id}/export-pi`, '_blank'),
-                className: "text-blue-600"
-            }
-          ]}
-        />
-      ),
-    },
+    }
   ], [t, locale, router])
 
   return (
@@ -169,7 +151,7 @@ case 'delivered': return 'outline'
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid griSd-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>{t("orders.stats.total")}</CardDescription>
@@ -191,16 +173,9 @@ case 'delivered': return 'outline'
       </div>
 
       {/* Main List */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t("orders.listTitle")}</CardTitle>
-            <div className="flex gap-2">
-                <Button variant="outline" onClick={loadOrders} size="icon">
-                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                </Button>
-            </div>
-        </CardHeader>
-        <CardContent>
+
+
+
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -214,8 +189,8 @@ case 'delivered': return 'outline'
               onRowClick={(row) => router.push(`/orders/${row.id}`)}
             />
           )}
-        </CardContent>
-      </Card>
+
+
     </div>
   )
 }

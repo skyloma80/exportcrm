@@ -19,6 +19,16 @@ import { useTabState } from "@/hooks/use-tab-state"
 import { Customer } from "@/lib/pocketbase/services/customers"
 import { Product } from "@/lib/pocketbase/services/products"
 import { DataTable, DataTableColumnHeader, DataTableRowActions } from "@/components/data-table"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ColumnDef } from "@tanstack/react-table"
 import type { RFQStatus } from "@/lib/pocketbase/services/rfqs"
@@ -89,6 +99,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [removeProductTarget, setRemoveProductTarget] = useState<{ id: string; name: string } | null>(null)
   const [activeTab, setActiveTab] = useTabState("info")
   const [selectedRfqIds, setSelectedRfqIds] = useState<string[]>([])
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
@@ -169,25 +180,20 @@ export default function ProjectDetailPage() {
         header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.unit")} />,
         cell: ({ row }) => <span>{UNITS[row.getValue("unit") as string]?.name_cn || row.getValue("unit")}</span>,
       },
-      {
-        accessorKey: "hs_code",
-        header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.hsCode")} />,
-        cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("hs_code") || "-"}</span>,
-      },
-      {
-        id: "actions",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => router.push(`/products/${row.original.productId}?project=${id}`)}>
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(row.original.id)}>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        ),
-      },
-    ]
+    {
+      accessorKey: "hs_code",
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t("products.columns.hsCode")} />,
+      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("hs_code") || "-"}</span>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setRemoveProductTarget({ id: row.original.id, name: row.original.name }) }}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+    },
+  ]
 
   // RFQ table columns with selection
   const rfqColumns: ColumnDef<RFQData>[] = useMemo(() => [
@@ -286,13 +292,15 @@ export default function ProjectDetailPage() {
   ], [t, locale, id])
 
 
-  const handleRemoveProduct = async (ppId: string) => {
+  const confirmRemoveProduct = async () => {
+    if (!removeProductTarget) return
     try {
-      await productProjectService.delete(ppId)
+      await productProjectService.delete(removeProductTarget.id)
       toast({
         title: locale === 'zh' ? '移除成功' : 'Removed',
         description: locale === 'zh' ? '产品已从项目中移除' : 'Product removed from project',
       })
+      setRemoveProductTarget(null)
       loadData()
     } catch (error) {
       console.error('Error removing product:', error)
@@ -609,82 +617,71 @@ export default function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value="products">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                {t("projects.products.title")}
-              </CardTitle>
-              <CardDescription>{t("projects.products.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {products.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-muted rounded-lg bg-muted/20">
-                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    {locale === 'zh' ? '开始添加产品' : 'Start Adding Products'}
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    {locale === 'zh'
-                      ? '产品是项目的核心。添加产品后，您可以创建询价、报价和订单。'
-                      : 'Products are the core of your project. Add products to start creating RFQs, quotations, and orders.'}
-                  </p>
-                  <div className="flex justify-center gap-3">
-                    <Button variant="outline" size="lg" onClick={() => setImportDialogOpen(true)}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      {locale === 'zh' ? '从产品库导入' : 'Import from Library'}
-                    </Button>
-                    <Button size="lg" onClick={() => router.push(`/products/new?project=${id}`)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      {locale === 'zh' ? '创建新产品' : 'Create New Product'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <DataTable
-                  columns={productColumns}
-                  data={products.filter(pp => pp.expand?.product).map(pp => ({
-                    id: pp.id,
-                    productId: pp.expand?.product?.id || '',
-                    code: pp.expand?.product?.code || '',
-                    part_number: pp.expand?.product?.part_number || '',
-                    name: pp.expand?.product?.name || '',
-                    name_cn: pp.expand?.product?.name_cn || '',
-                    description: pp.expand?.product?.description || '',
-                    description_cn: pp.expand?.product?.description_cn || '',
-                    category: pp.expand?.product?.category || '',
-                    unit: pp.expand?.product?.unit || '',
-                    hs_code: pp.expand?.product?.hs_code || '',
-                  })) as {
-                    id: string
-                    productId: string
-                    code: string
-                    part_number: string
-                    name: string
-                    name_cn: string
-                    description: string
-                    description_cn: string
-                    category: string
-                    unit: string
-                    hs_code: string
-                  }[]}
-                  searchKey="name"
-                  actions={
-                    <>
-                      <Button variant="outline" size="sm" className="h-8" onClick={() => setImportDialogOpen(true)}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        {locale === 'zh' ? '从产品库导入' : 'Import'}
-                      </Button>
-                      <Button size="sm" className="h-8" onClick={() => router.push(`/products/new?project=${id}`)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        {locale === 'zh' ? '添加产品' : 'Add Product'}
-                      </Button>
-                    </>
-                  }
-                />
-              )}
-            </CardContent>
-          </Card>
+          {products.length === 0 ? (
+            <div className="text-center py-12 border-2 border-dashed border-muted rounded-lg bg-muted/20">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {locale === 'zh' ? '开始添加产品' : 'Start Adding Products'}
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                {locale === 'zh'
+                  ? '产品是项目的核心。添加产品后，您可以创建询价、报价和订单。'
+                  : 'Products are the core of your project. Add products to start creating RFQs, quotations, and orders.'}
+              </p>
+              <div className="flex justify-center gap-3">
+                <Button variant="outline" size="lg" onClick={() => setImportDialogOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {locale === 'zh' ? '从产品库导入' : 'Import from Library'}
+                </Button>
+                <Button size="lg" onClick={() => router.push(`/products/new?project=${id}`)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {locale === 'zh' ? '创建新产品' : 'Create New Product'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <DataTable
+              columns={productColumns}
+              data={products.filter(pp => pp.expand?.product).map(pp => ({
+                id: pp.id,
+                productId: pp.expand?.product?.id || '',
+                code: pp.expand?.product?.code || '',
+                part_number: pp.expand?.product?.part_number || '',
+                name: pp.expand?.product?.name || '',
+                name_cn: pp.expand?.product?.name_cn || '',
+                description: pp.expand?.product?.description || '',
+                description_cn: pp.expand?.product?.description_cn || '',
+                category: pp.expand?.product?.category || '',
+                unit: pp.expand?.product?.unit || '',
+                hs_code: pp.expand?.product?.hs_code || '',
+              })) as {
+                id: string
+                productId: string
+                code: string
+                part_number: string
+                name: string
+                name_cn: string
+                description: string
+                description_cn: string
+                category: string
+                unit: string
+                hs_code: string
+              }[]}
+              searchKey="name"
+              actions={
+                <>
+                  <Button variant="outline" size="sm" className="h-8" onClick={() => setImportDialogOpen(true)}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    {locale === 'zh' ? '从产品库导入' : 'Import'}
+                  </Button>
+                  <Button size="sm" className="h-8" onClick={() => router.push(`/products/new?project=${id}`)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {locale === 'zh' ? '添加产品' : 'Add Product'}
+                  </Button>
+                </>
+              }
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="rfqs">
@@ -778,6 +775,26 @@ export default function ProjectDetailPage() {
           router.push(`/quotations/${quotationId}?project=${id}`)
         }}
       />
+
+      {/* Remove Product Confirmation Dialog */}
+      <AlertDialog open={!!removeProductTarget} onOpenChange={(open) => !open && setRemoveProductTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{locale === 'zh' ? '确认移除产品' : 'Confirm Remove Product'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {locale === 'zh'
+                ? `确定要将产品 "${removeProductTarget?.name}" 从项目中移除吗？此操作不会删除产品本身。`
+                : `Are you sure you want to remove product "${removeProductTarget?.name}" from this project? This will not delete the product itself.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{locale === 'zh' ? '取消' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveProduct} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {locale === 'zh' ? '移除' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -39,7 +39,7 @@ async function checkDraftToConfirmed(orderId: string): Promise<PrerequisiteCheck
   
   // 检查2: 总金额必须大于0
   try {
-    const order = await pb.collection('orders').getOne(orderId)
+    const order = await pb.collection('so').getOne(orderId)
     const hasAmount = order.total_amount > 0
     checks.push({
       id: 'has_amount',
@@ -188,7 +188,7 @@ async function checkDeliveredToCompleted(orderId: string): Promise<PrerequisiteC
   
   // 检查: 全款已收
   try {
-    const order = await pb.collection('orders').getOne(orderId)
+    const order = await pb.collection('so').getOne(orderId)
     const fullyPaid = order.paid_amount >= order.total_amount
     checks.push({
       id: 'fully_paid',
@@ -259,11 +259,11 @@ export async function advanceStatus(
   const pb = getPocketBase()
   
   // 获取当前订单
-  const order = await pb.collection('orders').getOne(orderId)
+  const order = await pb.collection('so').getOne(orderId)
   const fromStatus = order.status as OrderStatus
   
   // 更新订单状态
-  await pb.collection('orders').update(orderId, {
+  await pb.collection('so').update(orderId, {
     status: targetStatus,
   })
   

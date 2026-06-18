@@ -272,19 +272,13 @@ export default function SuppliersPage() {
         </Card>
       )}
 
-      {/* DataTable */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("suppliers.listTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
-            </div>
-          ) : (
-            <DataTable
+      {loading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
+          </div>
+      ) : (
+          <DataTable
               columns={columns}
               data={data}
               searchKey="name"
@@ -304,10 +298,8 @@ export default function SuppliersPage() {
                 },
               ]}
               onRowClick={(row) => router.push(`/suppliers/${row.id}`)}
-            />
-          )}
-        </CardContent>
-      </Card>
+          />
+      )}
 
       {/* Import Dialog */}
       <ExcelImportDialog

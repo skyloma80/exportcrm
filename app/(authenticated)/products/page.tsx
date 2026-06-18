@@ -25,9 +25,7 @@ import {
     FileSpreadsheet,
     Package,
     Layers,
-    FolderKanban,
-    Info,
-    Trash2
+    Info
 } from "lucide-react"
 import {Checkbox} from "@/components/ui/checkbox"
 import {Product, ProductCategory} from "@/lib/pocketbase/services/products"
@@ -154,23 +152,6 @@ export default function ProductsPage() {
         }
     }
 
-    const handleDeleteProduct = async (product: ProductWithProject) => {
-        const confirmMessage = locale === 'zh'
-            ? `确定要删除产品 "${product.code}" 吗？此操作不可撤销。`
-            : `Are you sure you want to delete product "${product.code}"? This action cannot be undone.`
-
-        if (!confirm(confirmMessage)) return
-
-        try {
-            const pb = getPocketBase()
-            await pb.collection("products").delete(product.id)
-            loadData()
-        } catch (err) {
-            console.error("Error deleting product:", err)
-            alert(locale === 'zh' ? "删除产品失败" : "Failed to delete product")
-        }
-    }
-
     const columns: ColumnDef<ProductWithProject>[] = useMemo(() => [
         {
             id: "select",
@@ -234,32 +215,6 @@ export default function ProductsPage() {
             ),
         },
 
-        {
-            id: "actions",
-            header: ({column}) => <DataTableColumnHeader column={column} title={t("common.actions")}/>,
-            cell: ({row}) => {
-                const product = row.original
-                const hasProject = !!product.projectInfo
-
-                if (hasProject) {
-                    return null
-                }
-
-                return (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteProduct(product)
-                        }}
-                    >
-                        <Trash2 className="h-4 w-4"/>
-                    </Button>
-                )
-            },
-        },
     ], [t, locale, router, categories, loadData])
 
     const handleExport = async () => {
@@ -360,37 +315,30 @@ export default function ProductsPage() {
             )}
 
             {/* DataTable */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>{t("products.listTitle")}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
-                        </div>
-                    ) : (
-                        <DataTable
-                            columns={columns}
-                            data={data}
-                            searchKey="name"
-                            showSelection={true}
-                            filterableColumns={[
-                                ...(categories.length > 0 ? [{
-                                    id: "category",
-                                    title: t("products.columns.category"),
-                                    options: categories.map(cat => ({
-                                        label: locale === 'zh' && cat.name_cn ? cat.name_cn : cat.name,
-                                        value: cat.id,
-                                    })),
-                                }] : []),
-                            ]}
-                            onRowClick={(row) => handleProductClick(row)}
-                        />
-                    )}
-                </CardContent>
-            </Card>
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
+                </div>
+            ) : (
+                <DataTable
+                    columns={columns}
+                    data={data}
+                    searchKey="name"
+                    showSelection={true}
+                    filterableColumns={[
+                        ...(categories.length > 0 ? [{
+                            id: "category",
+                            title: t("products.columns.category"),
+                            options: categories.map(cat => ({
+                                label: locale === 'zh' && cat.name_cn ? cat.name_cn : cat.name,
+                                value: cat.id,
+                            })),
+                        }] : []),
+                    ]}
+                    onRowClick={(row) => handleProductClick(row)}
+                />
+            )}
         </div>
     )
 }

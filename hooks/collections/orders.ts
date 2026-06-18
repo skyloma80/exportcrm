@@ -79,7 +79,7 @@ export function useOrders(options: UseOrdersOptions = {}): UseOrdersResult {
       
       const filter = filters.length > 0 ? filters.join(' && ') : '';
 
-      const result = await pb.collection('orders').getList<OrderWithExpand>(page, perPage, {
+      const result = await pb.collection('so').getList<OrderWithExpand>(page, perPage, {
         filter,
         sort: '-id',
         expand: 'project,customer',
@@ -135,7 +135,7 @@ export function useOrder(id: string | null): UseOrderResult {
       const pb = getPocketBase();
       
       // Fetch order with expand
-      const result = await pb.collection('orders').getOne<OrderWithExpand>(id, {
+      const result = await pb.collection('so').getOne<OrderWithExpand>(id, {
         expand: 'project,customer,quotation,order_items_via_order,order_items_via_order.product,order_payments_via_order',
       });
 
@@ -189,7 +189,7 @@ export function useAllOrders(options: Omit<UseOrdersOptions, 'page' | 'perPage'>
       
       const filter = filters.length > 0 ? filters.join(' && ') : '';
 
-      const result = await pb.collection('orders').getFullList<OrderWithExpand>({
+      const result = await pb.collection('so').getFullList<OrderWithExpand>({
         filter,
         sort: '-id',
         expand: 'project,customer',
