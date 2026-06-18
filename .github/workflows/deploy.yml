@@ -6,6 +6,7 @@ on:
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USER }}/crm:latest
   GHCR_IMAGE: ghcr.io/${{ github.repository }}:latest
+  IMAGE_TAR: /tmp/crm-image.tar.gz
 
 permissions:
   contents: read
@@ -19,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. 从 GitHub Secrets 生成 .env.production（build 时需要 NEXT_PUBLIC_* 变量）
+      # 1. 从 GitHub Secrets 生成 .env.production
       - name: Create .env.production from secrets
         env:
           ENV_PRODUCTION: ${{ secrets.ENV_PRODUCTION }}
@@ -39,18 +40,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. 构建并推送镜像到两个仓库
-      - name: Build and Push
+      # 3. 构建镜像（本地 tag，不推送 registry）
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ env.DOCKER_IMAGE }}
-            ${{ env.GHCR_IMAGE }}
+          push: false
+          tags: crm:latest
+          outputs: type=docker,dest=${{ env.IMAGE_TAR }}
 
-      # 4. 部署配置文件至服务器
+      # 4. 推送到两个 registry（备份用）
+      - name: Push to Docker Hub & GHCR
+        run: |
+          docker load -i ${{ env.IMAGE_TAR }}
+          docker tag crm:latest ${{ env.DOCKER_IMAGE }}
+          docker tag crm:latest ${{ env.GHCR_IMAGE }}
+          docker push ${{ env.DOCKER_IMAGE }}
+          docker push ${{ env.GHCR_IMAGE }}
+
+      # 5. 拷贝配置文件至服务器
       - name: Copy config files to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -61,7 +70,7 @@ jobs:
           target: "/home/ubuntu/exportcrm"
           strip_components: 0
 
-      # 5. 拷贝 PocketBase 迁移文件
+      # 6. 拷贝 PocketBase 迁移文件
       - name: Copy PocketBase migrations
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -72,26 +81,28 @@ jobs:
           target: "/home/ubuntu/exportcrm/pocketbase/pb_migrations"
           strip_components: 1
 
-      # 6. 远程部署（从 GHCR 拉取，中国服务器可访问）
+      # 7. SCP 镜像 tar 包到服务器（绕过中国 registry 拉取慢的问题）
+      - name: Copy image tarball to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "${{ env.IMAGE_TAR }}"
+          target: "/home/ubuntu/exportcrm"
+          strip_components: 1
+
+      # 8. 远程加载镜像并部署
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: GHCR_IMAGE,GITHUB_TOKEN
           script: |
             cd /home/ubuntu/exportcrm
-            # 登录 GHCR
-            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "skyloma80" --password-stdin
-            # 拉取最新镜像
-            docker pull $GHCR_IMAGE
-            # 重新 tag 为本地名，兼容 docker-compose 默认配置
-            docker tag $GHCR_IMAGE crm:latest
-            # 重新创建并启动容器
+            docker load -i crm-image.tar.gz
+            docker tag crm:latest crm:latest 2>/dev/null || true
             docker compose up -d --force-recreate
-            # 清理旧镜像
             docker image prune -f
-        env:
-          GHCR_IMAGE: ${{ env.GHCR_IMAGE }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            rm -f crm-image.tar.gz
