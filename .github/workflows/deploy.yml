@@ -1,7 +1,7 @@
 name: Deploy to VPS
 on:
   push:
-    branches: [ marster ]
+    branches: [ master ]
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USER }}/crm:latest
