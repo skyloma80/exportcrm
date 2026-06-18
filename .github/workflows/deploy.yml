@@ -40,20 +40,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. 构建镜像（本地 tag，不推送 registry）
-      - name: Build Docker image
+      # 3. 构建并加载镜像到本地 Docker
+      - name: Build and load Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: false
+          load: true
           tags: crm:latest
-          outputs: type=docker,dest=${{ env.IMAGE_TAR }}
 
-      # 4. 推送到两个 registry（备份用）
-      - name: Push to Docker Hub & GHCR
+      # 4. 导出镜像为 tar，推送到两个 registry
+      - name: Save image & push to registries
         run: |
-          docker load -i ${{ env.IMAGE_TAR }}
+          docker save crm:latest | gzip > ${{ env.IMAGE_TAR }}
           docker tag crm:latest ${{ env.DOCKER_IMAGE }}
           docker tag crm:latest ${{ env.GHCR_IMAGE }}
           docker push ${{ env.DOCKER_IMAGE }}
@@ -81,7 +81,7 @@ jobs:
           target: "/home/ubuntu/exportcrm/pocketbase/pb_migrations"
           strip_components: 1
 
-      # 7. SCP 镜像 tar 包到服务器（绕过中国 registry 拉取慢的问题）
+      # 7. SCP 镜像 tar 包到服务器
       - name: Copy image tarball to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -89,7 +89,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "${{ env.IMAGE_TAR }}"
-          target: "/home/ubuntu/exportcrm"
+          target: "/home/ubuntu/exportcrm/"
           strip_components: 1
 
       # 8. 远程加载镜像并部署
@@ -102,7 +102,6 @@ jobs:
           script: |
             cd /home/ubuntu/exportcrm
             docker load -i crm-image.tar.gz
-            docker tag crm:latest crm:latest 2>/dev/null || true
             docker compose up -d --force-recreate
             docker image prune -f
             rm -f crm-image.tar.gz
