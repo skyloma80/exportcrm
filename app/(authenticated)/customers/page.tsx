@@ -21,7 +21,8 @@ import { useI18n } from "@/lib/i18n/use-i18n"
 import { 
   Plus, 
   Building2,
-  Star
+  Star,
+  Loader2
 } from "lucide-react"
 import { Customer } from "@/lib/pocketbase/services/customers"
 
@@ -239,25 +240,21 @@ export default function CustomersPage() {
   const distributorCount = data.filter(c => c.type === 'distributor').length
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{t("customers.title")}</h1>
-            <p className="text-muted-foreground mt-1">{t("customers.description")}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => router.push("/customers/new")} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              {t("customers.newCustomer")}
-            </Button>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{t("customers.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("customers.description")}</p>
         </div>
+        <Button onClick={() => router.push("/customers/new")}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("customers.newCustomer")}
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>{t("customers.stats.total")}</CardDescription>
@@ -286,7 +283,7 @@ export default function CustomersPage() {
 
       {/* Error State */}
       {error && (
-        <Card className="mb-6 border-destructive">
+        <Card className="border-destructive">
           <CardContent className="pt-6">
             <div className="text-center text-destructive">
               <p>{t("common.error")}: {error.message}</p>
@@ -298,42 +295,35 @@ export default function CustomersPage() {
         </Card>
       )}
 
-      {/* DataTable */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("customers.listTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
-            </div>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={data}
-              searchKey="name"
-              filterableColumns={[
-                {
-                  id: "type",
-                  title: t("customers.columns.type"),
-                  options: TYPE_OPTIONS.map(opt => ({
-                    ...opt,
-                    label: t(`customers.type.${opt.value}`),
-                  })),
-                },
-                {
-                  id: "rating",
-                  title: t("customers.columns.rating"),
-                  options: RATING_OPTIONS,
-                },
-              ]}
-              onRowClick={(row) => router.push(`/customers/${row.id}`)}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {/* Main List */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground mt-2">{t("common.loading")}</p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          searchKey="name"
+          filterableColumns={[
+            {
+              id: "type",
+              title: t("customers.columns.type"),
+              options: TYPE_OPTIONS.map(opt => ({
+                ...opt,
+                label: t(`customers.type.${opt.value}`),
+              })),
+            },
+            {
+              id: "rating",
+              title: t("customers.columns.rating"),
+              options: RATING_OPTIONS,
+            },
+          ]}
+          onRowClick={(row) => router.push(`/customers/${row.id}`)}
+        />
+      )}
     </div>
   )
 }
