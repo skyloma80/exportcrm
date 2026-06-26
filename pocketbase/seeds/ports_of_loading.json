@@ -1,0 +1,10 @@
+[
+  {"id":"port_sha","code":"CNSHA","name":"Shanghai","name_cn":"上海","sort_order":1,"is_active":true},
+  {"id":"port_nbo","code":"CNNBO","name":"Ningbo","name_cn":"宁波","sort_order":2,"is_active":true},
+  {"id":"port_szx","code":"CNSZX","name":"Shenzhen","name_cn":"深圳","sort_order":3,"is_active":true},
+  {"id":"port_qin","code":"CNQIN","name":"Qingdao","name_cn":"青岛","sort_order":4,"is_active":true},
+  {"id":"port_tao","code":"CNTAO","name":"Tianjin","name_cn":"天津","sort_order":5,"is_active":true},
+  {"id":"port_xmn","code":"CNXMN","name":"Xiamen","name_cn":"厦门","sort_order":6,"is_active":true},
+  {"id":"port_gua","code":"CNGUA","name":"Guangzhou","name_cn":"广州","sort_order":7,"is_active":true},
+  {"id":"port_dlc","code":"CNDLC","name":"Dalian","name_cn":"大连","sort_order":8,"is_active":true}
+]

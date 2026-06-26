@@ -1,0 +1,36 @@
+[
+  {
+    "amount": 1146,
+    "approved_at": "",
+    "approved_by": "",
+    "bank_reference": "",
+    "currency": "EUR",
+    "id": "dukc2xgh4beii7r",
+    "payment_date": "2026-02-05 00:00:00.000Z",
+    "payment_method": "bank_transfer",
+    "receipt_file": "",
+    "rejection_reason": "",
+    "status": "pending",
+    "type": "deposit",
+    "created": "2026-02-05 09:06:04.908Z",
+    "order": "",
+    "collection": "sales_order_payments"
+  },
+  {
+    "amount": 1744.14,
+    "approved_at": "",
+    "approved_by": "",
+    "bank_reference": "",
+    "currency": "EUR",
+    "id": "oftapomm9he4o6p",
+    "payment_date": "2026-05-29 12:00:00.000Z",
+    "payment_method": "bank_transfer",
+    "receipt_file": "",
+    "rejection_reason": "",
+    "status": "pending",
+    "type": "deposit",
+    "created": "2026-05-29 14:46:44.855Z",
+    "order": "ikkujhl8zaglpcu",
+    "collection": "sales_order_payments"
+  }
+]

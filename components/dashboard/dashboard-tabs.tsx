@@ -22,7 +22,6 @@ import { useRouter } from "next/navigation"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { 
   TabType, 
-  TaskSummary, 
   OrderSummary, 
   PaymentSummary, 
   ShipmentSummary 
@@ -41,7 +40,6 @@ import {
 export interface DashboardTabsProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
-  tasks: TaskSummary[];
   orders: OrderSummary[];
   payments: PaymentSummary[];
   shipments: ShipmentSummary[];
@@ -53,7 +51,6 @@ const MAX_ITEMS = 10;
 export function DashboardTabs({
   activeTab,
   onTabChange,
-  tasks,
   orders,
   payments,
   shipments,
@@ -137,15 +134,7 @@ export function DashboardTabs({
       <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as TabType)}>
         <CardHeader className="pb-2">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="tasks" className="flex items-center gap-1">
-              <ListTodo className="h-4 w-4" />
-              <span className="hidden sm:inline">{isZh ? '待办任务' : 'Tasks'}</span>
-              {tasks.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {tasks.length}
-                </Badge>
-              )}
-            </TabsTrigger>
+
             <TabsTrigger value="orders" className="flex items-center gap-1">
               <ShoppingCart className="h-4 w-4" />
               <span className="hidden sm:inline">{isZh ? '近期订单' : 'Orders'}</span>
@@ -166,15 +155,7 @@ export function DashboardTabs({
           </TabsList>
         </CardHeader>
         <CardContent>
-          <TabsContent value="tasks" className="mt-0">
-            <TasksTable 
-              tasks={tasks.slice(0, MAX_ITEMS)} 
-              onRowClick={(id) => handleRowClick('tasks', id)}
-              isZh={isZh}
-              getPriorityBadge={getPriorityBadge}
-              formatDate={formatDate}
-            />
-          </TabsContent>
+
           <TabsContent value="orders" className="mt-0">
             <OrdersTable 
               orders={orders.slice(0, MAX_ITEMS)} 
@@ -213,51 +194,6 @@ export function DashboardTabs({
 // ============================================================================
 // Sub-components for each tab
 // ============================================================================
-
-interface TasksTableProps {
-  tasks: TaskSummary[];
-  onRowClick: (id: string) => void;
-  isZh: boolean;
-  getPriorityBadge: (priority: string) => React.ReactNode;
-  formatDate: (date?: string) => string;
-}
-
-function TasksTable({ tasks, onRowClick, isZh, getPriorityBadge, formatDate }: TasksTableProps) {
-  if (tasks.length === 0) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">
-        {isZh ? '暂无待办任务' : 'No pending tasks'}
-      </div>
-    );
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>{isZh ? '标题' : 'Title'}</TableHead>
-          <TableHead>{isZh ? '优先级' : 'Priority'}</TableHead>
-          <TableHead>{isZh ? '截止日期' : 'Due Date'}</TableHead>
-          <TableHead>{isZh ? '负责人' : 'Assignee'}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {tasks.map((task) => (
-          <TableRow 
-            key={task.id} 
-            className="cursor-pointer hover:bg-muted/50"
-            onClick={() => onRowClick(task.id)}
-          >
-            <TableCell className="font-medium">{task.title}</TableCell>
-            <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-            <TableCell>{formatDate(task.due_date)}</TableCell>
-            <TableCell>{task.assigneeName || '-'}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
 
 interface OrdersTableProps {
   orders: OrderSummary[];

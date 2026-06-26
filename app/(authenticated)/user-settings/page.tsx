@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useI18n } from '@/lib/i18n/use-i18n';
+ import { useI18n } from '@/lib/i18n/use-i18n';
 import { useTabState } from '@/hooks/use-tab-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { getPocketBase } from '@/lib/pocketbase/auth';
-import { User, Mail, Settings, Save, TestTube, Loader2 } from 'lucide-react';
+import { User, Mail, Settings, Save, TestTube, Loader2, Key } from 'lucide-react';
+import { ApiAccessTab } from '@/components/settings/api-access-tab';
 
 interface SmtpSettings {
   host: string;
@@ -137,6 +137,10 @@ export default function UserSettingsPage() {
             <Mail className="mr-2 h-4 w-4" />
             {t('userSettings.tabs.smtp')}
           </TabsTrigger>
+          <TabsTrigger value="api-access">
+            <Key className="mr-2 h-4 w-4" />
+            API 访问
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -149,6 +153,10 @@ export default function UserSettingsPage() {
               <p className="text-muted-foreground text-center py-8">{t('common.comingSoon')}</p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="api-access">
+          <ApiAccessTab />
         </TabsContent>
 
         <TabsContent value="smtp" className="space-y-6">

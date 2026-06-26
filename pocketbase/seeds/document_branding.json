@@ -1,0 +1,37 @@
+[
+  {
+    "id": "brand_default",
+    "company_name": "ALUSTARS INTERNATIONAL CO., LTD",
+    "company_name_cn": "重庆星铝国际贸易有限公司",
+    "website_url": "",
+    "vat": "",
+    "logo_base64": "",
+    "logo_url": "",
+    "stamp_base64": "",
+    "signature_base64": "",
+    "logo_path": "",
+    "stamp_path": "",
+    "primary_office": {
+      "name": "Chongqing Alustars International Trade Co., Ltd",
+      "name_cn": "重庆星铝国际贸易有限公司",
+      "address": "Floor 20, Building 2, Longtou Huafu, Longta Street, Yubei District, Chongqing, 401120",
+      "address_cn": "重庆市渝北区龙塔街道龙头华府2栋20层",
+      "phone": "(+86) 23-67890123",
+      "email": "info@alustars.com"
+    },
+    "secondary_office": {
+      "name": "ALUSTARS INTERNATIONAL CO., LTD",
+      "name_cn": "阿鲁斯达国际有限公司",
+      "address": "Valencia 264 Principal, 08007 Barcelona (Spain)",
+      "address_cn": "西班牙巴塞罗那瓦伦西亚街264号",
+      "phone": "(+34) 607630594",
+      "email": "c.feliu@alustars.com"
+    },
+    "default_signer": {
+      "name": "Carlos Feliu",
+      "name_cn": "Carlos Feliu",
+      "title": "VP of Business Development",
+      "title_cn": "业务发展副总裁"
+    }
+  }
+]

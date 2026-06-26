@@ -1,0 +1,110 @@
+[
+  {
+    "id": "wq1ovcrka9xtwwt",
+    "product": "k2jbxjl72nmuixe",
+    "quantity": 1500,
+    "remarks": "",
+    "rfq": "captg8143jzgndx",
+    "target_price": 0,
+    "created": "2026-02-05 08:25:09.938Z"
+  },
+  {
+    "id": "fz7fdlfg8b9x495",
+    "product": "zulu2uarc7sjc7q",
+    "quantity": 1000,
+    "remarks": "",
+    "rfq": "cho732bcjcgk5hi",
+    "target_price": 0,
+    "created": "2026-02-06 04:44:51.797Z"
+  },
+  {
+    "id": "145gx59t46vxh6q",
+    "product": "x5ll8zv6z5nd95s",
+    "quantity": 1000,
+    "remarks": "",
+    "rfq": "cho732bcjcgk5hi",
+    "target_price": 0,
+    "created": "2026-02-06 04:44:51.797Z"
+  },
+  {
+    "id": "3mn3ooz1f7ezyjh",
+    "product": "sokja3b4at0t5d0",
+    "quantity": 1000,
+    "remarks": "",
+    "rfq": "cho732bcjcgk5hi",
+    "target_price": 0,
+    "created": "2026-02-06 04:44:51.801Z"
+  },
+  {
+    "id": "8qmga46711788t3",
+    "product": "gv9j8v9hvjvm5yf",
+    "quantity": 1000,
+    "remarks": "",
+    "rfq": "cho732bcjcgk5hi",
+    "target_price": 0,
+    "created": "2026-02-06 04:44:51.805Z"
+  },
+  {
+    "id": "y7fpfia9zi465d2",
+    "product": "gsqag81z9ytwo60",
+    "quantity": 1000,
+    "remarks": "",
+    "rfq": "cho732bcjcgk5hi",
+    "target_price": 0,
+    "created": "2026-02-06 04:44:51.824Z"
+  },
+  {
+    "id": "568qc3rsxqc853w",
+    "product": "eds3f1u0hekj0fi",
+    "quantity": 1000,
+    "remarks": "",
+    "rfq": "cho732bcjcgk5hi",
+    "target_price": 0,
+    "created": "2026-02-06 04:44:51.825Z"
+  },
+  {
+    "id": "r2hi9s9h2etbg28",
+    "product": "kw1q3kc5zcqawvu",
+    "quantity": 1,
+    "remarks": "DDU",
+    "rfq": "pumhkxiuyecvkr8",
+    "target_price": 13.125,
+    "created": "2026-02-06 06:53:39.506Z"
+  },
+  {
+    "id": "tdy2eo5skf2h5xz",
+    "product": "sokja3b4at0t5d0",
+    "quantity": 400,
+    "remarks": "已经在2025年报过价",
+    "rfq": "xymwy89zmemfo1e",
+    "target_price": 98.9,
+    "created": "2026-03-06 14:25:46.871Z"
+  },
+  {
+    "id": "a5dstr23hc8ls1e",
+    "product": "x5ll8zv6z5nd95s",
+    "quantity": 400,
+    "remarks": "已经在2025年报过价",
+    "rfq": "xymwy89zmemfo1e",
+    "target_price": 98.9,
+    "created": "2026-03-06 14:25:46.877Z"
+  },
+  {
+    "id": "zlkjbokgrm8ppve",
+    "product": "fcpik1ht6v43a2k",
+    "quantity": 1,
+    "remarks": "",
+    "rfq": "js1zhzctttqaq5q",
+    "target_price": 0,
+    "created": "2026-03-10 05:59:03.135Z"
+  },
+  {
+    "id": "a0fx5bkd2iabhbp",
+    "product": "k6wxxraqy5rcblz",
+    "quantity": 1,
+    "remarks": "模具费9000",
+    "rfq": "08nbkwuub1n9v9o",
+    "target_price": 80,
+    "created": "2026-04-22 02:03:00.505Z"
+  }
+]

@@ -9,6 +9,7 @@
 import { RecordModel } from 'pocketbase';
 import { BaseCollectionService } from '../base-service';
 import { rfqService, rfqQuotationService } from './rfqs';
+import { productProjectService } from './projects';
 
 // ============================================================================
 // Types
@@ -201,7 +202,26 @@ class ProjectCostTableService extends BaseCollectionService<CostTable> {
     const rfqs = await rfqService.getByProject(projectId);
     
     if (rfqs.length === 0) {
-      return { products: [], suppliers: [], quotations: [] };
+      // No RFQs — get products directly from project's products_projects
+      const projectProducts = await this.pb.collection('products_projects').getFullList({
+        filter: `project = "${projectId}"`,
+        expand: 'product',
+      });
+      const products: AggregatedProduct[] = projectProducts
+        .map((pp: any) => {
+          const product = pp.expand?.product;
+          if (!product) return null;
+          return {
+            id: product.id,
+            code: product.code,
+            name: product.name,
+            nameCn: product.name_cn,
+            unit: product.unit,
+            quantity: 0,
+          };
+        })
+        .filter(Boolean) as AggregatedProduct[];
+      return { products, suppliers: [], quotations: [] };
     }
 
     const productsMap = new Map<string, AggregatedProduct>();

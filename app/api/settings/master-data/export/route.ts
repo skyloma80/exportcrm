@@ -20,7 +20,12 @@ export async function GET(request: Request) {
       supplierContacts,
       supplierBankAccounts,
       products,
-      appConfigs
+      appConfigs,
+      portsOfDestination,
+      portsOfLoading,
+      paymentTerms,
+      documentBrandings,
+      companyInfos,
     ] = await Promise.all([
       pb.collection("customers").getFullList({ sort: "-created" }),
       pb.collection("customer_contacts").getFullList({ sort: "-created", expand: "customer" }),
@@ -29,6 +34,11 @@ export async function GET(request: Request) {
       pb.collection("supplier_bank_accounts").getFullList({ sort: "-created", expand: "supplier" }),
       pb.collection("products").getFullList({ sort: "-created" }),
       pb.collection("app_config").getFullList({ sort: "key" }),
+      pb.collection("ports_of_destination").getFullList({ sort: "sort_order,name" }),
+      pb.collection("ports_of_loading").getFullList({ sort: "sort_order,name" }),
+      pb.collection("payment_terms").getFullList({ sort: "sort_order,code" }),
+      pb.collection("document_branding").getFullList(),
+      pb.collection("company_info").getFullList(),
     ]);
 
     // Helper to recursively strip base64 fields
@@ -55,6 +65,11 @@ export async function GET(request: Request) {
         supplier_bank_accounts: supplierBankAccounts.map(stripLargeFields),
         products: products.map(stripLargeFields),
         app_config: appConfigs.map(stripLargeFields),
+        ports_of_destination: portsOfDestination.map(stripLargeFields),
+        ports_of_loading: portsOfLoading.map(stripLargeFields),
+        payment_terms: paymentTerms.map(stripLargeFields),
+        document_branding: documentBrandings.map(stripLargeFields),
+        company_info: companyInfos.map(stripLargeFields),
       };
       return NextResponse.json(data);
     }
@@ -107,6 +122,11 @@ export async function GET(request: Request) {
       { name: "Supplier Bank Accounts", data: formatForExcel(supplierBankAccounts, 'supplier_bank_accounts') },
       { name: "Products", data: formatForExcel(products) },
       { name: "AppConfig", data: formatForExcel(appConfigs) },
+      { name: "Ports Of Destination", data: formatForExcel(portsOfDestination) },
+      { name: "Ports Of Loading", data: formatForExcel(portsOfLoading) },
+      { name: "Payment Terms", data: formatForExcel(paymentTerms) },
+      { name: "Document Branding", data: formatForExcel(documentBrandings) },
+      { name: "Company Info", data: formatForExcel(companyInfos) },
     ];
 
     for (const sheet of sheetsData) {

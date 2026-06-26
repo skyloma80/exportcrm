@@ -32,26 +32,12 @@ export async function POST(request: NextRequest) {
     console.log('[API /orders POST] orderData payload:', JSON.stringify(orderData, null, 2));
     const order = await orderService.createOrder(orderData, currentUser);
 
-    // 2. Create order items
+    // 2. Store items as JSON on the order record
     if (items && Array.isArray(items)) {
-      const { orderItemService } = await import('@/lib/pocketbase/services/orders');
-      for (const item of items) {
-        await orderItemService.createItem({
-          order: order.id,
-          product: item.product,
-          product_name: item.product_name,
-          product_code: item.product_code,
-          part_number: item.part_number,
-          description_en: item.description_en,
-          quantity: item.quantity,
-          unit: item.unit,
-          unit_price: item.unit_price,
-          cost_price: item.cost_price,
-        });
-      }
+      await orderService.update(order.id, { items });
     }
 
-    // 3. Recalculate total (though the service might handle it, let's be sure)
+    // 3. Recalculate total
     await orderService.recalculateTotal(order.id);
 
     return NextResponse.json(order);

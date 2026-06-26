@@ -25,23 +25,11 @@ export type ConfigCategory = 'branding' | 'trade' | 'payment' | 'ports';
 // ============================================================================
 
 export const DEFAULT_CONFIGS = {
-  // Trade
   default_currency: { value: 'USD', category: 'trade' },
   default_incoterm: { value: 'FOB', category: 'trade' },
   incoterms: {
     value: ['EXW', 'FCA', 'FOB', 'CFR', 'CIF', 'DAP', 'DDP'],
     category: 'trade',
-  },
-
-  // Ports
-  ports_of_loading: {
-    value: [
-      { code: 'CNSHA', name: 'Shanghai', name_cn: '上海' },
-      { code: 'CNNBO', name: 'Ningbo', name_cn: '宁波' },
-      { code: 'CNSZX', name: 'Shenzhen', name_cn: '深圳' },
-      { code: 'CNQIN', name: 'Qingdao', name_cn: '青岛' },
-    ],
-    category: 'ports',
   },
 };
 

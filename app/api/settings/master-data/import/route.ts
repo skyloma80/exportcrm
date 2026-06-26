@@ -25,6 +25,11 @@ export async function POST(request: NextRequest) {
       app_config: { total: 0, created: 0, updated: 0, failed: 0 },
       contacts: { total: 0, created: 0, updated: 0, failed: 0 },
       bank_accounts: { total: 0, created: 0, updated: 0, failed: 0 },
+      ports_of_destination: { total: 0, created: 0, updated: 0, failed: 0 },
+      ports_of_loading: { total: 0, created: 0, updated: 0, failed: 0 },
+      payment_terms: { total: 0, created: 0, updated: 0, failed: 0 },
+      document_branding: { total: 0, created: 0, updated: 0, failed: 0 },
+      company_info: { total: 0, created: 0, updated: 0, failed: 0 },
     };
 
     // Helper to parse JSON fields
@@ -77,6 +82,11 @@ export async function POST(request: NextRequest) {
       "Suppliers": { collection: "suppliers", uniqueField: "code", resultKey: "suppliers" },
       "Products": { collection: "products", uniqueField: "code", resultKey: "products" },
       "AppConfig": { collection: "app_config", uniqueField: "key", resultKey: "app_config" },
+      "Ports Of Destination": { collection: "ports_of_destination", uniqueField: "code", resultKey: "ports_of_destination" },
+      "Ports Of Loading": { collection: "ports_of_loading", uniqueField: "code", resultKey: "ports_of_loading" },
+      "Payment Terms": { collection: "payment_terms", uniqueField: "code", resultKey: "payment_terms" },
+      "Document Branding": { collection: "document_branding", uniqueField: "id", resultKey: "document_branding" },
+      "Company Info": { collection: "company_info", uniqueField: "id", resultKey: "company_info" },
     };
 
     for (const [sheetName, config] of Object.entries(sheetMap)) {

@@ -1,15 +1,4 @@
-/**
- * Dashboard Types
- * 
- * Type definitions for dashboard components and data
- */
 
-import { Task } from '@/lib/pocketbase/services/tasks';
-import { Order, OrderPayment } from '@/lib/pocketbase/services/orders';
-
-// ============================================================================
-// Time Range Types
-// ============================================================================
 
 export type TimeRange = '7d' | '30d' | '3m';
 
@@ -26,10 +15,7 @@ export interface KPIStats {
   revenue: KPIValue;
   orders: KPIValue;
   rfqs: KPIValue;
-  tasks: {
-    pending: number;
-    overdue: number;
-  };
+
 }
 
 // ============================================================================
@@ -46,7 +32,7 @@ export interface ChartDataPoint {
 // Tab Types
 // ============================================================================
 
-export type TabType = 'tasks' | 'orders' | 'payments' | 'shipments';
+export type TabType =   'orders' | 'payments' | 'shipments';
 
 export interface ShipmentSummary {
   id: string;
@@ -81,14 +67,6 @@ export interface OrderSummary {
   created: string;
 }
 
-export interface TaskSummary {
-  id: string;
-  title: string;
-  status: string;
-  priority: string;
-  due_date?: string;
-  assigneeName?: string;
-}
 
 // ============================================================================
 // Dashboard Data Types
@@ -97,7 +75,7 @@ export interface TaskSummary {
 export interface DashboardData {
   kpiStats: KPIStats;
   chartData: ChartDataPoint[];
-  tasks: TaskSummary[];
+
   orders: OrderSummary[];
   payments: PaymentSummary[];
   shipments: ShipmentSummary[];

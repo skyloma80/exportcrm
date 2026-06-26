@@ -1,0 +1,42 @@
+[
+  {
+    "content": "1.BENEFICIARY NAME:CHONGQING ALUSTARS INTERNATIONAL CO.,LTD\n2.ACCOUNT NUMBER (IBAN): 123917886435000\n3.BENEFICIARY BANK:China Merchants Bank, Chongqing Branch\n4.SWIFT CODE:CMBCCNBS245",
+    "id": "5805vvpdpdl0aet",
+    "is_default": 1,
+    "name": "EUR account",
+    "created": "2026-01-20 04:00:53.429Z",
+    "lines": null
+  },
+  {
+    "content": "1.BENEFICIARY NAME:CHONGQING ALUSTARS INTERNATIONAL CO.,LTD\n2.ACCOUNT NUMBER: 123917886410001\n3.BENEFICIARY BANK:China Merchants Bank, Chongqing Branch\n4.SWIFT CODE:CMBCCNBS245",
+    "id": "ssc102pl9fqtbvu",
+    "is_default": 0,
+    "name": "USD account",
+    "created": "2026-01-20 04:01:57.946Z",
+    "lines": null
+  },
+  {
+    "content": "1.BENEFICIARY NAME:CHONGQING ALUSTARS INTERNATIONAL CO.,LTD\n2.ACCOUNT NUMBER: 123917886410001\n3.BENEFICIARY BANK:China Merchants Bank, Chongqing Branch\n4.SWIFT CODE:CMBCCNBS245",
+    "id": "mrhvis850xjwfdd",
+    "is_default": 0,
+    "name": "RMB account",
+    "created": "2026-01-20 04:02:18.720Z",
+    "lines": null
+  },
+  {
+    "content": "Account Name:\tCHONGQING ALUSTARS INTERNATIONAL CO., LTD.\nAccount No.\tDK4289000057912169\nBank:\tBanking Circle Denmark\nCountry/Region:\tDenmark\nBank Address:\tLautrupsgade 13-15 2100 Copenhagen Denmark\nSWIFT CODE:\tSXPYDKKK\nBANK CODE:\t8900\nBRANCH CODE:\tXXX\nClearing system:\tSupport for local mainstream clearing systems\nRemarks:\tPlease include the following contents to your receiver when making a payment.[Seller Name]; [Product]; [PI/Contract Number]\n",
+    "id": "sxvnuji8c0ogoxu",
+    "is_default": 0,
+    "name": "全球收款账户 BankingCircle S.A.丹麦-多币种（连连）",
+    "created": "2026-01-20 04:04:17.753Z",
+    "lines": null
+  },
+  {
+    "content": "公司名称：重庆星铝国际贸易有限公司\n税号：91500109MADTT20C93\n地址：重庆市北碚区蔡家岗镇嘉瑞大道194号14-1\n电话：023-63214167\n开户银行：招商银行股份有限公司重庆分行营业部\n账号：123917886410001\n",
+    "id": "x8xi9g0aeiik5pd",
+    "is_default": 0,
+    "name": "开票信息",
+    "created": "2026-01-20 04:05:06.486Z",
+    "lines": null
+  }
+]

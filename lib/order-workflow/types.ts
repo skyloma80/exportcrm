@@ -14,17 +14,7 @@ export type OrderStatus =
   | 'completed' 
   | 'cancelled'
 
-// 所有有效的订单状态
-export const ORDER_STATUSES: OrderStatus[] = [
-  'draft',
-  'confirmed',
-  'in_production',
-  'ready_to_ship',
-  'shipped',
-  'delivered',
-  'completed',
-  'cancelled',
-]
+
 
 // 前置条件检查结果
 export interface PrerequisiteCheck {
@@ -42,38 +32,8 @@ export interface PrerequisiteResult {
   checks: PrerequisiteCheck[]
 }
 
-// 状态变更日志详情
-export interface StatusChangeDetails {
-  from_status: OrderStatus
-  to_status: OrderStatus
-  reason?: string  // 取消原因或备注
-  skipped_checks?: string[]  // 跳过的非必须检查
-}
 
-// 状态变更活动日志
-export interface StatusChangeLog {
-  entity_type: 'order'
-  entity_id: string
-  action: 'status_change'
-  details: StatusChangeDetails
-  user_id: string
-  created: string
-}
 
-// 状态推进请求
-export interface AdvanceStatusRequest {
-  orderId: string
-  targetStatus: OrderStatus
-  skipOptionalChecks?: boolean
-  reason?: string
-}
 
-// 状态推进响应
-export interface AdvanceStatusResponse {
-  success: boolean
-  order?: {
-    id: string
-    status: OrderStatus
-  }
-  error?: string
-}
+
+

@@ -38,13 +38,13 @@ export async function POST(
 
     // 1. 获取订单信息
     const order = await pb.collection('so').getOne(orderId, {
-      expand: "project,order_items_via_order,order_items_via_order.product",
+      expand: "project",
     })
 
     console.log("[PO Generation] Order loaded:", {
       orderId: order.id,
       projectId: order.project,
-      itemsCount: order.expand?.order_items_via_order?.length || 0,
+      itemsCount: (order.items || []).length,
     })
 
     if (!order.project) {
@@ -149,12 +149,12 @@ export async function POST(
 
       for (const item of items) {
         // 从订单明细中找到对应的产品数量
-        const orderItem = order.expand?.order_items_via_order?.find(
-          (oi: any) => oi.product === item.product
+        const orderItem = (order.items || []).find(
+          (oi: any) => oi.product_name === item.product_name || oi.part_number === item.part_number
         )
 
         if (!orderItem) {
-          console.warn("[PO Generation] No order item found for product:", item.product)
+          console.warn("[PO Generation] No order item found for product:", item.product_name)
           continue
         }
 

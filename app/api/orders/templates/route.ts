@@ -49,10 +49,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the source order with items
-    const order = await pb.collection('so').getOne(order_id, {
-      expand: 'order_items_via_order',
-    });
+    // Get the source order
+    const order = await pb.collection('so').getOne(order_id);
 
     // Create template data
     const templateData = {
@@ -61,19 +59,17 @@ export async function POST(request: NextRequest) {
       currency: order.currency,
       incoterm: order.incoterm,
       payment_terms: order.payment_terms,
-      delivery_port: order.delivery_port,
-      destination_port: order.destination_port,
       remarks: order.remarks,
     };
 
-    // Get order items
-    const items = order.expand?.order_items_via_order || [];
+    // Get order items from JSON
+    const items = order.items || [];
     const templateItems = items.map((item: any) => ({
-      product: item.product,
+      product_name: item.product_name,
+      part_number: item.part_number,
       quantity: item.quantity,
       unit_price: item.unit_price,
       unit: item.unit,
-      remarks: item.remarks,
     }));
 
     // Create the template

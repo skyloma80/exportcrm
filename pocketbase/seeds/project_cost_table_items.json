@@ -1,0 +1,110 @@
+[
+  {
+    "amount": 16.5,
+    "cost_table": "y9yeq0n8r3bprtv",
+    "id": "krwg9k40wvam28s",
+    "lead_time_days": 30,
+    "product": "k2jbxjl72nmuixe",
+    "quantity": 1,
+    "rfq_quotation": "mr1eht6bcd0edsu",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 16.5,
+    "created": "2026-02-05 08:56:56.133Z"
+  },
+  {
+    "amount": 56600,
+    "cost_table": "7colb1o25hackev",
+    "id": "24oaofawtbn7pfg",
+    "lead_time_days": 30,
+    "product": "zulu2uarc7sjc7q",
+    "quantity": 1000,
+    "rfq_quotation": "q0198cfrwch6bqz",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 56.6,
+    "created": "2026-02-06 09:14:22.289Z"
+  },
+  {
+    "amount": 57800,
+    "cost_table": "7colb1o25hackev",
+    "id": "1kz50jcje5dwjcx",
+    "lead_time_days": 30,
+    "product": "x5ll8zv6z5nd95s",
+    "quantity": 1000,
+    "rfq_quotation": "b150ya3vwj9bp5z",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 57.8,
+    "created": "2026-02-06 09:14:22.291Z"
+  },
+  {
+    "amount": 57800,
+    "cost_table": "7colb1o25hackev",
+    "id": "noquanoqss552ry",
+    "lead_time_days": 30,
+    "product": "sokja3b4at0t5d0",
+    "quantity": 1000,
+    "rfq_quotation": "a6ajebcofivlq7c",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 57.8,
+    "created": "2026-02-06 09:14:22.294Z"
+  },
+  {
+    "amount": 56600,
+    "cost_table": "7colb1o25hackev",
+    "id": "spkarjsx3aoqm5w",
+    "lead_time_days": 30,
+    "product": "gv9j8v9hvjvm5yf",
+    "quantity": 1000,
+    "rfq_quotation": "75fc4ywmqa0v2a2",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 56.6,
+    "created": "2026-02-06 09:14:22.297Z"
+  },
+  {
+    "amount": 20100,
+    "cost_table": "7colb1o25hackev",
+    "id": "1r8ioktbrbtivn2",
+    "lead_time_days": 30,
+    "product": "gsqag81z9ytwo60",
+    "quantity": 1000,
+    "rfq_quotation": "ywnf5zd9sbm5otl",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 20.1,
+    "created": "2026-02-06 09:14:22.300Z"
+  },
+  {
+    "amount": 20100,
+    "cost_table": "7colb1o25hackev",
+    "id": "6lti5t2apsxz8jy",
+    "lead_time_days": 30,
+    "product": "eds3f1u0hekj0fi",
+    "quantity": 1000,
+    "rfq_quotation": "j9cn9onhzy9s70w",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 20.1,
+    "created": "2026-02-06 09:14:22.302Z"
+  },
+  {
+    "amount": 75,
+    "cost_table": "6c7dzailnldnupv",
+    "id": "dlq9f4s2hdbrhnb",
+    "lead_time_days": 30,
+    "product": "kw1q3kc5zcqawvu",
+    "quantity": 1,
+    "rfq_quotation": "jlmbhzt2g10hop6",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 75,
+    "created": "2026-02-06 09:35:25.752Z"
+  },
+  {
+    "amount": 2575,
+    "cost_table": "yp7xhdx4mpl9bwp",
+    "id": "mqetpmasa9wxdep",
+    "lead_time_days": 20,
+    "product": "fcpik1ht6v43a2k",
+    "quantity": 1,
+    "rfq_quotation": "2bs3f9t4iz30f9y",
+    "supplier": "fpkc5aomf7fom86",
+    "unit_price": 2575,
+    "created": "2026-03-10 06:04:58.753Z"
+  }
+]

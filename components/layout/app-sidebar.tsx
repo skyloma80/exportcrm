@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   HardDrive,
   ArrowLeftRight,
+  DollarSign,
 } from "lucide-react"
 
 import { NavMain, NavGroup } from "@/components/layout/nav-main"
@@ -60,6 +61,7 @@ const baseNavGroups: NavGroup[] = [
     labelKey: "", // 无标签
     items: [
       { titleKey: "nav.products", url: "/products", icon: Package },
+      { titleKey: "nav.productCosts", url: "/product-costs", icon: DollarSign },
       { titleKey: "nav.disk", url: "/disk", icon: HardDrive },
       { titleKey: "nav.palletCalculator", url: "/pallet-calculator", icon: Calculator },
       { titleKey: "nav.palletCalculatorV2", url: "http://42.194.150.84:3005", icon: Calculator, external: true },

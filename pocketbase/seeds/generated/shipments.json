@@ -1,0 +1,20 @@
+[
+  {
+    "actual_arrival": "",
+    "actual_departure": "",
+    "bl_number": "",
+    "carrier": "",
+    "code": "SHP-2026-0001",
+    "container_number": "",
+    "container_type": "",
+    "eta": "",
+    "etd": "",
+    "id": "as3hxqyok1185a3",
+    "shipping_method": "air",
+    "status": "preparing",
+    "vessel_name": "",
+    "voyage_number": "",
+    "created": "2026-05-30 08:25:51.265Z",
+    "order": "ikkujhl8zaglpcu"
+  }
+]

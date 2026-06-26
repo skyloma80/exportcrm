@@ -23,7 +23,7 @@ import {
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
 import { customerContactService } from "@/lib/pocketbase/services/customers"
 import { soService, type FlatSO } from "@/lib/pocketbase/services/so"
-import { appConfigService } from "@/lib/pocketbase/services/app-config"
+import { documentBrandingService } from "@/lib/pocketbase/services/document-branding"
 import { ViewOrderDocumentButton } from "@/components/orders/view-order-document-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -117,9 +117,9 @@ Best regards,`
         
         // Load branding info
         try {
-          const brandingData = await appConfigService.get('document_branding')
-          if (brandingData) {
-            setBranding(brandingData)
+          const record = await documentBrandingService.getFirst()
+          if (record) {
+            setBranding(record as BrandingConfig)
           }
         } catch (err) {
           console.error("Failed to load branding config:", err)

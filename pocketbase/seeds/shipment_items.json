@@ -1,0 +1,24 @@
+[
+  {
+    "gross_weight": 0,
+    "id": "3bq4ow0e4520cin",
+    "net_weight": 0,
+    "packages": 0,
+    "quantity": 7,
+    "shipment": "as3hxqyok1185a3",
+    "volume": 0,
+    "created": "2026-05-30 08:26:55.691Z",
+    "order_item": "tn9akdlke"
+  },
+  {
+    "gross_weight": 0,
+    "id": "vvstc3uy600ryv8",
+    "net_weight": 0,
+    "packages": 0,
+    "quantity": 7,
+    "shipment": "as3hxqyok1185a3",
+    "volume": 0,
+    "created": "2026-05-30 08:26:57.626Z",
+    "order_item": "qmozm6dzm"
+  }
+]

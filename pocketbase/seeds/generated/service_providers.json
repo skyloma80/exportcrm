@@ -1,0 +1,42 @@
+[
+  {
+    "address": "",
+    "address_cn": "",
+    "city": "",
+    "code": "SP-2026-0001",
+    "contact_email": "",
+    "contact_name": "",
+    "contact_phone": "",
+    "contact_wechat": "",
+    "country": "",
+    "id": "9loeis546s7lyds",
+    "is_active": 1,
+    "name": "Fedex",
+    "name_cn": "联邦快递",
+    "rating": 0,
+    "remarks": "",
+    "services": null,
+    "type": "freight_forwarder",
+    "created": "2026-04-23 05:17:55.851Z"
+  },
+  {
+    "address": "",
+    "address_cn": "",
+    "city": "",
+    "code": "SP-2026-0001",
+    "contact_email": "",
+    "contact_name": "Andy",
+    "contact_phone": "",
+    "contact_wechat": "",
+    "country": "China",
+    "id": "v9kgg5y4204ejzd",
+    "is_active": 1,
+    "name": "吉成物流",
+    "name_cn": "",
+    "rating": 0,
+    "remarks": "",
+    "services": null,
+    "type": "freight_forwarder",
+    "created": "2026-04-23 05:18:35.636Z"
+  }
+]

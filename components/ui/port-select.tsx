@@ -7,7 +7,7 @@
  * type: 'loading' 装货港（国内港口）, 'destination' 目的港（国外港口）
  */
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Check, ChevronsUpDown, Loader2, Anchor } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useI18n } from "@/lib/i18n/use-i18n"
-import { appConfigService, DEFAULT_CONFIGS } from "@/lib/pocketbase/services/app-config"
+import { portsOfLoadingService } from "@/lib/pocketbase/services/ports-of-loading"
+import { portsOfDestinationService } from "@/lib/pocketbase/services/ports-of-destination"
 
 interface Port {
   code: string
@@ -84,17 +85,15 @@ export function PortSelect({
     setLoading(true)
     try {
       if (type === 'destination') {
-        // 目的港：国外港口
-        const data = await appConfigService.get<Port[]>('ports_of_destination')
-        setPorts(data || DEFAULT_DESTINATION_PORTS)
+        const data = await portsOfDestinationService.getActive()
+        setPorts(data && data.length > 0 ? data : DEFAULT_DESTINATION_PORTS)
       } else {
-        // 装货港：国内港口
-        const data = await appConfigService.get<Port[]>('ports_of_loading')
-        setPorts(data || DEFAULT_CONFIGS.ports_of_loading.value)
+        const data = await portsOfLoadingService.getActive()
+        setPorts(data && data.length > 0 ? data : DEFAULT_DESTINATION_PORTS)
       }
     } catch (error) {
       console.error("Error loading ports:", error)
-      setPorts(type === 'destination' ? DEFAULT_DESTINATION_PORTS : DEFAULT_CONFIGS.ports_of_loading.value)
+      setPorts(type === 'destination' ? DEFAULT_DESTINATION_PORTS : DEFAULT_DESTINATION_PORTS)
     } finally {
       setLoading(false)
     }
@@ -105,7 +104,16 @@ export function PortSelect({
     return port.name
   }
 
-  const selectedPort = ports.find((p) => p.code === value || p.name === value || p.name_cn === value)
+  const uniquePorts = useMemo(() => {
+    const seen = new Set<string>()
+    return ports.filter((p) => {
+      if (seen.has(p.code)) return false
+      seen.add(p.code)
+      return true
+    })
+  }, [ports])
+
+  const selectedPort = uniquePorts.find((p) => p.code === value || p.name === value || p.name_cn === value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -146,7 +154,7 @@ export function PortSelect({
             <>
               <CommandEmpty>{t("common.noData")}</CommandEmpty>
               <CommandGroup className="max-h-64 overflow-auto">
-                {ports.map((port) => (
+                {uniquePorts.map((port) => (
                   <CommandItem
                     key={port.code}
                     value={`${port.name} ${port.name_cn || ""} ${port.code}`}

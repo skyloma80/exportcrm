@@ -12,11 +12,23 @@ import { getPocketBase } from '@/lib/pocketbase/auth';
 import type { 
   Order, 
   OrderWithExpand,
-  OrderItem,
-  OrderItemWithExpand,
   OrderPayment,
   OrderStatus,
 } from '@/lib/pocketbase/services/orders';
+
+export interface OrderItem {
+  id?: string;
+  product_name?: string;
+  product_code?: string;
+  part_number?: string;
+  description_en?: string;
+  description_cn?: string;
+  quantity: number;
+  unit?: string;
+  unit_price: number;
+  amount: number;
+  cost_price?: number;
+}
 
 // ============================================================================
 // Types
@@ -41,7 +53,7 @@ interface UseOrdersResult {
 
 interface UseOrderResult {
   order: OrderWithExpand | null;
-  items: OrderItemWithExpand[];
+  items: OrderItem[];
   payments: OrderPayment[];
   isLoading: boolean;
   error: Error | null;
@@ -114,7 +126,7 @@ export function useOrders(options: UseOrdersOptions = {}): UseOrdersResult {
  */
 export function useOrder(id: string | null): UseOrderResult {
   const [order, setOrder] = useState<OrderWithExpand | null>(null);
-  const [items, setItems] = useState<OrderItemWithExpand[]>([]);
+  const [items, setItems] = useState<OrderItem[]>([]);
    const [payments, setPayments] = useState<OrderPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -136,11 +148,11 @@ export function useOrder(id: string | null): UseOrderResult {
       
       // Fetch order with expand
       const result = await pb.collection('so').getOne<OrderWithExpand>(id, {
-        expand: 'project,customer,quotation,order_items_via_order,order_items_via_order.product,order_payments_via_order',
+        expand: 'project,customer,quotation,order_payments_via_order',
       });
 
       setOrder(result);
-      setItems(result.expand?.order_items_via_order || []);
+      setItems(result.items || []);
        setPayments(result.expand?.order_payments_via_order || []);
     } catch (e) {
       setError(e instanceof Error ? e : new Error('Failed to fetch order'));
@@ -385,88 +397,6 @@ export function useOrderMutations() {
 }
 
 /**
- * Hook for order item mutations
- */
-export function useOrderItemMutations() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const createItem = useCallback(async (data: {
-    order: string;
-    product: string;
-    quantity: number;
-    unit_price: number;
-  }): Promise<OrderItem | null> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { orderItemService, orderService } = await import('@/lib/pocketbase/services/orders');
-      const result = await orderItemService.createItem(data);
-      // Recalculate order total
-      await orderService.recalculateTotal(data.order);
-      return result;
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error('Failed to create item'));
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const updateItem = useCallback(async (
-    id: string,
-    orderId: string,
-    data: Partial<{
-      quantity: number;
-      unit_price: number;
-    }>
-  ): Promise<OrderItem | null> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { orderItemService, orderService } = await import('@/lib/pocketbase/services/orders');
-      const result = await orderItemService.updateItem(id, data);
-      // Recalculate order total
-      await orderService.recalculateTotal(orderId);
-      return result;
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error('Failed to update item'));
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const deleteItem = useCallback(async (id: string, orderId: string): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { orderItemService, orderService } = await import('@/lib/pocketbase/services/orders');
-      await orderItemService.delete(id);
-      // Recalculate order total
-      await orderService.recalculateTotal(orderId);
-      return true;
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error('Failed to delete item'));
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  return {
-    isLoading,
-    error,
-    createItem,
-    updateItem,
-    deleteItem,
-  };
-}
-
-/**
  * Hook for order payment mutations
  */
 export function useOrderPaymentMutations() {
@@ -539,11 +469,3 @@ export function useOrderPaymentMutations() {
   };
 }
 
-export default {
-  useOrders,
-  useOrder,
-  useAllOrders,
-  useOrderMutations,
-  useOrderItemMutations,
-  useOrderPaymentMutations,
-};

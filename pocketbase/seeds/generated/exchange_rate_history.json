@@ -1,0 +1,524 @@
+[
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.690Z",
+    "id": "pt1d95t2d6iqbyh",
+    "rate": 0.143,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-01-19 13:48:04.851Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.689Z",
+    "id": "8rq94pubjhsxhbs",
+    "rate": 0.143,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-01-19 13:48:04.856Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.689Z",
+    "id": "ep2089gnrkh211r",
+    "rate": 0.124,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-01-19 13:48:05.282Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.690Z",
+    "id": "m7caeakvrbul1ye",
+    "rate": 0.124,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-01-19 13:48:05.356Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.689Z",
+    "id": "vmmqd5l37yn39og",
+    "rate": 0.107,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-01-19 13:48:05.769Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.689Z",
+    "id": "za7a2du6b29ba5o",
+    "rate": 22.62,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-01-19 13:48:06.190Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-01-19 13:48:03.690Z",
+    "id": "im8ko0slm69c3gt",
+    "rate": 1.12,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-01-19 13:48:06.591Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-02 09:40:59.883Z",
+    "id": "v4q561sqkuglo8s",
+    "rate": 0.144,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-02-02 09:41:01.649Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-02 09:40:59.883Z",
+    "id": "k13rkbd9wedx43x",
+    "rate": 0.121,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-02-02 09:41:02.122Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-02 09:40:59.883Z",
+    "id": "p395cyd19poeu98",
+    "rate": 0.105,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-02-02 09:41:03.062Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-02 09:40:59.883Z",
+    "id": "xtgshdt2aatij9b",
+    "rate": 22.3,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-02-02 09:41:03.531Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-02 09:40:59.883Z",
+    "id": "630jooslzrz0jlo",
+    "rate": 1.12,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-02-02 09:41:04.239Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-05 08:28:04.758Z",
+    "id": "9oykwzuoywmj0ur",
+    "rate": 0.144,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-02-05 08:28:05.266Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-05 08:28:04.758Z",
+    "id": "lsvb403e97zqc5j",
+    "rate": 0.122,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-02-05 08:28:05.747Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-05 08:28:04.758Z",
+    "id": "ppki1opmzchosmz",
+    "rate": 0.105,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-02-05 08:28:06.239Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-05 08:28:04.758Z",
+    "id": "otd91zo1c976q28",
+    "rate": 22.55,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-02-05 08:28:06.746Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-05 08:28:04.758Z",
+    "id": "f9roehim3hgo0en",
+    "rate": 1.12,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-02-05 08:28:07.222Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-06 08:32:21.767Z",
+    "id": "ltc0mg3lcdf4x2j",
+    "rate": 0.144,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-02-06 08:32:22.229Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-06 08:32:21.767Z",
+    "id": "rxias36qc56o6jc",
+    "rate": 0.122,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-02-06 08:32:22.481Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-06 08:32:21.767Z",
+    "id": "2sffb4mwy7hzi3m",
+    "rate": 0.106,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-02-06 08:32:22.778Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-06 08:32:21.767Z",
+    "id": "263ihgqojty1rk9",
+    "rate": 22.61,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-02-06 08:32:23.014Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-02-06 08:32:21.767Z",
+    "id": "vlekfnfyf15eacm",
+    "rate": 1.12,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-02-06 08:32:23.254Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-06 13:58:13.611Z",
+    "id": "abdwkt51z997zvc",
+    "rate": 0.145,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-03-06 13:58:14.463Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-06 13:58:13.611Z",
+    "id": "t37gytmdbp6krla",
+    "rate": 0.125,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-03-06 13:58:14.908Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-06 13:58:13.611Z",
+    "id": "hgdqi8le68rfypg",
+    "rate": 0.108,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-03-06 13:58:15.141Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-06 13:58:13.611Z",
+    "id": "mg5itt9sp6gtjkm",
+    "rate": 22.8,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-03-06 13:58:15.374Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-06 13:58:13.611Z",
+    "id": "469lk60p7775tk6",
+    "rate": 1.13,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-03-06 13:58:15.605Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-10 06:03:17.040Z",
+    "id": "gqg3n3jbuoyd12c",
+    "rate": 0.145,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-03-10 06:03:15.597Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-10 06:03:17.040Z",
+    "id": "21n464x86x71bf3",
+    "rate": 0.125,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-03-10 06:03:15.799Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-10 06:03:17.040Z",
+    "id": "34fg6da72izgqey",
+    "rate": 0.108,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-03-10 06:03:16.001Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-10 06:03:17.040Z",
+    "id": "ahm085qobbfhm51",
+    "rate": 22.85,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-03-10 06:03:16.203Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-03-10 06:03:17.040Z",
+    "id": "50ak2uosk2m203x",
+    "rate": 1.13,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-03-10 06:03:16.406Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-04-22 01:56:07.724Z",
+    "id": "rma18sf9tq5ow0q",
+    "rate": 0.146,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-04-22 01:56:06.463Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-04-22 01:56:07.723Z",
+    "id": "0844dmg3zt0yon9",
+    "rate": 0.146,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-04-22 01:56:06.469Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-04-22 01:56:07.724Z",
+    "id": "dar53p5u0m3fh6t",
+    "rate": 0.125,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-04-22 01:56:06.692Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-04-22 01:56:07.723Z",
+    "id": "yit83c9bj43giyc",
+    "rate": 0.108,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-04-22 01:56:06.920Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-04-22 01:56:07.724Z",
+    "id": "fbtzbct3b2ud3es",
+    "rate": 23.31,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-04-22 01:56:07.150Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-04-22 01:56:07.723Z",
+    "id": "0vjb7vwlfm56gdd",
+    "rate": 1.15,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-04-22 01:56:07.379Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.463Z",
+    "id": "q75xg2q1q5sd8jj",
+    "rate": 0.147,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-05-09 08:16:38.762Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.459Z",
+    "id": "0fg1yvrcp3txx76",
+    "rate": 0.147,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-05-09 08:16:38.776Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.463Z",
+    "id": "hgffrfknnz9cvt5",
+    "rate": 0.125,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-05-09 08:16:39.052Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.459Z",
+    "id": "v74bawnirg9a1g8",
+    "rate": 0.125,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-05-09 08:16:39.083Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.463Z",
+    "id": "deu8z6nouf0c26a",
+    "rate": 0.108,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-05-09 08:16:39.305Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.459Z",
+    "id": "a09ivnobvl39761",
+    "rate": 0.108,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-05-09 08:16:39.340Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.459Z",
+    "id": "z88m0vxv6383170",
+    "rate": 23.01,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-05-09 08:16:39.673Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.463Z",
+    "id": "7e9otq8bfdrqdd2",
+    "rate": 23.01,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-05-09 08:16:39.674Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.463Z",
+    "id": "k8fpsnpojgbolvw",
+    "rate": 1.15,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-05-09 08:16:39.988Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-05-09 08:16:38.459Z",
+    "id": "umvysgf92zcuaw9",
+    "rate": 1.15,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-05-09 08:16:40.022Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.603Z",
+    "id": "druyrxojvmy9ss6",
+    "rate": 0.148,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-06-18 06:03:03.445Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.602Z",
+    "id": "72p9wm970frr6wl",
+    "rate": 0.148,
+    "source": "exchangerate-api.com",
+    "target_currency": "USD",
+    "created": "2026-06-18 06:03:03.445Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.603Z",
+    "id": "zwjsxsmby23hmc7",
+    "rate": 0.128,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-06-18 06:03:03.696Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.602Z",
+    "id": "16h2x06asd4822u",
+    "rate": 0.128,
+    "source": "exchangerate-api.com",
+    "target_currency": "EUR",
+    "created": "2026-06-18 06:03:03.729Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.603Z",
+    "id": "l100lj7z8qe7b4o",
+    "rate": 0.111,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-06-18 06:03:04.350Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.602Z",
+    "id": "rvz6iqgczqujv6n",
+    "rate": 0.111,
+    "source": "exchangerate-api.com",
+    "target_currency": "GBP",
+    "created": "2026-06-18 06:03:04.388Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.603Z",
+    "id": "fa5lq3e94tx0ooi",
+    "rate": 23.69,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-06-18 06:03:04.617Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.602Z",
+    "id": "s9kslglt84g2w32",
+    "rate": 23.69,
+    "source": "exchangerate-api.com",
+    "target_currency": "JPY",
+    "created": "2026-06-18 06:03:04.698Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.603Z",
+    "id": "xt1u8eed1blbarp",
+    "rate": 1.16,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-06-18 06:03:04.899Z"
+  },
+  {
+    "base_currency": "CNY",
+    "date": "2026-06-18 06:03:02.602Z",
+    "id": "zbpyb7c3wcrll0b",
+    "rate": 1.16,
+    "source": "exchangerate-api.com",
+    "target_currency": "HKD",
+    "created": "2026-06-18 06:03:04.946Z"
+  }
+]

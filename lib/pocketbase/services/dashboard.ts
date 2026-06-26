@@ -9,7 +9,6 @@ import {
   KPIStats, 
   ChartDataPoint, 
   TimeRange,
-  TaskSummary,
   OrderSummary,
   PaymentSummary,
   ShipmentSummary 
@@ -72,26 +71,12 @@ class DashboardService {
       console.error('Failed to load RFQs for KPI:', e);
     }
 
-    // Fetch all tasks and filter client-side
-    let tasks: any[] = [];
-    try {
-      const allTasks = await this.pb.collection('tasks').getFullList({
-        batch: 200,
-      });
-      tasks = allTasks.filter((t: any) => 
-        t.status !== 'completed' && t.status !== 'cancelled'
-      );
-    } catch (e) {
-      console.error('Failed to load tasks for KPI:', e);
-    }
 
-    const now = new Date();
-    const overdueTasks = tasks.filter(t => 
-      t.due_date && new Date(t.due_date) < now
-    );
+
+
 
     return {
-      revenue: {
+       revenue: {
         current: currentOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
         previous: previousOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
       },
@@ -102,11 +87,8 @@ class DashboardService {
       rfqs: {
         current: currentRfqs.length,
         previous: previousRfqs.length,
-      },
-      tasks: {
-        pending: tasks.length,
-        overdue: overdueTasks.length,
-      },
+      }
+
     };
   }
 
@@ -117,11 +99,12 @@ class DashboardService {
     const startDate = getTimeRangeStartDate(timeRange);
     
     try {
-      // Fetch all non-cancelled orders and filter client-side
+      console.log('Fetching orders for revenue trend...');
       const orders = await this.pb.collection('so').getFullList({
         sort: '-created',
         batch: 200,
       });
+      console.log('Fetched orders count:', orders.length);
       
       const filtered: { created: string; total_amount: number }[] = orders.filter((o: any) => 
         o.status !== 'cancelled' && new Date(o.created) >= startDate
@@ -129,41 +112,15 @@ class DashboardService {
       
       return aggregateOrdersByTimeRange(filtered, timeRange);
     } catch (e: any) {
-      console.error('Failed to load revenue trend:', e?.message || e?.status, e);
-      return [];
-    }
-  }
-
-  /**
-   * Get recent tasks (pending/in_progress)
-   */
-  async getRecentTasks(limit: number = 10): Promise<TaskSummary[]> {
-    try {
-      const allTasks = await this.pb.collection('tasks').getFullList({
-        sort: '-created',
-        batch: 200,
+      console.error('Failed to load revenue trend:', {
+        message: e?.message,
+        status: e?.status,
+        originalError: e
       });
-
-      return allTasks
-        .filter((t: any) => t.status !== 'completed' && t.status !== 'cancelled')
-        .slice(0, limit)
-        .map((t: any) => ({
-          id: t.id,
-          title: t.title,
-          status: t.status,
-          priority: t.priority,
-          due_date: t.due_date,
-          assigneeName: undefined,
-        }));
-    } catch (e: any) {
-      if (e?.status === 400 || e?.status === 404) {
-        console.warn('Tasks collection may not exist yet');
-        return [];
-      }
-      console.error('Failed to load recent tasks:', e);
       return [];
     }
   }
+
 
   /**
    * Get recent orders

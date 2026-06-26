@@ -78,6 +78,7 @@ export interface Order extends RecordModel {
   country_of_origin?: string;
   country_of_destination?: string;
   mode_of_shipment?: string;
+  items?: any[];  // JSON items
   // PI-related fields - 存为 JSON 字符串
   bank_info?: string;
   shipping_marks?: string;
@@ -89,18 +90,18 @@ export interface Order extends RecordModel {
   updated_by?: string;
 }
 
-export interface OrderItem extends RecordModel {
-  order: string;
-  product: string;
+export interface OrderItem {
+  id?: string;
+  product?: string;
   product_name?: string;
   product_code?: string;
   part_number?: string;
   description_en?: string;
+  description_cn?: string;
   quantity: number;
   unit?: string;
   unit_price: number;
   amount: number;
-  shipped_quantity?: number;
   cost_price?: number;
 }
 
@@ -119,12 +120,6 @@ export interface OrderPayment extends RecordModel {
   approved_by?: string;
   approved_at?: string;
   rejection_reason?: string;
-}
-
-export interface OrderTemplate extends RecordModel {
-  name: string;
-  customer?: string;
-  template_data: Record<string, unknown>;
 }
 
 export interface OrderWithExpand extends Order {
@@ -158,22 +153,9 @@ export interface OrderWithExpand extends Order {
       code: string;
       version: number;
     };
-    order_items_via_order?: OrderItemWithExpand[];
     order_payments_via_order?: OrderPayment[];
-    shipments_via_order?: any[]; // Shipment records related to this order
-    order_purchase_orders_via_order?: any[]; // Purchase orders related to this order
-  };
-};
-
-export interface OrderItemWithExpand extends OrderItem {
-  expand?: {
-    product?: {
-      id: string;
-      code: string;
-      name: string;
-      name_cn?: string;
-      unit: string;
-    };
+    shipments_via_order?: any[];
+    order_purchase_orders_via_order?: any[];
   };
 }
 
@@ -204,19 +186,6 @@ export interface OrderCreateInput {
 
 export interface OrderUpdateInput extends Partial<Omit<OrderCreateInput, 'project' | 'customer'>> {
   status?: OrderStatus;
-}
-
-export interface OrderItemCreateInput {
-  order: string;
-  product: string;
-  product_name?: string;
-  product_code?: string;
-  part_number?: string;
-  description_en?: string;
-  quantity: number;
-  unit?: string;
-  unit_price: number;
-  cost_price?: number;
 }
 
 export interface OrderPaymentCreateInput {
@@ -261,7 +230,7 @@ class OrderService extends BaseCollectionService<Order> {
   async getWithDetails(id: string): Promise<OrderWithExpand | null> {
     try {
       const order = await this.pb.collection('so').getOne<OrderWithExpand>(id, {
-        expand: 'project,customer,quotation,order_items_via_order,order_items_via_order.product,order_payments_via_order',
+        expand: 'project,customer,quotation,order_payments_via_order',
       });
       return order;
     } catch (e: any) {
@@ -531,18 +500,8 @@ class OrderService extends BaseCollectionService<Order> {
     const order = await this.getOne(id);
     if (!order) throw new Error('Order not found');
 
-    // First, delete all related records that would prevent order deletion
+    // Delete related order payments
     try {
-      // Delete related order items
-      const orderItems = await this.pb.collection('order_items').getFullList({
-        filter: `order = "${id}"`
-      });
-
-      for (const item of orderItems) {
-        await this.pb.collection('order_items').delete(item.id);
-      }
-
-      // Delete related order payments
       const orderPayments = await this.pb.collection('order_payments').getFullList({
         filter: `order = "${id}"`
       });
@@ -551,8 +510,7 @@ class OrderService extends BaseCollectionService<Order> {
         await this.pb.collection('order_payments').delete(payment.id);
       }
     } catch (e) {
-      console.error('Failed to delete related records:', e);
-      throw new Error('Failed to delete related order records');
+      console.error('Failed to delete related order records:', e);
     }
 
     // Then delete the order itself
@@ -583,10 +541,11 @@ class OrderService extends BaseCollectionService<Order> {
    * Recalculate order total
    */
   async recalculateTotal(id: string): Promise<Order> {
-    const items = await orderItemService.getByOrder(id);
+    const order = await this.getOne(id);
+    if (!order) throw new Error('Order not found');
 
-    const itemsTotal = items.reduce((sum, item) => sum + item.amount, 0);
-    // Round to 2 decimal places to avoid floating point precision issues
+    const items = order.items || [];
+    const itemsTotal = items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
     const roundedTotal = Math.round(itemsTotal * 100) / 100;
 
     return this.update(id, { total_amount: roundedTotal });
@@ -651,16 +610,9 @@ class OrderService extends BaseCollectionService<Order> {
       exchange_rate: original.exchange_rate,
     }, userId);
 
-    // Copy items
-    const items = original.expand?.order_items_via_order || [];
-    for (const item of items) {
-      await orderItemService.createItem({
-        order: newOrder.id,
-        product: item.product,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-      });
-    }
+    // Copy items from JSON
+    const items = original.items || [];
+    await this.update(newOrder.id, { items });
 
     // Recalculate total
     await this.recalculateTotal(newOrder.id);
@@ -680,86 +632,6 @@ class OrderService extends BaseCollectionService<Order> {
    */
   isFullyPaid(order: Order): boolean {
     return Math.round((order.paid_amount || 0) * 100) >= Math.round(order.total_amount * 100);
-  }
-}
-
-// ============================================================================
-// Order Item Service
-// ============================================================================
-
-class OrderItemService extends BaseCollectionService<OrderItem> {
-  constructor() {
-    super('order_items', { sort: 'id' });
-  }
-
-  /**
-   * Get items for an order
-   */
-  async getByOrder(orderId: string): Promise<OrderItemWithExpand[]> {
-    return this.pb.collection('order_items').getFullList<OrderItemWithExpand>({
-      filter: `order = "${orderId}"`,
-      expand: 'product',
-    });
-  }
-
-  /**
-   * Create order item with calculated amount
-   */
-  async createItem(data: OrderItemCreateInput): Promise<OrderItem> {
-    // Round amount to 2 decimal places
-    const amount = Math.round(data.unit_price * data.quantity * 100) / 100;
-
-    return this.create({
-      ...data,
-      amount,
-      shipped_quantity: 0,
-    });
-  }
-
-  /**
-   * Update order item and recalculate amount
-   */
-  async updateItem(id: string, data: Partial<OrderItemCreateInput>): Promise<OrderItem> {
-    const existing = await this.getOne(id);
-    if (!existing) throw new Error('Order item not found');
-
-    const unit_price = data.unit_price ?? existing.unit_price;
-    const quantity = data.quantity ?? existing.quantity;
-    // Round amount to 2 decimal places
-    const amount = Math.round(unit_price * quantity * 100) / 100;
-
-    return this.update(id, {
-      ...data,
-      amount,
-    });
-  }
-
-  /**
-   * Update shipped quantity
-   */
-  async updateShippedQuantity(id: string, shippedQuantity: number): Promise<OrderItem> {
-    const existing = await this.getOne(id);
-    if (!existing) throw new Error('Order item not found');
-
-    if (shippedQuantity > existing.quantity) {
-      throw new Error('Shipped quantity cannot exceed ordered quantity');
-    }
-
-    return this.update(id, { shipped_quantity: shippedQuantity });
-  }
-
-  /**
-   * Get remaining quantity to ship
-   */
-  getRemainingQuantity(item: OrderItem): number {
-    return item.quantity - (item.shipped_quantity || 0);
-  }
-
-  /**
-   * Bulk create order items
-   */
-  async bulkCreate(items: OrderItemCreateInput[]): Promise<OrderItem[]> {
-    return Promise.all(items.map(item => this.createItem(item)));
   }
 }
 
@@ -860,107 +732,10 @@ class OrderPaymentService extends BaseCollectionService<OrderPayment> {
 }
 
 // ============================================================================
-// Order Template Service
-// ============================================================================
-
-class OrderTemplateService extends BaseCollectionService<OrderTemplate> {
-  constructor() {
-    super('order_templates', { sort: 'name' });
-  }
-
-  /**
-   * Get templates for a customer
-   */
-  async getByCustomer(customerId: string): Promise<OrderTemplate[]> {
-    return this.getFullList({
-      filter: `customer = "${customerId}" || customer = ""`,
-    });
-  }
-
-  /**
-   * Create template from order
-   */
-  async createFromOrder(orderId: string, name: string): Promise<OrderTemplate> {
-    const order = await orderService.getWithDetails(orderId);
-    if (!order) throw new Error('Order not found');
-
-    const templateData = {
-      incoterm: order.incoterm,
-      port_of_loading: order.port_of_loading,
-      port_of_destination: order.port_of_destination,
-      payment_terms: order.payment_terms,
-      currency: order.currency,
-      items: order.expand?.order_items_via_order?.map(item => ({
-        product: item.product,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-      })) || [],
-    };
-
-    return this.create({
-      name,
-      customer: order.customer,
-      template_data: templateData,
-    });
-  }
-
-  /**
-   * Apply template to create new order
-   */
-  async applyTemplate(templateId: string, projectId: string, customerId: string): Promise<Order> {
-    const template = await this.getOne(templateId);
-    if (!template) throw new Error('Template not found');
-
-    const data = template.template_data as {
-      incoterm: string;
-      port_of_loading?: string;
-      port_of_destination?: string;
-      payment_terms?: string;
-      currency: string;
-      items?: Array<{ product: string; quantity: number; unit_price: number }>;
-    };
-
-    const customer = await this.pb.collection('customers').getOne(customerId);
-    const customerName = customer.name || customer.name_cn || '';
-
-    // Create order
-    const order = await orderService.createOrder({
-      project: projectId,
-      customer: customerId,
-      customer_name: customerName,
-      incoterm: data.incoterm,
-      port_of_loading: data.port_of_loading,
-      port_of_destination: data.port_of_destination,
-      payment_terms: data.payment_terms,
-      currency: data.currency,
-    });
-
-    // Create items
-    if (data.items) {
-      for (const item of data.items) {
-        await orderItemService.createItem({
-          order: order.id,
-          product: item.product,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-        });
-      }
-    }
-
-    // Recalculate total
-    await orderService.recalculateTotal(order.id);
-
-    return orderService.getOne(order.id) as Promise<Order>;
-  }
-}
-
-// ============================================================================
 // Export Services
 // ============================================================================
 
 export const orderService = new OrderService();
-export const orderItemService = new OrderItemService();
 export const orderPaymentService = new OrderPaymentService();
-export const orderTemplateService = new OrderTemplateService();
 
 export default orderService;

@@ -11,6 +11,7 @@
     "suppliers": "Suppliers",
     "serviceProviders": "Service Providers",
     "products": "Products",
+    "productCosts": "Product Costs",
     "projects": "Projects",
     "rfqs": "RFQ",
     "sourcingPlans": "Cost Sheet",
@@ -227,7 +228,8 @@
     "tabs": {
       "info": "Information",
       "molds": "Molds",
-      "documents": "Documents"
+      "documents": "Documents",
+      "costs": "Purchase Costs"
     },
     "info": {
       "basic": "Basic Information",
@@ -298,6 +300,33 @@
       "certification": "Certification",
       "sample_approval": "Sample Approval",
       "other": "Other"
+    },
+    "costs": {
+      "title": "Purchase Costs",
+      "add": "Add Cost",
+      "addCost": "Add Supplier Quotation",
+      "editCost": "Edit Quotation",
+      "updatePrice": "Update Price",
+      "save": "Save",
+      "empty": "No supplier quotations yet",
+      "supplier": "Supplier",
+      "currency": "Currency",
+      "tiers": "Pricing Tiers",
+      "moq": "MOQ",
+      "leadTime": "Lead Time (days)",
+      "preferred": "Preferred",
+      "markPreferred": "Mark as preferred supplier",
+      "history": "Price History",
+      "priceHistory": "Price History",
+      "validFrom": "Valid From",
+      "validUntil": "Valid Until",
+      "active": "Active",
+      "addTier": "Add Tier",
+      "minQty": "Min Qty",
+      "maxQty": "Max Qty",
+      "unitPrice": "Unit Price",
+      "remarks": "Remarks",
+      "remarksPlaceholder": "Enter remarks"
     },
     "placeholders": {
       "name": "Enter product name",
@@ -3414,7 +3443,11 @@
     "leadTime": "Lead Time",
     "amount": "Amount",
     "saved": "Cost table saved",
-    "incompleteWarning": "{{count}} product(s) still need supplier selection"
+    "incompleteWarning": "{{count}} product(s) still need supplier selection",
+    "directEntryTitle": "Direct Cost Entry",
+    "directEntryDesc": "Enter supplier and price info directly without RFQ",
+    "noProductsDesc": "Please add products to the project first",
+    "enterSupplier": "Select Supplier"
   },
   "projectProducts": {
     "title": "Project Products",

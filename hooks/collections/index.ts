@@ -24,6 +24,5 @@ export * from './rfqs';
 export * from './quotations';
 export * from './orders';
 export * from './shipments';
-export * from './tasks';
 export * from './service-providers';
 export * from './activity-logs';

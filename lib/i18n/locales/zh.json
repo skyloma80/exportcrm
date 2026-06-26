@@ -11,6 +11,7 @@
     "suppliers": "供应商",
     "serviceProviders": "服务商",
     "products": "产品管理",
+    "productCosts": "产品成本管理",
     "projects": "项目管理",
     "rfqs": "询价管理",
     "sourcingPlans": "采购成本表",
@@ -228,7 +229,8 @@
     "tabs": {
       "info": "基本信息",
       "molds": "模具",
-      "documents": "文档"
+      "documents": "文档",
+      "costs": "采购成本"
     },
     "info": {
       "basic": "基本信息",
@@ -300,6 +302,33 @@
       "sample_approval": "样品确认",
       "other": "其他"
     },
+    "costs": {
+      "title": "采购成本",
+      "add": "添加成本",
+      "addCost": "添加供应商报价",
+      "editCost": "编辑报价",
+      "updatePrice": "更新价格",
+      "save": "保存",
+      "empty": "暂无供应商报价",
+      "supplier": "供应商",
+      "currency": "货币",
+      "tiers": "阶梯价",
+      "moq": "最小起订量",
+      "leadTime": "交期(天)",
+      "preferred": "优选",
+      "markPreferred": "标记为首选供应商",
+      "history": "历史报价",
+      "priceHistory": "报价历史",
+      "validFrom": "开始日期",
+      "validUntil": "结束日期",
+      "active": "当前价",
+      "addTier": "添加阶梯",
+      "minQty": "最小数量",
+      "maxQty": "最大数量",
+      "unitPrice": "单价",
+      "remarks": "备注",
+      "remarksPlaceholder": "输入备注"
+    },
     "placeholders": {
       "name": "输入产品名称",
       "nameCn": "输入中文名称",
@@ -327,7 +356,7 @@
     }
   },
   "projects": {
-    "title": "项目管理",
+    "title": "项目",
     "description": "管理您的业务项目",
     "listTitle": "项目列表",
     "newProject": "新建项目",
@@ -3081,7 +3110,11 @@
     "leadTime": "交期",
     "amount": "金额",
     "saved": "成本表已保存",
-    "incompleteWarning": "还有 {{count}} 个产品未选择供应商"
+    "incompleteWarning": "还有 {{count}} 个产品未选择供应商",
+    "directEntryTitle": "直接录入采购成本",
+    "directEntryDesc": "无需通过询价单，直接录入供应商和价格信息",
+    "noProductsDesc": "请先在项目中添加产品",
+    "enterSupplier": "选择供应商"
   },
   "projectProducts": {
     "title": "项目产品",

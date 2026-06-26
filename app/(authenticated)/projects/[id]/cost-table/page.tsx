@@ -14,6 +14,8 @@ import { useI18n } from "@/lib/i18n/use-i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { SupplierSelect } from "@/components/ui/supplier-select"
 import { Loader2, AlertCircle, Save, Package, Star } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useBreadcrumb } from "@/lib/breadcrumb/context"
@@ -276,6 +278,43 @@ export default function ProjectCostTablePage() {
     return selections.find((s) => s.productId === productId)
   }
 
+  // Handle field changes in direct entry mode (no RFQ quotations)
+  const handleFieldChange = useCallback((productId: string, field: string, value: any) => {
+    setSelections(prev => {
+      const existing = prev.find(s => s.productId === productId)
+      const current = existing || {
+        productId,
+        supplierId: null,
+        rfqQuotationId: null,
+        quantity: 0,
+        unitPrice: 0,
+        leadTimeDays: null,
+      }
+      const updated = { ...current }
+      switch (field) {
+        case 'supplierId':
+          updated.supplierId = value || null
+          break
+        case 'quantity':
+          updated.quantity = value
+          break
+        case 'unitPrice':
+          updated.unitPrice = value
+          break
+        case 'leadTimeDays':
+          updated.leadTimeDays = value
+          break
+      }
+      const idx = prev.findIndex(s => s.productId === productId)
+      if (idx >= 0) {
+        const result = [...prev]
+        result[idx] = updated
+        return result
+      }
+      return [...prev, updated]
+    })
+  }, [])
+
   // Convert to SupplierSelection for summary calculation
   const supplierSelections: SupplierSelection[] = useMemo(() => {
     return selections
@@ -340,6 +379,7 @@ export default function ProjectCostTablePage() {
   }
 
   const hasQuotations = aggregated && aggregated.quotations.length > 0
+  const hasProducts = aggregated && aggregated.products.length > 0
 
   if (loading) {
     return (
@@ -372,18 +412,156 @@ export default function ProjectCostTablePage() {
         </div>
       </div>
 
-      {!hasQuotations ? (
+      {!hasProducts ? (
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
             <h2 className="text-xl font-semibold mb-2">
-              {t("projectCostTable.noQuotations")}
+              {t("common.noData")}
             </h2>
             <p className="text-muted-foreground mb-4">
-              {t("projectCostTable.noQuotationsDesc")}
+              {t("projectCostTable.noProductsDesc")}
             </p>
           </CardContent>
         </Card>
+      ) : !hasQuotations ? (
+        <div className="space-y-6">
+          {/* Direct Entry Banner */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-blue-800">
+                    {t("projectCostTable.directEntryTitle")}
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    {t("projectCostTable.directEntryDesc")}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Direct Entry Cost Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                {t("projectCostTable.costDetails")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium">
+                        {t("projectCostTable.product")}
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium">
+                        {t("projectCostTable.quantity")}
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        {t("projectCostTable.enterSupplier")}
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium">
+                        {t("projectCostTable.unitPrice")}
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium">
+                        {t("projectCostTable.leadTime")}
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium">
+                        {t("projectCostTable.amount")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {aggregated?.products.map((product) => {
+                      const selection = getSelection(product.id)
+                      return (
+                        <tr key={product.id} className="border-b">
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className="font-medium">{getDisplayName(product)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {product.code}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={selection?.quantity ?? 0}
+                                onChange={(e) =>
+                                  handleFieldChange(product.id, 'quantity', parseInt(e.target.value) || 0)
+                                }
+                                className="w-20 text-right"
+                              />
+                              <span className="text-muted-foreground text-sm">
+                                {UNITS[product.unit]?.name_cn || product.unit}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 min-w-[250px]">
+                            <SupplierSelect
+                              value={selection?.supplierId || ""}
+                              onChange={(supplier) =>
+                                handleFieldChange(product.id, 'supplierId', supplier?.id || '')
+                              }
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={selection?.unitPrice ?? 0}
+                              onChange={(e) =>
+                                handleFieldChange(product.id, 'unitPrice', parseFloat(e.target.value) || 0)
+                              }
+                              className="w-28 text-right"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <Input
+                              type="number"
+                              min="0"
+                              value={selection?.leadTimeDays ?? ""}
+                              onChange={(e) =>
+                                handleFieldChange(
+                                  product.id,
+                                  'leadTimeDays',
+                                  e.target.value ? parseInt(e.target.value) : null
+                                )
+                              }
+                              className="w-16 text-right"
+                              placeholder="-"
+                            />
+                          </td>
+                          <td className="text-right py-3 px-4 font-medium">
+                            {selection ? (
+                              formatPrice((selection.quantity || 0) * selection.unitPrice)
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Summary */}
+          {supplierSelections.length > 0 && (
+            <SourcingSummary summary={summary} currency="CNY" />
+          )}
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Recommendation Panel */}

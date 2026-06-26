@@ -12,6 +12,7 @@ import { BrandingConfigCard } from '@/components/settings/branding-config-card';
 import { FeedbackManagement } from '@/components/settings/feedback-management';
 import { MasterDataCard } from '@/components/settings/master-data-card';
 import { FileSpreadsheet } from 'lucide-react';
+
 export default function SettingsPage() {
   const { t, locale } = useI18n();
   const { toast } = useToast();

@@ -166,8 +166,14 @@ export function ProductSelectDialog({
       accessorKey: "projectIds",
       header: ({ column }) => <DataTableColumnHeader column={column} title={t("projects.title")} />,
       cell: ({ row }) => {
-        const count = row.original.projectIds.length
-        return <span className="text-slate-400 text-[10px]">{count > 0 ? `${count} Projects` : "-"}</span>
+        const pIds = row.original.projectIds
+        if (pIds.length === 0) return <span className="text-slate-400 text-[10px]">-</span>
+        const names = pIds.map(id => {
+          const p = projects.find(pr => pr.id === id)
+          return p ? (locale === 'zh' && p.name_cn ? p.name_cn : p.name) : id
+        })
+        const display = names.length <= 2 ? names.join(", ") : `${names.length} ${t("projects.title")}`
+        return <span className="text-slate-500 text-[11px] truncate max-w-[150px] block" title={names.join(", ")}>{display}</span>
       },
       filterFn: (row, id, value) => {
         const pIds = row.getValue(id) as string[]
@@ -188,7 +194,7 @@ export function ProductSelectDialog({
         </div>
       ),
     }
-  ], [t, locale, selectedIds, categories])
+  ], [t, locale, selectedIds, categories, projects])
 
   const handleConfirm = () => {
     const selectedIdsArray = Array.from(selectedIds)

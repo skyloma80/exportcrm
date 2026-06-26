@@ -1,0 +1,62 @@
+[
+  {
+    "attachments": null,
+    "code": "RFQ-2026-0002",
+    "deadline": "2026-02-05 00:00:00.000Z",
+    "id": "captg8143jzgndx",
+    "project": "quklwvxxrzp58s8",
+    "remarks": "价格已经确定，补录",
+    "status": "received",
+    "created": "2026-02-05 08:25:09.804Z"
+  },
+  {
+    "attachments": null,
+    "code": "RFQ-2026-0003",
+    "deadline": "2026-02-06 00:00:00.000Z",
+    "id": "cho732bcjcgk5hi",
+    "project": "0mhfn1s73s72jnu",
+    "remarks": "",
+    "status": "completed",
+    "created": "2026-02-06 04:44:51.727Z"
+  },
+  {
+    "attachments": null,
+    "code": "RFQ-2026-0001",
+    "deadline": "",
+    "id": "pumhkxiuyecvkr8",
+    "project": "w6xalbpq84kfynw",
+    "remarks": "",
+    "status": "received",
+    "created": "2026-02-06 06:53:39.379Z"
+  },
+  {
+    "attachments": null,
+    "code": "RFQ-2026-0001",
+    "deadline": "",
+    "id": "xymwy89zmemfo1e",
+    "project": "0mhfn1s73s72jnu",
+    "remarks": "",
+    "status": "received",
+    "created": "2026-03-06 14:25:46.789Z"
+  },
+  {
+    "attachments": null,
+    "code": "RFQ-2026-0001",
+    "deadline": "",
+    "id": "js1zhzctttqaq5q",
+    "project": "n08vqf2n18a3y5a",
+    "remarks": "",
+    "status": "received",
+    "created": "2026-03-10 05:59:03.074Z"
+  },
+  {
+    "attachments": null,
+    "code": "RFQ-2026-0001",
+    "deadline": "",
+    "id": "08nbkwuub1n9v9o",
+    "project": "w6xalbpq84kfynw",
+    "remarks": "",
+    "status": "draft",
+    "created": "2026-04-22 02:03:00.445Z"
+  }
+]

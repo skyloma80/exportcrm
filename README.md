@@ -30,8 +30,7 @@ ExportCRM 是一个现代化的外贸出口客户关系管理系统，专为金�
 
 ### 辅助功能
 - 📊 **仪表板** - KPI 统计、汇率卡片
-- ✅ **任务管理** - 待办事项、截止日期
-- 📁 **文件管理** - S3 存储、文档分类
+- - 📁 **文件管理** - S3 存储、文档分类
 - ⚙️ **系统配置** - 公司信息、基础数据
 
 ## 技术特性
@@ -60,30 +59,7 @@ cp .env.example .env.local
 ```
 
 编辑 `.env.local` 文件，配置必要的环境变量。
-
-### 3. 启动 PocketBase 和 MinIO
-
-```bash
-docker-compose up -d
-```
-
-这会启动：
-- PocketBase: http://localhost:8092
-- MinIO: http://localhost:9003 (API) / http://localhost:9004 (控制台)
-
-首次启动后，创建 PocketBase 超级用户：
-
-```bash
-docker exec -it exportcrm_pocketbase /usr/local/bin/pocketbase superuser create your@email.com yourpassword
-```
-
-创建 MinIO bucket：
-
-```bash
-docker exec exportcrm_minio mc mb /data/exportcrm-documents
-```
-
-### 4. 启动开发服务器
+ 
 
 ```bash
 npm run dev
@@ -117,97 +93,7 @@ npm run dev
 | `EXCHANGE_RATE_PROVIDER` | 汇率 API 提供商 | `exchangerate-api` |
 | `EXCHANGE_RATE_API_KEY` | API 密钥（如需要） | - |
 | `EXCHANGE_RATE_BASE_CURRENCY` | 基准货币 | `USD` |
-
-### AI 配置（可选）
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `AI_ENABLED` | 启用 AI 功能 | `false` |
-| `AI_PROVIDER` | AI 提供商 | - |
-| `AI_API_KEY` | AI API 密钥 | - |
-| `AI_MODEL` | AI 模型名称 | - |
-
-## 目录结构
-
-```
-exportcrm/
-├── app/                        # Next.js App Router
-│   ├── (authenticated)/        # 需要登录的页面
-│   │   ├── dashboard/          # 仪表板
-│   │   ├── customers/          # 客户管理
-│   │   ├── suppliers/          # 供应商管理
-│   │   ├── products/           # 产品管理
-│   │   ├── projects/           # 项目管理
-│   │   ├── rfqs/               # 询价管理
-│   │   ├── quotations/         # 报价管理
-│   │   ├── orders/             # 订单管理
-│   │   ├── purchase-orders/    # 采购订单
-│   │   ├── invoices/           # 发票管理
-│   │   ├── shipments/          # 发货管理
-│   │   ├── tasks/              # 任务管理
-│   │   ├── disk/               # 文件管理
-│   │   └── settings/           # 系统设置
-│   ├── (public)/               # 公开页面
-│   │   ├── login/              # 登录
-│   │   └── register/           # 注册
-│   └── api/                    # API 路由
-├── components/                 # React 组件
-│   ├── customers/              # 客户相关组件
-│   ├── suppliers/              # 供应商相关组件
-│   ├── products/               # 产品相关组件
-│   ├── data-table/             # 数据表格组件
-│   ├── disk/                   # 文件管理组件
-│   ├── layout/                 # 布局组件
-│   └── ui/                     # shadcn/ui 组件
-├── hooks/                      # React Hooks
-│   └── collections/            # 数据集合 Hooks
-├── lib/                        # 工具库
-│   ├── pocketbase/             # PocketBase 客户端
-│   │   ├── services/           # 数据服务
-│   │   └── base-service.ts     # 服务基类
-│   ├── s3/                     # S3 存储
-│   ├── constants/              # 常量定义
-│   │   ├── trade-standards.ts  # 国际贸易常量
-│   │   └── storage.ts          # 存储路径常量
-│   ├── services/               # 业务服务
-│   │   ├── code-generator.ts   # 业务编码生成
-│   │   ├── storage-path.ts     # 文档路径生成
-│   │   └── quotation-calculator.ts # 报价计算
-│   ├── i18n/                   # 国际化
-│   └── utils.ts                # 工具函数
-├── pocketbase/                 # PocketBase 配置
-│   └── pb_migrations/          # 数据库迁移
-├── types/                      # TypeScript 类型
-├── docker-compose.yml          # Docker 配置
-├── middleware.ts               # Next.js 中间件
-└── .env.example                # 环境变量模板
-```
-
-## 国际贸易常量
-
-系统内置以下国际贸易标准常量：
-
-- **Incoterms 2020** - EXW, FOB, CIF, DDP 等贸易术语
-- **集装箱类型** - 20GP, 40GP, 40HQ 等
-- **计量单位** - 数量、重量、长度、体积单位
-- **包装类型** - 纸箱、木托盘、木箱等
-- **运输方式** - 海运、空运、陆运、快递
-- **保险类型** - 基本险、附加险、特殊险
-
-## 业务编码规范
-
-| 实体类型 | 前缀 | 格式 | 示例 |
-|---------|------|------|------|
-| 客户 | C | C-YYYY-XXXX | C-2025-0001 |
-| 供应商 | S | S-YYYY-XXXX | S-2025-0001 |
-| 项目 | P | P-YYYY-XXXX | P-2025-0001 |
-| 产品 | PRD | PRD-YYYY-XXXX | PRD-2025-0001 |
-| 询价单 | RFQ | RFQ-YYYY-XXXX | RFQ-2025-0001 |
-| 报价单 | Q | Q-YYYY-XXXX | Q-2025-0001 |
-| 销售订单 | O | O-YYYY-XXXX | O-2025-0001 |
-| 采购订单 | PO | PO-YYYY-XXXX | PO-2025-0001 |
-| 形式发票 | PI | PI-YYYY-XXXX | PI-2025-0001 |
-| 商业发票 | CI | CI-YYYY-XXXX | CI-2025-0001 |
+ 
 
 ## 可用脚本
 

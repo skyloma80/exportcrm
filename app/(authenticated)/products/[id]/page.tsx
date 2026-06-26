@@ -25,6 +25,7 @@ import {
   Product, ProductCategory, ProductDocument 
 } from "@/lib/pocketbase/services/products"
 import { ProductDocumentManager } from "@/components/products/product-document-manager"
+import { ProductCostManager } from "@/components/products/product-cost-manager"
 
 export default function ProductDetailPage() {
   const router = useRouter()
@@ -185,6 +186,7 @@ export default function ProductDetailPage() {
         <TabsList>
           <TabsTrigger value="info">{t("products.tabs.info")}</TabsTrigger>
           <TabsTrigger value="documents">{t("products.tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="costs">{t("products.tabs.costs")}</TabsTrigger>
         </TabsList>
 
 
@@ -268,6 +270,14 @@ export default function ProductDetailPage() {
             productName={getDisplayName()}
             documents={documents}
             onDocumentsChange={handleDocumentsChange}
+          />
+        </TabsContent>
+
+        {/* Costs Tab */}
+        <TabsContent value="costs">
+          <ProductCostManager
+            productId={id}
+            productCode={product.code}
           />
         </TabsContent>
       </Tabs>

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "ree8ncainoosulz",
+    "received_at": "2026-02-05 08:27:49.270Z",
+    "rfq": "captg8143jzgndx",
+    "sent_at": "",
+    "status": "received",
+    "supplier": "fpkc5aomf7fom86",
+    "created": "2026-02-05 08:25:10.071Z"
+  },
+  {
+    "id": "4sjlhpbieamnohi",
+    "received_at": "2026-02-06 05:00:37.360Z",
+    "rfq": "cho732bcjcgk5hi",
+    "sent_at": "",
+    "status": "received",
+    "supplier": "fpkc5aomf7fom86",
+    "created": "2026-02-06 04:44:51.891Z"
+  },
+  {
+    "id": "ssgb4acx48muu17",
+    "received_at": "2026-02-06 07:09:55.745Z",
+    "rfq": "pumhkxiuyecvkr8",
+    "sent_at": "",
+    "status": "received",
+    "supplier": "fpkc5aomf7fom86",
+    "created": "2026-02-06 06:53:39.637Z"
+  },
+  {
+    "id": "dtyo5s5t8r0dzsp",
+    "received_at": "2026-03-06 14:26:11.713Z",
+    "rfq": "xymwy89zmemfo1e",
+    "sent_at": "",
+    "status": "received",
+    "supplier": "fpkc5aomf7fom86",
+    "created": "2026-03-06 14:25:46.957Z"
+  },
+  {
+    "id": "7re4yanex0glk8v",
+    "received_at": "2026-03-10 06:01:07.373Z",
+    "rfq": "js1zhzctttqaq5q",
+    "sent_at": "",
+    "status": "received",
+    "supplier": "fpkc5aomf7fom86",
+    "created": "2026-03-10 05:59:03.192Z"
+  },
+  {
+    "id": "hdqgazr0r6lb7fl",
+    "received_at": "",
+    "rfq": "08nbkwuub1n9v9o",
+    "sent_at": "",
+    "status": "pending",
+    "supplier": "fpkc5aomf7fom86",
+    "created": "2026-04-22 02:03:00.565Z"
+  }
+]

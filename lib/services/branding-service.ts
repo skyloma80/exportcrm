@@ -6,20 +6,13 @@
  * Supports bilingual content (English for customer documents, Chinese for supplier documents).
  */
 
-import { appConfigService } from '@/lib/pocketbase/services/app-config';
+import { documentBrandingService } from '@/lib/pocketbase/services/document-branding';
 import {
   BrandingConfig,
   DocumentBranding,
   DocumentType,
   DEFAULT_BRANDING_CONFIG,
 } from '@/lib/branding/types';
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const BRANDING_CONFIG_KEY = 'document_branding';
-const BRANDING_CATEGORY = 'branding';
 
 // ============================================================================
 // Branding Service
@@ -32,21 +25,33 @@ class BrandingService {
    * Get full branding configuration
    */
   async getBrandingConfig(): Promise<BrandingConfig> {
-    // Check cache first
     if (this.cache) {
       return this.cache;
     }
 
     try {
-      const config = await appConfigService.get<BrandingConfig>(
-        BRANDING_CONFIG_KEY,
-        DEFAULT_BRANDING_CONFIG
-      );
-      
-      // Merge with defaults to ensure all fields exist
-      const mergedConfig = this.mergeWithDefaults(config);
-      this.cache = mergedConfig;
-      return mergedConfig;
+      const record = await documentBrandingService.getFirst();
+      if (record) {
+        const config: BrandingConfig = {
+          company_name: record.company_name || DEFAULT_BRANDING_CONFIG.company_name,
+          company_name_cn: record.company_name_cn || DEFAULT_BRANDING_CONFIG.company_name_cn,
+          website_url: record.website_url || DEFAULT_BRANDING_CONFIG.website_url,
+          vat: record.vat,
+          logo_base64: record.logo_base64 || DEFAULT_BRANDING_CONFIG.logo_base64,
+          stamp_base64: record.stamp_base64 || DEFAULT_BRANDING_CONFIG.stamp_base64,
+          signature_base64: record.signature_base64 || DEFAULT_BRANDING_CONFIG.signature_base64,
+          logo_url: record.logo_url,
+          logo_path: record.logo_path || DEFAULT_BRANDING_CONFIG.logo_path,
+          stamp_path: record.stamp_path || DEFAULT_BRANDING_CONFIG.stamp_path,
+          primary_office: record.primary_office || DEFAULT_BRANDING_CONFIG.primary_office,
+          secondary_office: record.secondary_office || DEFAULT_BRANDING_CONFIG.secondary_office,
+          default_signer: record.default_signer || DEFAULT_BRANDING_CONFIG.default_signer,
+        };
+        const mergedConfig = this.mergeWithDefaults(config);
+        this.cache = mergedConfig;
+        return mergedConfig;
+      }
+      return DEFAULT_BRANDING_CONFIG;
     } catch (error) {
       console.error('[BrandingService] Failed to get branding config:', error);
       return DEFAULT_BRANDING_CONFIG;
@@ -156,10 +161,23 @@ class BrandingService {
         },
       };
 
-      // Save to AppConfig
-      await appConfigService.set(BRANDING_CONFIG_KEY, updatedConfig, BRANDING_CATEGORY as any);
-      
-      // Update cache
+      // Save to document_branding collection
+      await documentBrandingService.save({
+        company_name: updatedConfig.company_name,
+        company_name_cn: updatedConfig.company_name_cn,
+        website_url: updatedConfig.website_url,
+        vat: updatedConfig.vat,
+        logo_base64: updatedConfig.logo_base64,
+        stamp_base64: updatedConfig.stamp_base64,
+        signature_base64: updatedConfig.signature_base64,
+        logo_url: updatedConfig.logo_url,
+        logo_path: updatedConfig.logo_path,
+        stamp_path: updatedConfig.stamp_path,
+        primary_office: updatedConfig.primary_office,
+        secondary_office: updatedConfig.secondary_office,
+        default_signer: updatedConfig.default_signer,
+      });
+
       this.cache = updatedConfig;
     } catch (error) {
       console.error('[BrandingService] Failed to update branding config:', error);
@@ -172,8 +190,6 @@ class BrandingService {
    */
   clearCache(): void {
     this.cache = null;
-    // Also clear appConfigService cache to ensure fresh data
-    appConfigService.clearCache();
   }
 
   /**

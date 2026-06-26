@@ -668,6 +668,10 @@ export default function ProjectDetailPage() {
                 hs_code: string
               }[]}
               searchKey="name"
+              onRowClick={(row) => {
+                const p = row as { productId: string }
+                if (p.productId) router.push(`/products/${p.productId}`)
+              }}
               actions={
                 <>
                   <Button variant="outline" size="sm" className="h-8" onClick={() => setImportDialogOpen(true)}>

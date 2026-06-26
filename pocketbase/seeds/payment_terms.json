@@ -1,0 +1,11 @@
+[
+  {"id":"term_tt30","code":"TT30","name":"30% deposit, 70% before shipment","name_cn":"30%定金，70%发货前","sort_order":1,"is_active":true},
+  {"id":"term_tt50","code":"TT50","name":"50% deposit, 50% before shipment","name_cn":"50%定金，50%发货前","sort_order":2,"is_active":true},
+  {"id":"term_tt100","code":"TT100","name":"100% before shipment","name_cn":"100%发货前付清","sort_order":3,"is_active":true},
+  {"id":"term_lc","code":"LC","name":"Letter of Credit","name_cn":"信用证","sort_order":4,"is_active":true},
+  {"id":"term_oa30","code":"OA30","name":"Open Account 30 days","name_cn":"月结30天","sort_order":5,"is_active":true},
+  {"id":"term_oa60","code":"OA60","name":"Open Account 60 days","name_cn":"月结60天","sort_order":6,"is_active":true},
+  {"id":"term_oa90","code":"OA90","name":"Open Account 90 days","name_cn":"月结90天","sort_order":7,"is_active":true},
+  {"id":"term_dp","code":"DP","name":"Documents against Payment","name_cn":"付款交单","sort_order":8,"is_active":true},
+  {"id":"term_da","code":"DA","name":"Documents against Acceptance","name_cn":"承兑交单","sort_order":9,"is_active":true}
+]

@@ -27,7 +27,6 @@ import {
   TabType,
   KPIStats,
   ChartDataPoint,
-  TaskSummary,
   OrderSummary,
   PaymentSummary,
   ShipmentSummary
@@ -43,14 +42,13 @@ export default function DashboardPage() {
   const [kpiStats, setKpiStats] = useState<KPIStats | null>(null)
   const [chartData, setChartData] = useState<ChartDataPoint[]>([])
   const [timeRange, setTimeRange] = useState<TimeRange>('30d')
-  const [activeTab, setActiveTab] = useState<TabType>('tasks')
+  const [activeTab, setActiveTab] = useState<TabType>('orders')
 
   const [kpiError, setKpiError] = useState(false)
   const [chartLoading, setChartLoading] = useState(false)
 
   // Tab data state
-  const [tasks, setTasks] = useState<TaskSummary[]>([])
-  const [orders, setOrders] = useState<OrderSummary[]>([])
+   const [orders, setOrders] = useState<OrderSummary[]>([])
   const [payments, setPayments] = useState<PaymentSummary[]>([])
   const [shipments, setShipments] = useState<ShipmentSummary[]>([])
 
@@ -83,13 +81,12 @@ export default function DashboardPage() {
   // Load tab data
   const loadTabData = async () => {
     try {
-      const [tasksData, ordersData, paymentsData, shipmentsData] = await Promise.all([
-        dashboardService.getRecentTasks(),
-        dashboardService.getRecentOrders(),
+      const [  ordersData, paymentsData, shipmentsData] = await Promise.all([
+         dashboardService.getRecentOrders(),
         dashboardService.getPendingPayments(),
         dashboardService.getUpcomingShipments(),
       ])
-      setTasks(tasksData)
+
       setOrders(ordersData)
       setPayments(paymentsData)
       setShipments(shipmentsData)
@@ -189,14 +186,7 @@ export default function DashboardPage() {
           loading={loading}
           error={kpiError}
         />
-        <KPICard
-          title={isZh ? '待办任务' : 'Pending Tasks'}
-          value={kpiStats?.tasks.pending || 0}
-          icon={kpiStats?.tasks.overdue ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <Clock className="h-4 w-4" />}
-          loading={loading}
-          error={kpiError}
-          subtitle={kpiStats?.tasks.overdue ? `${kpiStats.tasks.overdue} ${isZh ? '已逾期' : 'overdue'}` : undefined}
-        />
+
       </div>
 
       {/* Recent Projects Card + Revenue Trend Chart */}
@@ -212,16 +202,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Dashboard Tabs */}
-      <DashboardTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        tasks={tasks}
-        orders={orders}
-        payments={payments}
-        shipments={shipments}
-        loading={loading}
-      />
+
 
     </div>
   )

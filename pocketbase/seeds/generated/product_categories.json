@@ -1,0 +1,44 @@
+[
+  {
+    "id": "eqeyzyvzubkdlr9",
+    "name": "LED",
+    "name_cn": "",
+    "sort_order": 0,
+    "created": ""
+  },
+  {
+    "id": "x2nl8208twxy96x",
+    "name": "Machined Parts",
+    "name_cn": "金属机加件",
+    "sort_order": 1,
+    "created": "2026-04-23 02:32:39.473Z"
+  },
+  {
+    "id": "z6epia0qdi6uegt",
+    "name": "Motorcycle Parts",
+    "name_cn": "摩托车零配件",
+    "sort_order": 2,
+    "created": "2026-04-23 02:34:09.926Z"
+  },
+  {
+    "id": "67spbilpc5946u3",
+    "name": "Client",
+    "name_cn": "按客户",
+    "sort_order": 3,
+    "created": "2026-05-29 10:34:26.222Z"
+  },
+  {
+    "id": "b552ykd0d9hbts5",
+    "name": "BKL",
+    "name_cn": "BKL",
+    "sort_order": 4,
+    "created": "2026-05-29 10:35:05.978Z"
+  },
+  {
+    "id": "d65u1c4s7t7nzvj",
+    "name": "BKL-Rear Axle",
+    "name_cn": "",
+    "sort_order": 5,
+    "created": "2026-05-29 10:35:48.812Z"
+  }
+]
