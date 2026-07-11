@@ -5,7 +5,7 @@ Provides PocketBase API CRUD operations for Hermes agents.
 """
 import os, sys, json, urllib.request, urllib.error
 
-CRM_API_URL = os.environ.get("CRM_API_URL", "http://localhost:8090")
+CRM_API_URL = os.environ.get("CRM_API_URL", "http://42.194.150.84:8091")
 CRM_API_TOKEN = os.environ.get("CRM_API_TOKEN")
 
 if not CRM_API_TOKEN:

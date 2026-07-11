@@ -81,6 +81,22 @@ jobs:
           target: "/home/ubuntu/exportcrm/pocketbase/pb_migrations"
           strip_components: 1
 
+      # 6.5 部署前备份 PocketBase 数据库
+      - name: Backup PocketBase before deploy
+        uses: appleboy/ssh-action@v1.2.0
+        continue-on-error: true
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/exportcrm
+            mkdir -p backups
+            BACKUP_NAME="pb_backup_$(date +%Y%m%d_%H%M%S).zip"
+            docker exec pb ./pocketbase backup "./backups/${BACKUP_NAME}" || \
+            echo "WARN: Backup failed, proceeding with deploy"
+            echo "Backup: ${BACKUP_NAME}"
+
       # 7. SCP 镜像 tar 包到服务器
       - name: Copy image tarball to server
         uses: appleboy/scp-action@v0.1.7
@@ -104,3 +120,25 @@ jobs:
             docker compose up -d --force-recreate
             docker image prune -f
             rm -f crm-image.tar.gz
+
+      # 9. 部署后健康检查
+      - name: Post-deploy health check
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Waiting for services to start..."
+            sleep 20
+            # 检查 PocketBase
+            PB_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8091/api/health || echo "000")
+            echo "PocketBase health: $PB_STATUS"
+            # 检查 Next.js
+            APP_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:3333/ || echo "000")
+            echo "Next.js health: $APP_STATUS"
+            if [ "$PB_STATUS" != "200" ] || [ "$APP_STATUS" != "200" ]; then
+              echo "WARNING: Health check failed! PB=$PB_STATUS APP=$APP_STATUS"
+              exit 1
+            fi
+            echo "All services healthy."

@@ -1,115 +1,49 @@
 ---
 name: crm-auth
-description: "PocketBase authentication and CRM API connection management"
-version: 1.0.0
+description: 认证管理 — PocketBase 用户认证、Token 管理、登录/注销
+version: 2.0.0
 author: Hermes Agent
-license: MIT
-tags: [CRM, Auth, PocketBase, API]
 ---
 
-# CRM Auth Skill
+# CRM 认证管理
 
-Authenticate and manage connections to the AlustarsCRM PocketBase backend.
+## 概述
 
-## Prerequisites
+所有 CRM API 操作均需先通过认证。支持 API Token 和用户名密码两种方式，通过环境变量配置。
 
-- CRM_API_URL and CRM_API_TOKEN set in environment
-- PocketBase server running at CRM_API_URL
+## 环境变量
 
-## PocketBase Collections Overview
+| 变量 | 说明 |
+|------|------|
+| `CRM_API_URL` | PocketBase 服务器地址（默认 http://42.194.150.84:8091） |
+| `CRM_API_TOKEN` | 静态 API Token（优先使用） |
+| `CRM_USER` / `CRM_PASS` | 用户名密码认证（备用） |
 
-| Collection | Description | 
-|-----------|-------------|
-| `customers` | Customer records |
-| `suppliers` | Supplier records |
-| `products` | Product/Item catalog |
-| `projects` | Project management |
-| `rfqs` | Request for Quotations |
-| `quotations` | Customer quotations |
-| `orders` (also `so`) | Sales orders |
-| `purchase_orders` (also `po`) | Purchase orders |
-| `proforma_invoices` | Proforma Invoices |
-| `shipments` | Shipping records |
-| `feedbacks` | User feedback/bug reports |
-| `tasks` | Task management |
-| `activity_logs` | Activity audit trail |
-| `exchange_rate_cache` | Cached exchange rates |
-| `product_costs` | Product cost tracking |
-| `user_settings` | User SMTP/branding settings |
-| `app_config` | Application configuration |
-| `ai_configs` | AI provider configuration |
-| `customer_tracking` | Customer tracking/CRM pipeline |
-| `customer_activities` | Customer activity log |
-| `remittance` | Payment remittance |
-| `service_providers` | Service provider directory |
-| `code_sequences` | Auto-numbering sequences |
-| `company_info` | Company branding/contact info |
-| `payment_terms` | Payment term definitions |
-| `ports_of_loading` | Port of loading directory |
-| `ports_of_destination` | Port of destination directory |
+> `CRM_API_TOKEN` 优先于 `CRM_USER`/`CRM_PASS`。两者都设置时用 Token。都没设置时运行时会提示。
 
-## Authentication Script
+## 认证方式
+
+### 方式一：API Token（优先）
 
 ```python
-import os
-import json
-import urllib.request
-
-CRM_API_URL = os.environ.get("CRM_API_URL", "http://localhost:8090")
-CRM_API_TOKEN = os.environ.get("CRM_API_TOKEN")
-
-def get_pb_headers():
-    """Get authenticated PocketBase API headers"""
-    return {
-        "Authorization": f"Bearer {CRM_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
-
-def pb_get(collection: str, record_id: str = "", params: str = ""):
-    """GET records from PocketBase"""
-    url = f"{CRM_API_URL}/api/collections/{collection}/records"
-    if record_id:
-        url += f"/{record_id}"
-    if params:
-        url += f"?{params}"
-    req = urllib.request.Request(url, headers=get_pb_headers())
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
-
-def pb_list(collection: str, params: str = "perPage=100&sort=-created"):
-    """List records with pagination"""
-    url = f"{CRM_API_URL}/api/collections/{collection}/records?{params}"
-    req = urllib.request.Request(url, headers=get_pb_headers())
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
-
-def pb_create(collection: str, data: dict):
-    """Create a record"""
-    url = f"{CRM_API_URL}/api/collections/{collection}/records"
-    body = json.dumps(data).encode()
-    req = urllib.request.Request(url, data=body, headers=get_pb_headers(), method="POST")
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
-
-def pb_update(collection: str, record_id: str, data: dict):
-    """Update a record"""
-    url = f"{CRM_API_URL}/api/collections/{collection}/records/{record_id}"
-    body = json.dumps(data).encode()
-    req = urllib.request.Request(url, data=body, headers=get_pb_headers(), method="PATCH")
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
-
-def pb_delete(collection: str, record_id: str):
-    """Delete a record"""
-    url = f"{CRM_API_URL}/api/collections/{collection}/records/{record_id}"
-    req = urllib.request.Request(url, headers=get_pb_headers(), method="DELETE")
-    with urllib.request.urlopen(req) as resp:
-        return resp.status == 204
+from authenticate import list_records, create_record, update_record, delete_record
+customers = list_records("customers")
 ```
 
-## Usage
+### 方式二：用户名密码自动登录
 
-1. First, ensure CRM_API_URL and CRM_API_TOKEN are set
-2. Load crm-auth skill to get the `authenticate` helper
-3. Use `pb_list`, `pb_get`, `pb_create`, `pb_update`, `pb_delete` for CRUD operations
-4. All subsequent CRM skills depend on this authentication
+```python
+from authenticate import list_records
+customers = list_records("customers")  # 自动取 token，无需额外步骤
+```
+
+## 常用操作
+
+```python
+# 手动获取 token
+from authenticate import authenticate
+token = authenticate()
+
+# 获取用户列表
+users = list_records("users")
+```

@@ -2,7 +2,7 @@
 CRM Auth Module — PocketBase API client for Hermes agents.
 
 Usage (Python):
-    export CRM_API_URL=http://localhost:8090
+    export CRM_API_URL=http://42.194.150.84:8091
     export CRM_API_TOKEN=***
     
     from authenticate import pb_list, pb_get, pb_create, pb_update, pb_delete
@@ -22,7 +22,7 @@ Usage (CLI):
 """
 import os, sys, json, urllib.request, urllib.error
 
-CRM_API_URL = os.environ.get("CRM_API_URL", "http://localhost:8090")
+CRM_API_URL = os.environ.get("CRM_API_URL", "http://42.194.150.84:8091")
 CRM_API_TOKEN = os.environ.get("CRM_API_TOKEN", "")
 CRM_USER = os.environ.get("CRM_USER", "")
 CRM_PASS = os.environ.get("CRM_PASS", "")

@@ -5,7 +5,7 @@ PocketBase connection and authentication for the AlustarsCRM system.
 ## Environment
 
 ```bash
-export CRM_API_URL=http://localhost:8090
+export CRM_API_URL=http://42.194.150.84:8091
 export CRM_API_TOKEN=your_token_here
 ```
 

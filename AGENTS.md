@@ -1,17 +1,17 @@
-# ExportCRM — AI Agent Setup
+# AlustarsCRM — AI Agent Setup (星铝)
 
 ## Overview
 
 This project integrates with Hermes Agent through a skill-based architecture. Two primary agents are available:
 
-1. **crm-developer** — DevOps agent managing feedbacks, code fixes, and CI/CD
+1. **crm-developer** — DevOps agent managing tasks, code fixes, and CI/CD
 2. **crm-user-assistant** — Role-based business agent for all CRM operations
 
 ## Environment Variables
 
 ```env
 # PocketBase API — required for all CRM operations
-CRM_API_URL=http://localhost:8090
+CRM_API_URL=http://42.194.150.84:8091
 # Option 1: API Token (from CRM Settings > API Access)
 CRM_API_TOKEN=*** Option 2: Auto-auth with CRM credentials
 CRM_USER=271341794@qq.com
@@ -25,14 +25,14 @@ CRM_PASS=085711jern
 When CRM_API_TOKEN is not set but CRM_USER/CRM_PASS are, the authenticate module automatically logs in:
 
 ```python
-from authenticate import pb_list
-customers = pb_list("customers")  # 自动取 token，无需额外步骤
+from authenticate import list_records
+customers = list_records("customers")  # 自动取 token，无需额外步骤
 ```
 
 ## Connection
 
 ```python
-from authenticate import pb_list, pb_create, pb_update, pb_delete
+from authenticate import list_records, create_record, update_record, delete_record
 ```
 
 ## Complete Skills Reference
@@ -54,9 +54,7 @@ All skills located in `.agents/skills/crm-*/`:
 | `crm-suppliers` | Supplier management | Managing supplier records |
 | `crm-products` | Product catalog & cost tracking | Managing product catalog |
 | `crm-po` | Purchase order management | Managing purchase orders |
-| `crm-rfqs` | RFQ management & supplier sourcing | Sending RFQs to suppliers |
 | `crm-shipments` | Shipment & logistics management | Managing shipments |
-| `crm-feedbacks` | User feedback & bug tracking | Managing feedback/bugs |
 | `crm-tasks` | Task management | Creating/assigning tasks |
 
 ### Functional Skills
@@ -75,7 +73,7 @@ All skills located in `.agents/skills/crm-*/`:
 ### Agent Skills
 | Skill | Purpose | Load When... |
 |-------|---------|-------------|
-| `crm-developer` | DevOps: feedback→branch→fix→deploy | Fixing bugs/implementing features |
+| `crm-developer` | DevOps: task→branch→fix→deploy | Fixing bugs/implementing features |
 | `crm-user-assistant` | Role-based master orchestrator | Starting any CRM task |
 
 ## Quick Start
@@ -96,9 +94,6 @@ skill_view(name='crm-quotations')  # for quotations
 ```bash
 # Load developer agent
 skill_view(name='crm-developer')
-
-# Check feedbacks
-python3 -c "from authenticate import pb_list; print(pb_list('feedbacks','filter=(status=\\'new\\')&sort=-created'))"
 ```
 
 ## Architecture
@@ -107,26 +102,25 @@ python3 -c "from authenticate import pb_list; print(pb_list('feedbacks','filter=
 Hermes Agent
 └── crm-user-assistant (role-based orchestrator)
     ├── crm-auth          → PocketBase API
-    ├── crm-customers     → customers, customer_contacts
-    ├── crm-projects      → projects, project_cost_tables
-    ├── crm-quotations    → quotations, quotation_items
-    ├── crm-orders        → orders (so), order_items
-    ├── crm-suppliers     → suppliers, supplier_contacts
-    ├── crm-products      → products, product_costs
-    ├── crm-po            → purchase_orders (po), po_payments
-    ├── crm-rfqs          → rfqs, rfq_items
-    ├── crm-shipments     → shipments, customs_clearance
+    ├── crm-customers     → customers, customer_contacts, customer_tracking, customer_activities
+    ├── crm-projects      → projects, products_projects
+    ├── crm-quotations    → quotations (items JSONB)
+    ├── crm-orders        → so (items JSONB), order_payments
+    ├── crm-suppliers     → suppliers, supplier_contacts, supplier_bank_accounts
+    ├── crm-products      → products, product_categories, product_documents, product_costs
+    ├── crm-po            → po (items JSONB), po_payments
+    ├── crm-shipments     → shipments (items JSONB)
     ├── crm-email         → SendGrid/SMTP
     ├── crm-workflow      → Order status engine
-    ├── crm-price-compare → Product cost comparison
+    ├── crm-price-compare → product_costs supplier comparison
     ├── crm-documents     → PI/PO Excel/PDF generation
     ├── crm-disk          → S3 file management
     ├── crm-exchange-rates  → Currency conversion
     ├── crm-dashboard     → Business analytics
-    ├── crm-company-info  → Branding & config
+    ├── crm-company-info  → Company branding & config
     ├── crm-service-providers → Logistics partners
+    ├── crm-app-config    → System key-value config
     ├── crm-tasks         → Task management
-    ├── crm-feedbacks     → Bug/feature tracking
     └── crm-developer     → Git → OpenCode → CI/CD
 ```
 
