@@ -13,7 +13,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # 构建时使用 .env.local（如果存在）
 COPY .env.local* ./
-RUN yarn build
+# 构建 Page Agent 生产 IIFE 并复制到 public/ 供 Python 桥接使用
+RUN node scripts/build-page-agent.mjs && \
+    cp node_modules/page-agent/dist/iife/page-agent.js public/page-agent.js && \
+    yarn build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

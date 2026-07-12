@@ -5,6 +5,9 @@ node_modules/
 .next/
 out/
 
+# Page Agent production IIFE (built during Docker image build)
+public/page-agent.js
+
 # Environment files
 .env
 .env.local

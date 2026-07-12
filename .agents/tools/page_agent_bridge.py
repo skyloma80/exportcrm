@@ -85,10 +85,15 @@ def _inject_page_agent(page):
     root = os.getcwd()
 
     if mode == "production":
-        local = os.path.join(root, "node_modules", "page-agent", "dist", "iife", "page-agent.js")
-        if os.path.isfile(local):
-            page.add_script_tag(path=local)
-            return
+        local_paths = [
+            os.path.join(root, "node_modules", "page-agent", "dist", "iife", "page-agent.js"),
+            os.path.join(root, "public", "page-agent.js"),
+            os.path.join(root, "..", "node_modules", "page-agent", "dist", "iife", "page-agent.js"),
+        ]
+        for local in local_paths:
+            if os.path.isfile(local):
+                page.add_script_tag(path=local)
+                return
         raise RuntimeError(
             "Production IIFE not found. Run: npm run build:page-agent"
         )
