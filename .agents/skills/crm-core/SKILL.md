@@ -192,5 +192,7 @@ preparing → booking → customs_clearance → loaded → handed_over → shipp
 | `disk_delete(path)` | disk_ops.py | 删除 S3 文件/目录 | api/disk/delete |
 | `disk_folders()` | disk_ops.py | 获取目录树 | api/disk/folders |
 | `disk_ensure_folder(path)` | disk_ops.py | 创建目录 | api/disk/ensure-folder |
+| `PageAgentForm` | page_agent_bridge.py | 浏览器表单填充 & 用户确认 | Playwright + Page Agent CDN，打开 CRM 网页预填表单，用户预览后确认 |
+| `preview_and_confirm(type, data)` | page_agent_bridge.py | 一键预览确认 | 打开浏览器 → 登录 → 填充 → 等用户确认 |
 | `calc_packing(specs_text)` | pallet_packing.py | 托盘打包 & 体积计算 | 解析箱型规格 → 最优托盘混装 → 3D 可视化 |
 

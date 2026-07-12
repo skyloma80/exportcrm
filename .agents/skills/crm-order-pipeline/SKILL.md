@@ -56,6 +56,90 @@ pi = generate_and_send_pi(so_id="xxx", email_to="customer@example.com")
 # → {"pi_file": "/path/to/pi.xlsx", "email_sent_to": "customer@example.com"}
 ```
 
+## Page Agent 浏览器模式（需用户确认的操作用此模式）
+
+对于**新建 SO、新建报价、生成 PI 前预览**等需要用户确认的操作，可以使用 Page Agent 打开浏览器，在 CRM Web UI 中预填表单，让用户预览后手动提交。
+
+### 架构
+```
+AI Agent (OpenCode)
+  └─ Python: page_agent_bridge.py
+       └─ Playwright → 打开浏览器
+            └─ 注入 Page Agent CDN
+                 └─ 导航到 CRM 页面 → 自动填充表单
+                      └─ 用户预览确认 → 手动提交
+```
+
+### 一键预览确认
+```python
+from tools.page_agent_bridge import preview_and_confirm
+
+# 创建 SO 前让用户预览
+preview_and_confirm(
+    form_type="so",
+    form_data={
+        "customer_name": "ABC Corp",
+        "currency": "USD",
+        "items": [
+            {"product_name": "Product A", "quantity": 100, "unit_price": 25},
+            {"product_name": "Product B", "quantity": 50, "unit_price": 60},
+        ],
+        "total_amount": 5500.00,
+    }
+)
+```
+
+### 精细控制（登录 → 导航 → 填充 → 等确认）
+```python
+from tools.page_agent_bridge import PageAgentForm
+
+with PageAgentForm(headless=False) as pa:
+    # 1. 登录 CRM
+    pa.login()
+
+    # 2. 导航到新建 SO 页面
+    pa.navigate("/so/new")
+
+    # 3. 填充表单
+    pa.fill_new_so_form({
+        "customer_name": "ABC Corp",
+        "currency": "USD",
+        "incoterm": "FOB Shanghai",
+        "items": [{"product_name": "Product A", "quantity": 100, "unit_price": 25}],
+    })
+
+    # 4. 等待用户确认
+    pa.wait_for_user("请核对 SO 信息，确认后点击提交")
+```
+
+### 与现有 API 流程配合
+
+在 `process_po_flow` 中加入 `browser_mode=True` 使用浏览器模式：
+```python
+# API 模式（无用户确认）
+result = process_po_flow(po_id="xxx")
+
+# 浏览器模式（打开页面让用户确认）
+from tools.page_agent_bridge import preview_and_confirm
+from tools.order_pipeline import analyze_po
+
+analysis = analyze_po("xxx")
+if analysis.get("can_proceed_to_so"):
+    preview_and_confirm("so", analysis["so_preview"])
+    # 用户确认后，再调用 API 创建
+    from tools.order_pipeline import create_so_from_po
+    so = create_so_from_po("xxx")
+```
+
+### 适用场景
+
+| 操作 | 推荐模式 | 原因 |
+|------|---------|------|
+| 查询数据、状态推进 | API 直连 | 快，无需用户介入 |
+| **新建 SO / PO / 报价** | **Page Agent 浏览器** | 用户需要确认金额、条款 |
+| **PI 生成前预览** | **Page Agent 浏览器** | 用户需要检查格式和内容 |
+| 批量导入、简单更新 | API 直连 | 效率优先 |
+
 ### 价格检查逻辑
 - PO 有价格 → 直接使用，检查利润率
 - PO 无价格 → 提示用户手动输入
