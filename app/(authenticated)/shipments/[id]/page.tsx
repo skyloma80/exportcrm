@@ -37,14 +37,14 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
   }, [shipment, resolvedOrderId]);
 
   const returnUrl = resolvedOrderId
-    ? `/orders/${resolvedOrderId}/shipments`
-    : '/orders';
+    ? `/so/${resolvedOrderId}/shipments`
+    : '/so';
 
   useEffect(() => {
     if (!shipment || !resolvedOrderId) return;
     const order = shipment.expand?.order;
     setBreadcrumb([
-      { label: order?.code || resolvedOrderId, href: `/orders/${resolvedOrderId}` },
+      { label: order?.code || resolvedOrderId, href: `/so/${resolvedOrderId}` },
       { label: shipment.code || shipment.id },
     ]);
     return () => setBreadcrumb([]);

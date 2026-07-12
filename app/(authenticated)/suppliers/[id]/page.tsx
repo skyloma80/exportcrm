@@ -585,9 +585,7 @@ export default function SupplierDetailPage() {
                 </CardTitle>
                 <CardDescription>{t("suppliers.products.description")}</CardDescription>
               </div>
-              <Button variant="outline" onClick={() => router.push(`/rfqs?supplier=${id}`)}>
-                {locale === 'zh' ? '查看相关询价' : 'View Related RFQs'}
-              </Button>
+              
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-center py-8">

@@ -47,7 +47,7 @@ export function ItemsStep({
   const fetchOrderItems = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/orders/${orderId}/items-with-shipped?excludeShipmentId=${shipmentId}`);
+      const response = await fetch(`/api/so/${orderId}/items-with-shipped?excludeShipmentId=${shipmentId}`);
       if (!response.ok) throw new Error('Failed to fetch order items');
       
       const data = await response.json();

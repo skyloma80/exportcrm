@@ -142,7 +142,7 @@ export function PaymentManager({ orderId, orderCode, customerId, projectId, tota
 
   const loadReceiptFiles = async () => {
     try {
-      const res = await fetch(`/api/orders/${orderId}/payment-receipts`);
+      const res = await fetch(`/api/so/${orderId}/payment-receipts`);
       if (res.ok) {
         const data = await res.json();
         setFilesByType(data.filesByType || { deposit: [], progress: [], final: [] });
@@ -246,7 +246,7 @@ export function PaymentManager({ orderId, orderCode, customerId, projectId, tota
         uploadFormData.append('file', selectedFile);
         uploadFormData.append('type', formData.type);
         
-        const res = await fetch(`/api/orders/${orderId}/payment-receipts`, {
+        const res = await fetch(`/api/so/${orderId}/payment-receipts`, {
           method: 'POST',
           body: uploadFormData,
         });

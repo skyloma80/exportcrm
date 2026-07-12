@@ -244,7 +244,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
         title: t("quotations.convertToOrderSuccess"),
       })
       if (result.order) {
-        router.push(`/orders/${result.order.id}?project=${projectIdFromUrl}`)
+        router.push(`/so/${result.order.id}?project=${projectIdFromUrl}`)
       }
     } catch (err: any) {
       console.error("Convert to order error:", err)
@@ -590,7 +590,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
               {existingOrder ? (
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/orders/${existingOrder.id}?project=${projectIdFromUrl}`)}
+                  onClick={() => router.push(`/so/${existingOrder.id}?project=${projectIdFromUrl}`)}
                   className="w-full justify-center"
                 >
                   <FileText className="mr-2 h-4 w-4" />

@@ -9,7 +9,6 @@ export const CODE_PREFIXES = {
   SUPPLIER: 'SUP',
   PROJECT: 'PRJ',
   PRODUCT: 'PRD',
-  RFQ: 'RFQ',
   QUOTATION: 'QUO',
   ORDER: 'ORD',
   PURCHASE_ORDER: 'PO',
@@ -31,7 +30,6 @@ const COLLECTION_MAP: Record<string, string> = {
   SUP: 'suppliers',
   PRJ: 'projects',
   PRD: 'products',
-  RFQ: 'rfqs',
   QUO: 'quotations',
   ORD: 'so',
   PO: 'po',
@@ -57,7 +55,6 @@ const CODE_PATTERNS: Record<string, { pattern: string; seqDigits: number; useYea
   SUP: { pattern: 'SUP-', seqDigits: 4, useYear: true, useMonth: false },
   PRJ: { pattern: 'PRJ-', seqDigits: 4, useYear: true, useMonth: false },
   PRD: { pattern: 'PRD-', seqDigits: 4, useYear: true, useMonth: false },
-  RFQ: { pattern: 'RFQ-', seqDigits: 4, useYear: true, useMonth: false },
   QUO: { pattern: 'QUO-', seqDigits: 4, useYear: true, useMonth: false },
   PI: { pattern: 'PI-', seqDigits: 4, useYear: true, useMonth: false },
   CI: { pattern: 'CI-', seqDigits: 4, useYear: true, useMonth: false },
@@ -249,13 +246,6 @@ export async function generateProductCode(pbInstance?: PocketBase): Promise<stri
 }
 
 /**
- * Generates a new unique RFQ code: RFQ-{YYYY}-XXXX
- */
-export async function generateRFQCode(pbInstance?: PocketBase): Promise<string> {
-  return generateCodeByPrefix('RFQ', pbInstance);
-}
-
-/**
  * Generates a new unique quotation code: QUO-{YYYY}-XXXX
  */
 export async function generateQuotationCode(pbInstance?: PocketBase): Promise<string> {
@@ -288,7 +278,6 @@ export async function generateCode(prefix: CodePrefix | string, pbInstance?: Poc
     SUP: () => generateSupplierCode(pbInstance),
     PRJ: () => generateProjectCode(pbInstance),
     PRD: () => generateProductCode(pbInstance),
-    RFQ: () => generateRFQCode(pbInstance),
     QUO: () => generateQuotationCode(pbInstance),
     SHP: () => generateShipmentCode(pbInstance),
     TSK: () => generateTaskCode(pbInstance),
@@ -422,7 +411,6 @@ export const codeGenerator = {
   generateSupplierCode,
   generateProjectCode,
   generateProductCode,
-  generateRFQCode,
   generateQuotationCode,
   generateShipmentCode,
   generateTaskCode,

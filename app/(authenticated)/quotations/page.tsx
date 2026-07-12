@@ -292,7 +292,7 @@ export default function QuotationsPage() {
         description: result.order ? `订单号: ${result.order.code}` : undefined,
       })
       if (result.order) {
-        router.push(`/orders/${result.order.id}?project=${quotation.project}`)
+        router.push(`/so/${result.order.id}?project=${quotation.project}`)
       }
     } catch (err: any) {
       console.error("Convert to order error:", err)

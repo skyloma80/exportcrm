@@ -1,111 +1,40 @@
 ---
 name: crm-workflow
-description: "Order status workflow management - advance, cancel, and track order lifecycle"
-version: 1.0.0
+description: 工作流 — 订单状态推进、取消
+version: 3.0.0
 author: Hermes Agent
-license: MIT
-tags: [CRM, Workflow, Orders, Status]
-depends_on: [crm-auth, crm-orders]
 ---
 
-# CRM Workflow Skill
+# CRM 工作流
 
-Manage order status workflow progression from draft through to completion.
+```python
+from tools.advance_so_status import advance_so_status, cancel_so
+from tools.advance_po_status import advance_po_status, cancel_po
+from tools.advance_shipment_status import advance_shipment_status
+```
 
-## Order Status Flow
+## 销售订单
 
 ```
 draft → confirmed → in_production → ready_to_ship → shipped → delivered → completed
-    ↘ cancelled ↗ (any non-terminal state)
-         ↘ draft (reactivate)
+    ↘ cancelled ↗ (终态)
+         ↘ draft (从 cancelled 重新激活)
 ```
 
-## Status Definitions
+`advance_so_status(id)` 自动推进一步，`cancel_so(id)` 取消。
+`advance_so_status(id)` 在 shipped 时自动记录 `estimated_shipping_date`。
 
-| Status | Description |
-|--------|-------------|
-| `draft` | Initial draft state |
-| `confirmed` | Order confirmed with customer |
-| `in_production` | Production in progress |
-| `ready_to_ship` | Goods ready for shipment |
-| `shipped` | Goods shipped |
-| `delivered` | Goods delivered to customer |
-| `completed` | Order fully completed (terminal) |
-| `cancelled` | Order cancelled (terminal) |
+## 采购订单
 
-## Common Operations
-
-### Advance Order Status
-```python
-from crm_auth import pb_get, pb_update
-
-# Get current order
-order = pb_get("orders", order_id)
-
-# Validate transition
-current = order.get("status")
-valid_transitions = {
-    "draft": "confirmed",
-    "confirmed": "in_production",
-    "in_production": "ready_to_ship",
-    "ready_to_ship": "shipped",
-    "shipped": "delivered",
-    "delivered": "completed"
-}
-
-if current in valid_transitions:
-    next_status = valid_transitions[current]
-    pb_update("orders", order_id, {"status": next_status})
-    print(f"Order advanced from {current} → {next_status}")
-else:
-    print(f"Order {order_id} is in terminal state: {current}")
+```
+draft → sent → confirmed → in_production → shipped → delivered → completed
+    ↘ cancelled ↗ (终态)
 ```
 
-### Cancel Order
-```python
-# Cancellation allowed from any non-terminal state
-terminal_states = ["completed", "cancelled"]
-if current not in terminal_states:
-    pb_update("orders", order_id, {"status": "cancelled"})
+## 发货
+
+```
+preparing → booking → customs_clearance → loaded → handed_over → shipped → in_transit → arrived → delivered
 ```
 
-### Reactivate Cancelled Order
-```python
-# Only cancelled orders can be reactivated to draft
-if current == "cancelled":
-    pb_update("orders", order_id, {"status": "draft"})
-```
-
-### Check Progress
-```python
-progress_order = ["draft", "confirmed", "in_production", "ready_to_ship", 
-                  "shipped", "delivered", "completed"]
-if current in progress_order:
-    index = progress_order.index(current)
-    progress = round((index / (len(progress_order) - 1)) * 100)
-    print(f"Order progress: {progress}%")
-```
-
-## Advanced Status Management
-
-The CRM has a dedicated status advancement dialog at:
-- `/app/api/shipments/[id]/status` - Shipment status updates
-- Check prerequisites before advancing (e.g., all items shipped before marking "delivered")
-
-## Prerequisite Checks
-
-Before advancing from `ready_to_ship` → `shipped`:
-- All items have shipping quantities assigned
-- Shipping documents generated
-
-Before advancing from `shipped` → `delivered`:
-- Tracking number provided
-- Carrier confirmed delivery
-
-## Usage in Hermes
-
-1. Load crm-auth + crm-workflow
-2. Check current order status
-3. Validate transition is allowed
-4. Update status via pb_update
-5. Log the activity
+`advance_shipment_status(id)` 在 shipped 时自动记录 `actual_departure`，在 delivered 时记录 `actual_arrival`。

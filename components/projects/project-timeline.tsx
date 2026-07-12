@@ -20,7 +20,7 @@ import {
 
 interface TimelineEvent {
   id: string;
-  type: 'rfq' | 'quotation' | 'order' | 'purchase_order' | 'shipment' | 'invoice';
+  type: 'quotation' | 'order' | 'purchase_order' | 'shipment' | 'invoice';
   code: string;
   title: string;
   status: string;
@@ -34,7 +34,6 @@ interface ProjectTimelineProps {
 }
 
 const EVENT_ICONS = {
-  rfq: FileText,
   quotation: FileText,
   order: ShoppingCart,
   purchase_order: Package,
@@ -43,7 +42,6 @@ const EVENT_ICONS = {
 };
 
 const EVENT_COLORS = {
-  rfq: 'bg-blue-100 text-blue-800',
   quotation: 'bg-purple-100 text-purple-800',
   order: 'bg-green-100 text-green-800',
   purchase_order: 'bg-orange-100 text-orange-800',

@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
-# crm-dev-task.sh - Create a task file from a feedback record
-# Usage: ./crm-dev-task.sh <feedback_id>
-FEEDBACK_ID="${1:?Usage: $0 <feedback_id>}"
+# crm-dev-task.sh - Create a task file from a customer_tracking record
+# Usage: ./crm-dev-task.sh <tracking_id>
+TRACKING_ID="${1:?Usage: $0 <tracking_id>}"
 TASK_DIR=".agents/tasks"
 mkdir -p "$TASK_DIR"
 
-# Get feedback from PocketBase
-FEEDBACK_JSON=$(python3 -c "
+# Get tracking record from PocketBase
+TRACKING_JSON=$(python3 -c "
 from crm_auth import get_record, pb_list
 import json, sys
-f = get_record('feedbacks', '$FEEDBACK_ID', 'user')
+f = get_record('customer_tracking', '$TRACKING_ID')
 print(json.dumps(f))
 ")
 
-echo "$FEEDBACK_JSON" | python3 -c "
+echo "$TRACKING_JSON" | python3 -c "
 import json, sys
 f = json.load(sys.stdin)
-task = f'''# Feedback #{f['id']}: {f.get('title','')}
+task = f'''# Task #{f['id']}: {f.get('title','')}
 
-- **Type**: {f.get('type','')}
-- **Status**: {f.get('status','')}
 - **Description**: {f.get('description','')}
-- **Screenshots**: {f.get('screenshots','')}
+- **Status**: {f.get('status','')}
+- **Notes**: {f.get('notes','')}
 
 ## Changes Required
 
@@ -32,7 +31,7 @@ TODO: Define specific code changes
 - [ ] TypeScript compiles
 - [ ] Tests pass
 '''
-with open('.agents/tasks/${FEEDBACK_ID}.md', 'w') as fh:
+with open('.agents/tasks/${TRACKING_ID}.md', 'w') as fh:
     fh.write(task)
-print(f'Task file created: .agents/tasks/${FEEDBACK_ID}.md')
+print(f'Task file created: .agents/tasks/${TRACKING_ID}.md')
 "

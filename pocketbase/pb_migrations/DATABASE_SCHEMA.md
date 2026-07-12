@@ -1,4 +1,4 @@
-# ExportCRM 数据库 Schema 文档
+# AlustarsCRM 数据库 Schema 文档 (星铝)
 
  
 

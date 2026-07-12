@@ -11,7 +11,6 @@ import {
   Settings,
   Command,
   Calculator,
-  MessageSquarePlus,
   ShoppingCart,
   HardDrive,
   ArrowLeftRight,
@@ -39,7 +38,7 @@ const baseNavGroups: NavGroup[] = [
     items: [
       { titleKey: "nav.dashboard", url: "/dashboard", icon: LayoutDashboard },
       { titleKey: "nav.projects", url: "/projects", icon: FolderKanban },
-      { titleKey: "nav.orders", url: "/orders", icon: ShoppingCart },
+      { titleKey: "nav.orders", url: "/so", icon: ShoppingCart },
     ],
   },
   {
@@ -63,8 +62,7 @@ const baseNavGroups: NavGroup[] = [
       { titleKey: "nav.products", url: "/products", icon: Package },
       { titleKey: "nav.productCosts", url: "/product-costs", icon: DollarSign },
       { titleKey: "nav.disk", url: "/disk", icon: HardDrive },
-      { titleKey: "nav.palletCalculator", url: "/pallet-calculator", icon: Calculator },
-      { titleKey: "nav.palletCalculatorV2", url: "http://42.194.150.84:3005", icon: Calculator, external: true },
+       { titleKey: "nav.palletCalculator", url: "http://42.194.150.84:3005", icon: Calculator, external: true },
     ],
   },
 ]
@@ -86,9 +84,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       // Admin sees settings
       systemItems.push({ titleKey: "nav.systemSettings", url: "/settings", icon: Settings })
     }
-
-    // All users can view feedbacks (用户反馈)
-    systemItems.push({ titleKey: "nav.feedback", url: "/feedbacks", icon: MessageSquarePlus })
 
     groups.push({
       labelKey: "",

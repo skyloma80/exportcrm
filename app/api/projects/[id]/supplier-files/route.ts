@@ -54,27 +54,9 @@ export async function GET(
     const pb = await createServerPocketBase();
     const storage = createStorage();
     
-    // 获取项目的所有询价供应商
-    const rfqs = await pb.collection('rfqs').getFullList({
-      filter: `project = "${projectId}"`,
-    });
-    
-    if (rfqs.length === 0) {
-      return NextResponse.json({ files: [] });
-    }
-
-    const rfqIds = rfqs.map(r => r.id);
-    const rfqFilter = rfqIds.map(id => `rfq = "${id}"`).join(' || ');
-    
-    let rfqSuppliers = await pb.collection('rfq_suppliers').getFullList({
-      filter: rfqFilter,
-      expand: 'supplier',
-    });
-
-    // 如果指定了 supplierId，只查询该供应商
-    if (supplierId) {
-      rfqSuppliers = rfqSuppliers.filter(s => s.supplier === supplierId);
-    }
+    // 列出供应商报价目录下的所有文件
+    const basePath = getSupplierFilePath(pathInfo, '');
+    const { data: allFiles } = await storage.list({ prefix: basePath });
 
     const files: Array<{
       supplierId: string;
@@ -84,24 +66,28 @@ export async function GET(
       fileUrl: string;
     }> = [];
 
-    for (const rfqSupplier of rfqSuppliers) {
-      const supplierName = rfqSupplier.expand?.supplier?.name || 
-                          rfqSupplier.expand?.supplier?.name_cn || 
-                          rfqSupplier.supplier;
-      
-      const folderPath = getSupplierFilePath(pathInfo, supplierName);
-      const { data: folderFiles } = await storage.list({ prefix: folderPath });
-      
-      for (const file of folderFiles) {
-        if (!file.isFolder && file.name !== '.keep') {
-          files.push({
-            supplierId: rfqSupplier.supplier,
-            supplierName,
-            fileName: file.name,
-            filePath: file.path,
-            fileUrl: `/api/disk/download?path=${encodeURIComponent(file.path)}`,
-          });
-        }
+    // 按供应商子目录分组
+    const supplierDirs = new Map<string, string[]>();
+    for (const item of allFiles) {
+      if (item.isFolder || item.name === '.keep') continue;
+      const parts = item.path.replace(basePath, '').split('/');
+      if (parts.length >= 2) {
+        const dirName = parts[0];
+        if (!supplierDirs.has(dirName)) supplierDirs.set(dirName, []);
+        supplierDirs.get(dirName)!.push(item.path);
+      }
+    }
+
+    for (const [dirName, filePaths] of supplierDirs) {
+      for (const filePath of filePaths) {
+        const fileName = filePath.split('/').pop() || '';
+        files.push({
+          supplierId: '',
+          supplierName: dirName,
+          fileName,
+          filePath,
+          fileUrl: `/api/disk/download?path=${encodeURIComponent(filePath)}`,
+        });
       }
     }
 

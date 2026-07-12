@@ -25,7 +25,6 @@ export const FILE_SCOPES = {
   CUSTOMER: 'customer',
   PROJECT: 'project',
   PRODUCT: 'product',
-  RFQ: 'rfq',
   QUOTATION: 'quotation',
   ORDER: 'order',
   PURCHASE_ORDER: 'purchase_order',
@@ -83,7 +82,6 @@ export type DocumentCategory = typeof DOCUMENT_CATEGORIES[keyof typeof DOCUMENT_
 export const DIRECTORY_NAMES: Record<string, string> = {
   // Scope directories
   products: 'products',
-  rfqs: 'rfqs',
   quotations: 'quotations',
   orders: 'orders',
   pos: 'pos',
@@ -122,7 +120,6 @@ export const DIRECTORY_NAMES: Record<string, string> = {
  * Customers/{customerName}/{projectName}/products/{productName}/photo/
  * Customers/{customerName}/{projectName}/products/{productName}/drawing/
  * Customers/{customerName}/{projectName}/products/{productName}/specification/
- * Customers/{customerName}/{projectName}/rfqs/{rfqCode}/quotations/
  * Customers/{customerName}/{projectName}/quotations/
  * Customers/{customerName}/{projectName}/orders/{orderCode}/pi/
  * Customers/{customerName}/{projectName}/orders/{orderCode}/contracts/
@@ -165,7 +162,7 @@ export interface PathOptions {
   productName?: string;
   scope: FileScope;
   category?: DocumentCategory;
-  refCode?: string;  // Reference code (e.g., order code, RFQ code)
+  refCode?: string;  // Reference code (e.g., order code)
   fileName?: string;
 }
 

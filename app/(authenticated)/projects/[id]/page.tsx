@@ -8,17 +8,16 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useI18n } from "@/lib/i18n/use-i18n"
 import { getPocketBase } from "@/lib/pocketbase/auth"
-import { Edit, FolderKanban, Building2, Package, Calendar, FileText, ShoppingCart, Truck, DollarSign, Loader2, Plus, Upload, Eye, Trash2, Layers, ClipboardList, Wand2, PlayCircle } from "lucide-react"
+import { Edit, FolderKanban, Building2, Package, Calendar, ShoppingCart, Truck, DollarSign, Loader2, Plus, Upload, Eye, Trash2, ClipboardList, Wand2, PlayCircle } from "lucide-react"
 import { ViewDiskButton } from "@/components/disk/view-disk-button"
 import { Project, ProjectStage, productProjectService } from "@/lib/pocketbase/services/projects"
 import { ProductImportDialog } from "@/components/projects/product-import-dialog"
 import { ProjectTimeline } from "@/components/projects/project-timeline"
-import { MergeToQuotationDialog } from "@/components/rfqs/merge-to-quotation-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useTabState } from "@/hooks/use-tab-state"
 import { Customer } from "@/lib/pocketbase/services/customers"
 import { Product } from "@/lib/pocketbase/services/products"
-import { DataTable, DataTableColumnHeader, DataTableRowActions } from "@/components/data-table"
+import { DataTable, DataTableColumnHeader } from "@/components/data-table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,9 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Checkbox } from "@/components/ui/checkbox"
 import { ColumnDef } from "@tanstack/react-table"
-import type { RFQStatus } from "@/lib/pocketbase/services/rfqs"
 import { UNITS } from "@/lib/constants/trade-standards"
 import type { QuotationStatus } from "@/lib/pocketbase/services/quotations"
 import type { OrderStatus } from "@/lib/pocketbase/services/orders"
@@ -43,14 +40,6 @@ interface ProductProject {
   project: string
   usage_note?: string
   expand?: { product?: Product }
-}
-
-interface RFQData {
-  id: string
-  code: string
-  status: RFQStatus
-  deadline?: string
-  created: string
 }
 
 interface QuotationData {
@@ -66,13 +55,12 @@ interface QuotationData {
 
 
 interface BusinessSummary {
-  rfqs: { total: number; completed: number };
   quotations: { total: number; accepted: number };
 }
 
 interface TimelineEvent {
   id: string;
-  type: 'rfq' | 'quotation';
+  type: 'quotation';
   code: string;
   title: string;
   status: string;
@@ -92,7 +80,6 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [products, setProducts] = useState<ProductProject[]>([])
-  const [rfqs, setRfqs] = useState<RFQData[]>([])
   const [quotations, setQuotations] = useState<QuotationData[]>([])
   const [summary, setSummary] = useState<BusinessSummary | null>(null)
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
@@ -101,9 +88,6 @@ export default function ProjectDetailPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [removeProductTarget, setRemoveProductTarget] = useState<{ id: string; name: string } | null>(null)
   const [activeTab, setActiveTab] = useTabState("info")
-  const [selectedRfqIds, setSelectedRfqIds] = useState<string[]>([])
-  const [mergeDialogOpen, setMergeDialogOpen] = useState(false)
-
   // Set breadcrumb when project loads
   // 面包屑结构：客户名称 > 项目名称
   useEffect(() => {
@@ -195,67 +179,6 @@ export default function ProjectDetailPage() {
     },
   ]
 
-  // RFQ table columns with selection
-  const rfqColumns: ColumnDef<RFQData>[] = useMemo(() => [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label={locale === 'zh' ? '全选' : 'Select all'}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={locale === 'zh' ? '选择行' : 'Select row'}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "code",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("rfqs.columns.code")} />,
-      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue("code")}</span>,
-    },
-    {
-      accessorKey: "status",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("rfqs.columns.status")} />,
-      cell: ({ row }) => {
-        const status = row.getValue("status") as RFQStatus
-        const variant = status === 'completed' ? 'default' : status === 'cancelled' ? 'destructive' : 'outline'
-        return <Badge variant={variant}>{t(`rfqs.status.${status}`)}</Badge>
-      },
-    },
-    {
-      accessorKey: "deadline",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("rfqs.columns.deadline")} />,
-      cell: ({ row }) => {
-        const deadline = row.getValue("deadline") as string
-        return deadline ? new Date(deadline).toLocaleDateString() : "-"
-      },
-    },
-    {
-      accessorKey: "created",
-      header: ({ column }) => <DataTableColumnHeader column={column} title={t("common.created")} />,
-      cell: ({ row }) => new Date(row.getValue("created")).toLocaleDateString(),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DataTableRowActions
-          row={row}
-          onView={(item) => router.push(`/rfqs/${item.id}?project=${id}`)}
-          onEdit={(item) => router.push(`/rfqs/${item.id}/edit?project=${id}`)}
-        />
-      ),
-    },
-  ], [t, router, locale, id])
-
   // Quotation table columns
   const quotationColumns: ColumnDef<QuotationData>[] = useMemo(() => [
     {
@@ -331,20 +254,12 @@ export default function ProjectDetailPage() {
       // 先获取项目的订单ID列表
 
 
-      const [rfqsData, quotationsData] = await Promise.all([
-        pb.collection("rfqs").getFullList<RFQData>({ filter: `project = "${id}"` }),
-        pb.collection("quotations").getFullList<QuotationData>({ filter: `project = "${id}"` }),
-      ])
+      const quotationsData = await pb.collection("quotations").getFullList<QuotationData>({ filter: `project = "${id}"` })
 
-      setRfqs(rfqsData)
       setQuotations(quotationsData)
 
       // Set business summary
       setSummary({
-        rfqs: {
-          total: rfqsData.length,
-          completed: rfqsData.filter(r => r.status === 'completed').length,
-        },
         quotations: {
           total: quotationsData.length,
           accepted: quotationsData.filter(q => q.status === 'accepted').length,
@@ -352,26 +267,16 @@ export default function ProjectDetailPage() {
       })
 
       // Build timeline events
-      const events: TimelineEvent[] = [
-        ...rfqsData.map((r) => ({
-          id: r.id,
-          type: 'rfq' as const,
-          code: r.code,
-          title: r.code,
-          status: r.status,
-          date: r.created,
-        })),
-        ...quotationsData.map((q) => ({
-          id: q.id,
-          type: 'quotation' as const,
-          code: q.code,
-          title: q.code,
-          status: q.status,
-          date: q.created,
-          amount: q.total_amount,
-          currency: q.currency,
-        })),
-      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      const events: TimelineEvent[] = quotationsData.map((q) => ({
+        id: q.id,
+        type: 'quotation' as const,
+        code: q.code,
+        title: q.code,
+        status: q.status,
+        date: q.created,
+        amount: q.total_amount,
+        currency: q.currency,
+      })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       
       setTimelineEvents(events)
     } catch (err: any) {
@@ -469,16 +374,7 @@ export default function ProjectDetailPage() {
             projectName={project.name}
             label={locale === 'zh' ? '文件' : 'Files'}
           />
-          {/* 工作流按钮暂时隐藏
-          <Button variant="default" onClick={() => router.push(`/projects/${id}/workflow`)}>
-            <PlayCircle className="mr-2 h-4 w-4" />
-            {locale === 'zh' ? '工作流' : 'Workflow'}
-          </Button>
-          */}
-          <Button variant="outline" onClick={() => router.push(`/projects/${id}/cost-table`)}>
-            <ClipboardList className="mr-2 h-4 w-4" />
-            {locale === 'zh' ? '采购成本表' : 'Cost Table'}
-          </Button>
+
           <Button onClick={() => router.push(`/projects/${id}/edit`)}>
             <Edit className="mr-2 h-4 w-4" />
             {t("common.edit")}
@@ -487,45 +383,27 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Business Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                {t("projects.rfqs.title")}
-              </CardDescription>
-              <CardTitle className="text-2xl">{summary?.rfqs?.total ?? 0}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                {summary?.rfqs?.completed ?? 0} {locale === 'zh' ? '已完成' : 'completed'}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                {t("projects.quotations.title")}
-              </CardDescription>
-              <CardTitle className="text-2xl">{summary?.quotations?.total ?? 0}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                {summary?.quotations?.accepted ?? 0} {locale === 'zh' ? '已接受' : 'accepted'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              {t("projects.quotations.title")}
+            </CardDescription>
+            <CardTitle className="text-2xl">{summary?.quotations?.total ?? 0}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">
+              {summary?.quotations?.accepted ?? 0} {locale === 'zh' ? '已接受' : 'accepted'}
+            </p>
+          </CardContent>
+        </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="info">{t("projects.tabs.info")}</TabsTrigger>
           <TabsTrigger value="timeline">{locale === 'zh' ? '时间线' : 'Timeline'}</TabsTrigger>
           <TabsTrigger value="products">{t("projects.tabs.products")}</TabsTrigger>
-          <TabsTrigger value="rfqs">{t("projects.tabs.rfqs")}</TabsTrigger>
           <TabsTrigger value="quotations">{t("projects.tabs.quotations")}</TabsTrigger>
-
         </TabsList>
 
         <TabsContent value="info" className="space-y-6">
@@ -625,8 +503,8 @@ export default function ProjectDetailPage() {
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 {locale === 'zh'
-                  ? '产品是项目的核心。添加产品后，您可以创建询价、报价和订单。'
-                  : 'Products are the core of your project. Add products to start creating RFQs, quotations, and orders.'}
+                  ? '产品是项目的核心。添加产品后，您可以创建报价和订单。'
+                  : 'Products are the core of your project. Add products to start creating quotations and orders.'}
               </p>
               <div className="flex justify-center gap-3">
                 <Button variant="outline" size="lg" onClick={() => setImportDialogOpen(true)}>
@@ -688,45 +566,7 @@ export default function ProjectDetailPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="rfqs">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t("projects.rfqs.title")}</CardTitle>
-                <CardDescription>{t("projects.rfqs.description")}</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                {selectedRfqIds.length > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setMergeDialogOpen(true)}
-                  >
-                    <Layers className="mr-2 h-4 w-4" />
-                    {locale === 'zh' ? `合并转报价 (${selectedRfqIds.length})` : `Merge to Quotation (${selectedRfqIds.length})`}
-                  </Button>
-                )}
 
-                <Button onClick={() => router.push(`/rfqs/new?project=${id}`)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {locale === 'zh' ? '新建询价' : 'New RFQ'}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {rfqs.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">{t("projects.rfqs.empty")}</p>
-              ) : (
-                <DataTable
-                  columns={rfqColumns}
-                  data={rfqs}
-                  searchKey="code"
-                  onRowClick={(row) => router.push(`/rfqs/${row.id}?project=${id}`)}
-                  onRowSelectionChange={(rows) => setSelectedRfqIds(rows.map(r => r.id))}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="quotations">
           <Card>
@@ -768,17 +608,6 @@ export default function ProjectDetailPage() {
         excludeProductIds={products.map(pp => pp.product)}
       />
 
-      {/* Merge RFQs to Quotation Dialog */}
-      <MergeToQuotationDialog
-        open={mergeDialogOpen}
-        onOpenChange={setMergeDialogOpen}
-        rfqIds={selectedRfqIds}
-        onSuccess={(quotationId) => {
-          setSelectedRfqIds([])
-          loadData()
-          router.push(`/quotations/${quotationId}?project=${id}`)
-        }}
-      />
 
       {/* Remove Product Confirmation Dialog */}
       <AlertDialog open={!!removeProductTarget} onOpenChange={(open) => !open && setRemoveProductTarget(null)}>

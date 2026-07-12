@@ -14,7 +14,6 @@ export interface KPIValue {
 export interface KPIStats {
   revenue: KPIValue;
   orders: KPIValue;
-  rfqs: KPIValue;
 
 }
 

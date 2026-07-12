@@ -1,103 +1,59 @@
 ---
-name: crm-document-generation
-description: "Generate PI (Proforma Invoice) and PO (Purchase Order) documents in Excel/PDF"
+name: crm-documents
+description: 文档数据提取与 DB 补全 — 从上传的 PI/PO 的 Excel/PDF 文件中提取客户、产品、价格信息，与数据库比对，自动补全
 version: 1.0.0
-author: Hermes Agent
-license: MIT
-tags: [CRM, Documents, PI, PO, Excel, PDF]
-depends_on: [crm-auth]
+author: AlustarsCRM
 ---
 
-# CRM Document Generation Skill
+# 文档数据提取与 DB 补全
 
-Generate business documents including Proforma Invoices (PI) and Purchase Orders (PO) in Excel format with brand styling.
+## 触发条件
 
-## Document Types
+当用户需要：
+- 把上传的 PI/PO Excel 或 PDF 导入系统
+- 文档中的客户/产品/价格与数据库核对
+- 从 PDF 报价单中提取报价信息
+- 检查文档数据与数据库是否一致
 
-| Document | Collection | Endpoint | Format |
-|----------|-----------|----------|--------|
-| Proforma Invoice | `orders` (so) | `/api/so/[id]/export-pi` | Excel |
-| Purchase Order | `purchase_orders` (po) | `/api/po/[id]/export-excel` | Excel |
-| PI Documents | `orders` | `/api/orders/[id]/pi-documents` | PDF (S3) |
-| PO Documents | `orders` | `/api/orders/[id]/purchase-orders` | PDF (S3) |
-| Shipment Documents | `shipments` | `/api/shipments/[id]/documents/generate` | PDF |
-| RFQ PDF | `rfqs` | `/api/rfqs/[id]/pdf` | PDF |
+## 工作流程
 
-## PI Generation (Proforma Invoice)
-
+### 1. 文件上传 → 解析
 ```python
-import urllib.request, json
+from tools.document_import import import_document
 
-# Generate PI Excel
-url = f"{CRM_API_URL}/api/so/{order_id}/export-pi"
-req = urllib.request.Request(url, headers=get_pb_headers())
-with urllib.request.urlopen(req) as r:
-    pi_data = r.read()  # Excel binary data
-    
-# List existing PI documents in S3
-url = f"{CRM_API_URL}/api/orders/{order_id}/pi-documents"
-req = urllib.request.Request(url, headers=get_pb_headers())
-with urllib.request.urlopen(req) as r:
-    docs = json.loads(r.read())
+result = import_document("/path/to/pi-2025.xlsx")
+# → 解析结果 + 比对报告
 ```
 
-### PI Contains:
-- Seller company info with logo
-- Buyer company info
-- PI number and date
-- Item descriptions with quantities
-- Unit prices and total amounts
-- Incoterm and port of loading/destination
-- Payment terms
-- Bank information
-- Signature and stamp
+### 2. 解析内容
+支持的文件格式：
+- Excel (.xlsx, .xls) → openpyxl
+- PDF (.pdf) → pdfplumber (表格) + pypdf (文本后备)
 
-## PO Generation (Purchase Order)
+### 3. 字段提取
+从文件中提取的结构化字段：
+- 文档类型 (PI / PO / Quotation / Invoice)
+- 客户名称、地址、税号
+- 产品明细（名称、数量、单价、总价）
+- 币种、总金额、付款条件、交货条款
+- 银行信息（PI 时）
 
-```python
-# Generate PO Excel
-url = f"{CRM_API_URL}/api/po/{po_id}/export-excel"
-req = urllib.request.Request(url, headers=get_pb_headers())
-with urllib.request.urlopen(req) as r:
-    po_data = r.read()  # Excel binary data
-```
+### 4. 数据库比对
+与以下集合比对：
+- `customers` — 按名称模糊匹配
+- `products` — 按 part_number 或名称匹配
+- `suppliers` — PO 时按名称匹配
+- `product_costs` — 价格比对
 
-### PO Contains:
-- Company information
-- PO number and date
-- Supplier information
-- Item details with specifications
-- Quantities and prices
-- Delivery terms
-- Payment terms
+### 5. 用户确认 → 执行写入
+- 展现比对差异报告
+- 用户逐项确认
+- 系统执行 `pb_create` / `pb_update`
+- 记录到 `activity_logs`
 
-## Excel Template Location
+## 依赖
 
-Templates stored at `D:/exportcrm/excel-template/`:
-- PI template with company branding
-- PO template with company branding
-
-## Quick Start
-
-### Generate and Download PI
+首次使用自动安装：
 ```bash
-# Generate PI Excel
-curl -H "Authorization: Bearer $CRM_API_TOKEN" \
-  -o "PI-${ORDER_CODE}.xlsx" \
-  "${CRM_API_URL}/api/so/${ORDER_ID}/export-pi"
-
-# Generate PO Excel
-curl -H "Authorization: Bearer $CRM_API_TOKEN" \
-  -o "PO-${PO_CODE}.xlsx" \
-  "${CRM_API_URL}/api/po/${PO_ID}/export-excel"
+pip install pdfplumber
 ```
-
-## Document Storage
-
-Documents are stored in S3-compatible storage with path structure:
-```
-/{company}/{customer}/{project}/{doc_type}/{filename}
-```
-
-PI documents at: `/{company}/{customer}/{project}/PI/{filename}.pdf`
-PO documents at: `/{company}/{customer}/{project}/PO/{filename}.pdf`

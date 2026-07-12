@@ -54,3 +54,8 @@ test-*.xlsx
 manual-merge.xlsx
 
 nul
+
+__pycache__
+*.pyc
+email_logs.db
+.pytest_cache

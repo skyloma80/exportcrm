@@ -16,7 +16,6 @@ import { notFound } from 'next/navigation';
  * 需要项目上下文的单据类型
  */
 export type RequiredProjectDocumentType = 
-  | 'rfq' 
   | 'quotation' 
   | 'order' 
   | 'purchase-order' 
@@ -93,7 +92,7 @@ export function checkProjectContext(
  * @example
  * ```tsx
  * // In a page component
- * export default function RfqDetailPage({ searchParams }: PageProps) {
+ * export default function QuotationDetailPage({ searchParams }: PageProps) {
  *   const projectId = requireProjectContext(searchParams);
  *   // projectId is guaranteed to be non-null here
  *   // ...
@@ -161,7 +160,6 @@ export function requireOrderContext(
  */
 export function requiresProjectContext(documentType: RequiredProjectDocumentType): boolean {
   const typesRequiringProject: RequiredProjectDocumentType[] = [
-    'rfq',
     'quotation',
     'order',
     'purchase-order',

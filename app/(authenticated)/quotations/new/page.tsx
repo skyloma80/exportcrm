@@ -124,9 +124,7 @@ export default function NewQuotationPage() {
   const { toast } = useToast()
   const { setItems: setBreadcrumb } = useBreadcrumb()
 
-  // Get URL parameters for pre-filling from RFQ
   const projectIdFromUrl = searchParams.get('project')
-  const fromRfqId = searchParams.get('fromRfq')
 
   // 强制项目上下文：无项目参数返回 404 (Requirements: 1.2)
   if (!projectIdFromUrl) {
@@ -201,13 +199,6 @@ export default function NewQuotationPage() {
               currency: customer?.preferred_currency || prev.currency,
             }))
 
-            // If coming from RFQ, show a hint to import from sourcing plan
-            if (fromRfqId) {
-              toast({
-                title: t('rfqs.convertToQuotation.hint'),
-                description: t('rfqs.convertToQuotation.hintDesc'),
-              })
-            }
           }
         }
       } catch (err) {
@@ -215,7 +206,7 @@ export default function NewQuotationPage() {
       }
     }
     loadProjects()
-  }, [projectIdFromUrl, fromRfqId, locale, t, toast])
+  }, [projectIdFromUrl, locale, t, toast])
 
   // 加载汇率（切换币种时重新计算明细项）
   useEffect(() => {

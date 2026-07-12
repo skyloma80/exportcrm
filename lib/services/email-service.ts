@@ -11,7 +11,7 @@ import type PocketBase from 'pocketbase';
 import { createServerPB } from '@/lib/pocketbase/auth';
 import { createStorage } from '@/lib/s3/storage';
 import { brandingService } from '@/lib/services/branding-service';
-import { generateBrandedEmailHTML, generateRFQEmailContent } from '@/lib/email/branded-template';
+import { generateBrandedEmailHTML } from '@/lib/email/branded-template';
 
 // ============================================================================
 // Types
@@ -41,28 +41,6 @@ export interface SmtpSettings {
   pass: string;
   from: string;
   secure: boolean;
-}
-
-export interface RFQEmailData {
-  rfqNumber: string;
-  issueDate: string;
-  responseDeadline: string;
-  itemCount?: number; // Number of items (for summary display)
-  projectDescription?: string; // Project description to include in email
-  items?: Array<{
-    product_name: string;
-    description?: string;
-    quantity: number;
-    unit: string;
-  }>;
-  specialInstructions?: string;
-  attachments?: Array<{
-    name: string;
-    path: string;
-    content?: string; // Base64 encoded content for inline attachments
-    type?: string;
-    size?: number;
-  }>;
 }
 
 export interface EmailTemplateOptions {
@@ -147,7 +125,7 @@ function validateEmail(email: string): { valid: boolean; error?: string } {
 export class EmailService {
   private settings: SmtpSettings | null = null;
   private defaultTemplateSettings = {
-    subject: '报价邀请函: {rfq_number}',
+    subject: '报价邀请',
     greeting: '尊敬的供应商，您好！',
     intro: '我们诚邀您为以下项目提供报价：',
     closing: '请在截止日期前提供您的最优报价，如有疑问请随时联系我们。',
@@ -339,204 +317,6 @@ export class EmailService {
         error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
-  }
-
-  /**
-   * Send RFQ email to supplier
-   */
-  async sendRfqToSupplier(
-    supplierEmail: string,
-    rfqData: RFQEmailData,
-    templateOptions?: EmailTemplateOptions,
-    overrideBranding?: { logoUrl?: string }
-  ): Promise<{ success: boolean; error?: string }> {
-    console.log(`[EmailService.sendRfqToSupplier] Sending RFQ to: ${supplierEmail}`);
-    console.log(`[EmailService.sendRfqToSupplier] RFQ Number: ${rfqData.rfqNumber}`);
-    
-    const { rfqNumber, issueDate, responseDeadline, itemCount, projectDescription, specialInstructions, attachments } = rfqData;
-    
-    // Merge template settings
-    const templateSettings = {
-      ...this.defaultTemplateSettings,
-      ...templateOptions,
-    };
-
-    // Get branding config for supplier documents (Chinese)
-    let branding;
-    try {
-      brandingService.clearCache();
-      branding = await brandingService.getDocumentBranding('supplier');
-      
-      if (overrideBranding?.logoUrl && !branding.logoUrl) {
-        branding.logoUrl = overrideBranding.logoUrl;
-      }
-      
-      console.log('[EmailService] Branding loaded:', {
-        hasLogoBase64: !!branding.logoBase64,
-        logoUrl: branding.logoUrl || 'NOT SET',
-        companyName: branding.companyName,
-      });
-    } catch (error) {
-      console.warn('[EmailService] Failed to get branding config, using default template', error);
-    }
-
-    // Format date in Chinese
-    const formatDateCN = (date: string) => {
-      const d = new Date(date);
-      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-    };
-
-    let html: string;
-
-    if (branding) {
-      // Use branded template - summary only, no product table
-      const bodyContent = generateRFQEmailContent({
-        rfqCode: rfqNumber,
-        issueDate: formatDateCN(issueDate),
-        deadline: formatDateCN(responseDeadline),
-        itemCount: itemCount || 0,
-        projectDescription,
-      });
-
-      // Add special instructions if any
-      const fullBodyContent = `
-        ${bodyContent}
-        ${specialInstructions ? `<div style="margin-top: 15px; padding: 12px 15px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;"><strong style="color: #92400e;">特殊要求:</strong><br><span style="color: #78350f;">${specialInstructions}</span></div>` : ''}
-      `;
-
-      // Determine attachment hint
-      const hasPdf = attachments?.some(a => a.name?.endsWith('.pdf'));
-      const hasExcel = attachments?.some(a => a.name?.endsWith('.xlsx'));
-      let attachmentNote: string | undefined;
-      if (hasPdf && hasExcel) {
-        attachmentNote = 'rfq_with_template'; // PDF + Excel template
-      } else if (hasPdf) {
-        attachmentNote = 'pdf';
-      } else if (hasExcel) {
-        attachmentNote = 'excel_template';
-      } else if (attachments?.length) {
-        attachmentNote = 'attachments';
-      }
-
-      html = generateBrandedEmailHTML({
-        branding,
-        language: 'cn',
-        subject: templateSettings.subject.replace('{rfq_number}', rfqNumber),
-        bodyContent: fullBodyContent,
-        recipientName: templateSettings.recipientName,
-        attachmentNote,
-      });
-    } else {
-      // Fallback to original template - summary only, no product table
-      const greeting = templateSettings.recipientName
-        ? `尊敬的${templateSettings.recipientName}，您好！`
-        : templateSettings.greeting;
-
-      html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>${templateSettings.subject}</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
-            .container { max-width: 650px; margin: 0 auto; padding: 20px; background-color: #ffffff; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
-            .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 600; }
-            .content { padding: 25px; background-color: #fff; }
-            .info-box { background-color: #f8fafc; border-radius: 8px; padding: 15px 20px; margin: 15px 0; }
-            .info-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
-            .info-item:last-child { border-bottom: none; }
-            .info-label { color: #64748b; font-size: 14px; }
-            .info-value { color: #1e293b; font-size: 14px; font-weight: 500; }
-            .footer { margin-top: 25px; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; background-color: #f8fafc; border-radius: 0 0 8px 8px; }
-            .signature { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${templateSettings.companyName}</h1>
-            </div>
-            
-            <div class="content">
-              <p style="font-size: 15px; color: #334155;">${greeting}</p>
-              
-              <p style="font-size: 14px; color: #475569;">${templateSettings.intro}</p>
-              
-              <div class="info-box">
-                <div class="info-item">
-                  <span class="info-label">询价单号</span>
-                  <span class="info-value">${rfqNumber}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">发布日期</span>
-                  <span class="info-value">${new Date(issueDate).toLocaleDateString('zh-CN')}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">回复截止</span>
-                  <span class="info-value" style="color: #dc2626;">${new Date(responseDeadline).toLocaleDateString('zh-CN')}</span>
-                </div>
-                ${itemCount ? `
-                <div class="info-item">
-                  <span class="info-label">产品数量</span>
-                  <span class="info-value">${itemCount} 个产品</span>
-                </div>
-                ` : ''}
-              </div>
-              
-              <p style="font-size: 14px; color: #475569; margin: 15px 0;">详情请查看附件中的报价模板。</p>
-              
-              ${specialInstructions ? `<div style="margin-top: 15px; padding: 12px 15px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;"><strong style="color: #92400e;">特殊要求:</strong><br><span style="color: #78350f;">${specialInstructions}</span></div>` : ''}
-              
-              <p style="font-size: 14px; color: #475569; margin-top: 20px;">${templateSettings.closing}</p>
-              
-              <div class="signature">
-                <p style="margin: 0; color: #334155;">${templateSettings.signature}</p>
-                <p style="margin: 5px 0 0 0; font-weight: 600; color: #1e293b;">${templateSettings.companyName}</p>
-              </div>
-            </div>
-            
-            <div class="footer">
-              <p style="margin: 0;">${templateSettings.footer}</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-    }
-
-    // Prepare attachments
-    const emailAttachments: EmailAttachment[] = [];
-    
-    if (attachments && attachments.length > 0) {
-      console.log(`[EmailService] Preparing ${attachments.length} attachments`);
-      
-      for (const file of attachments) {
-        const attachment: EmailAttachment = {
-          filename: file.name,
-          path: file.path,
-          type: file.type || getMimeType(file.name),
-          size: file.size
-        };
-        
-        // Handle base64 content (e.g., auto-generated quotation template)
-        if (file.content) {
-          // Convert base64 string to Buffer
-          attachment.content = Buffer.from(file.content, 'base64');
-          console.log(`[EmailService] Added inline attachment: ${file.name} (${attachment.content.length} bytes)`);
-        }
-        
-        emailAttachments.push(attachment);
-      }
-    }
-
-    return this.sendEmail({
-      to: supplierEmail,
-      subject: templateSettings.subject.replace('{rfq_number}', rfqNumber),
-      html,
-      attachments: emailAttachments,
-    });
   }
 
   /**

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 托盘装箱预览</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: system-ui, sans-serif; overflow:hidden; transition: background 0.3s, color 0.3s; }
+body.light { background:#f0f2f5; color:#1f2937; }
+body.dark { background:#0b0f19; color:#f3f4f6; }
+#canvas { width:100vw; height:100vh; position:fixed; top:0; left:0; }
+#tip { position:fixed; display:none; padding:10px 14px; border-radius:8px; pointer-events:none; font-size:12px; z-index:100; line-height:1.6; }
+body.light #tip { background:rgba(255,255,255,0.95); border:1px solid rgba(0,0,0,0.1); color:#1f2937; }
+body.dark #tip { background:rgba(15,23,42,0.92); border:1px solid rgba(255,255,255,0.12); color:white; }
+.panel { backdrop-filter:blur(12px); border-radius:12px; padding:12px 16px; }
+body.light .panel { background:rgba(255,255,255,0.8); border:1px solid rgba(0,0,0,0.08); }
+body.dark .panel { background:rgba(17,24,39,0.75); border:1px solid rgba(255,255,255,0.08); }
+.tab { padding:4px 14px; border-radius:6px; font-size:12px; cursor:pointer; }
+body.light .tab { border:1px solid rgba(0,0,0,0.1); background:rgba(243,244,246,0.8); color:#6b7280; }
+body.light .tab:hover { background:rgba(59,130,246,0.15); color:#1f2937; }
+body.light .tab.on { background:rgba(59,130,246,0.8); color:white; border-color:rgba(59,130,246,0.9); }
+body.dark .tab { border:1px solid rgba(255,255,255,0.1); background:rgba(30,41,59,0.8); color:#9ca3af; }
+body.dark .tab:hover { background:rgba(59,130,246,0.3); color:#e5e7eb; }
+body.dark .tab.on { background:rgba(59,130,246,0.8); color:white; border-color:rgba(59,130,246,0.9); }
+#themeBtn { padding:6px 10px; font-size:16px; cursor:pointer; border:none; background:transparent; }
+body.light #themeBtn { color:#374151; }
+body.dark #themeBtn { color:#d1d5db; }
+</style>
+</head>
+<body class="light">
+
+<div id="canvas"></div>
+<div id="tip"></div>
+
+<div id="tbar" class="panel" style="position:fixed;top:16px;left:16px;right:310px;z-index:10;display:none;padding:8px 16px;align-items:center;gap:8px;overflow-x:auto;">
+  <div id="tabs" style="display:flex;gap:4px;flex-shrink:0;"></div>
+  <button id="btnAll" class="tab on">全部</button>
+</div>
+
+<div class="panel" style="position:fixed;top:16px;right:16px;z-index:10;max-width:280px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <span style="font-size:11px;font-weight:600;">方案</span>
+    <div style="display:flex;gap:6px;">
+      <button id="cpyBtn" style="background:none;border:1px solid rgba(128,128,128,0.3);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">复制</button>
+      <button id="themeBtn" title="切换主题">&#9790;</button>
+    </div>
+  </div>
+  <pre id="plan" style="font-size:11px;line-height:1.5;max-height:200px;overflow-y:auto;white-space:pre-wrap;">📦 托盘打包方案
+====================================
+
+托盘: 2 个
+箱子: 36 箱
+体积: 2.730 CBM
+
+#1  1200x1200  26箱  高1500mm
+#2  1200x800  10箱  高1200mm</pre>
+</div>
+
+<div style="position:fixed;bottom:16px;right:16px;z-index:10;display:flex;align-items:center;gap:8px;">
+  <button id="playBtn" class="panel" style="padding:8px 20px;font-size:13px;cursor:pointer;border:none;">演示</button>
+  <span class="panel" style="padding:6px 12px;font-size:11px;border:none;">拖拽旋转 · 滚轮缩放</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+const COL=['#3b82f6','#10b981','#f59e0b','#ec4899','#8b5cf6','#ef4444','#06b6d4'];
+let OL=50, OW=50, OH=50, PH=150;
+
+let sc, cam, ren, ctrl;
+let data=[{"id": 1, "spec_name": "1200x1200", "base_l": 1200, "base_w": 1200, "base_h": 1600, "packed_items": [{"id": "Box_600x360x400_0_0", "name": "Box_600x360x400", "pos": [25.0, 85.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_1", "name": "Box_600x360x400", "pos": [625.0, 85.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_2", "name": "Box_600x360x400", "pos": [25.0, 445.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_3", "name": "Box_600x360x400", "pos": [625.0, 445.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_4", "name": "Box_600x360x400", "pos": [25.0, 805.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_5", "name": "Box_600x360x400", "pos": [625.0, 805.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_6", "name": "Box_600x360x400", "pos": [25.0, 85.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_7", "name": "Box_600x360x400", "pos": [625.0, 85.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_8", "name": "Box_600x360x400", "pos": [25.0, 445.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_9", "name": "Box_600x360x400", "pos": [625.0, 445.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_10", "name": "Box_600x360x400", "pos": [25.0, 805.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_11", "name": "Box_600x360x400", "pos": [625.0, 805.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_12", "name": "Box_600x360x400", "pos": [25.0, 85.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_13", "name": "Box_600x360x400", "pos": [625.0, 85.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_14", "name": "Box_600x360x400", "pos": [25.0, 445.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_15", "name": "Box_600x360x400", "pos": [625.0, 445.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_16", "name": "Box_600x360x400", "pos": [25.0, 805.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_17", "name": "Box_600x360x400", "pos": [625.0, 805.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_370x350x300_1_0", "name": "Box_370x350x300", "pos": [25.0, 85.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_1", "name": "Box_370x350x300", "pos": [395.0, 85.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_2", "name": "Box_370x350x300", "pos": [765.0, 85.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_3", "name": "Box_370x350x300", "pos": [25.0, 435.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_4", "name": "Box_370x350x300", "pos": [395.0, 435.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_5", "name": "Box_370x350x300", "pos": [765.0, 435.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_6", "name": "Box_370x350x300", "pos": [25.0, 785.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}, {"id": "Box_370x350x300_1_7", "name": "Box_370x350x300", "pos": [395.0, 785.0, 1200.0], "dims": [370, 350, 300], "weight": 38.85}]}, {"id": 2, "spec_name": "1200x800", "base_l": 1200, "base_w": 800, "base_h": 1600, "packed_items": [{"id": "Box_600x360x400_0_18", "name": "Box_600x360x400", "pos": [25.0, 65.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_19", "name": "Box_600x360x400", "pos": [625.0, 65.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_20", "name": "Box_600x360x400", "pos": [25.0, 425.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_21", "name": "Box_600x360x400", "pos": [625.0, 425.0, 0.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_22", "name": "Box_600x360x400", "pos": [25.0, 65.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_23", "name": "Box_600x360x400", "pos": [625.0, 65.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_24", "name": "Box_600x360x400", "pos": [25.0, 425.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_25", "name": "Box_600x360x400", "pos": [625.0, 425.0, 400.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_26", "name": "Box_600x360x400", "pos": [25.0, 65.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}, {"id": "Box_600x360x400_0_27", "name": "Box_600x360x400", "pos": [625.0, 65.0, 800.0], "dims": [600, 360, 400], "weight": 86.4}]}], cur=0, step=0, play=0, ival=null;
+let mode='all';
+let boxes=[], rc=new THREE.Raycaster(), mp=new THREE.Vector2(), hov=null, tc={};
+let grids=[], bounds=[];
+let darkMode=false;
+
+function init(){
+  sc=new THREE.Scene();
+  cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,1,100000);
+  ren=new THREE.WebGLRenderer({antialias:!0});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(devicePixelRatio);ren.shadowMap.enabled=!0;
+  document.getElementById('canvas').appendChild(ren.domElement);
+  ctrl=new THREE.OrbitControls(cam,ren.domElement);ctrl.enableDamping=!0;ctrl.dampingFactor=0.05;ctrl.maxPolarAngle=Math.PI/2-0.05;ctrl.minDistance=1;ctrl.maxDistance=100000;
+
+  const types=[...new Set(data.flatMap(p=>p.packed_items).map(i=>i.name))].sort();
+  tc={};types.forEach((t,i)=>tc[t]=COL[i%COL.length]);
+
+  applyTheme();
+  setupLights();
+  draw();
+  setupUI();
+  looper();
+}
+
+function setupLights(){
+  sc.children=sc.children.filter(c=>!(c instanceof THREE.Light));
+  sc.add(new THREE.AmbientLight(0xffffff,0.5));
+  const d1=new THREE.DirectionalLight(0xffffff,0.6);d1.position.set(2000,3000,1500);d1.castShadow=!0;d1.shadow.mapSize.width=2048;d1.shadow.mapSize.height=2048;sc.add(d1);
+  const d2=new THREE.DirectionalLight(0xffffff,0.2);d2.position.set(-2000,1500,-1500);sc.add(d2);
+}
+
+function applyTheme(){
+  const bg=darkMode?0x0b0f19:0xf0f2f5;
+  sc.background=new THREE.Color(bg);
+  document.body.className=darkMode?'dark':'light';
+  document.getElementById('themeBtn').innerHTML=darkMode?'&#9788;':'&#9790;';
+  grids.forEach(g=>{g.material.color.set(darkMode?0x1e293b:0xd1d5db);g.material.opacity=darkMode?1:0.5;});
+  ren.setClearColor(bg);
+}
+
+function setupUI(){
+  window.onresize=()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight);};
+  document.onmousemove=onMove;
+  document.getElementById('playBtn').onclick=()=>play?pause():start();
+  document.getElementById('btnAll').onclick=()=>{mode='all';tabActive();draw();};
+  document.getElementById('cpyBtn').onclick=()=>{navigator.clipboard.writeText(document.getElementById('plan').textContent).then(()=>{const b=document.getElementById('cpyBtn');b.textContent='已复制';setTimeout(()=>b.textContent='复制',1500);});};
+  document.getElementById('themeBtn').onclick=()=>{darkMode=!darkMode;applyTheme();};
+  tabs();
+}
+
+function tabs(){
+  const tb=document.getElementById('tbar');const tl=document.getElementById('tabs');tl.innerHTML='';
+  if(data.length<=1){tb.style.display='none';return;}
+  tb.style.display='flex';
+  data.forEach((p,i)=>{
+    const b=document.createElement('button');b.className='tab';b.textContent='#'+p.id;
+    b.onclick=()=>{mode='single';cur=i;tabActive();draw();};tl.appendChild(b);
+  });
+  mode='single';cur=0;tabActive();
+}
+
+function tabActive(){
+  const a=document.getElementById('btnAll');
+  const ts=document.getElementById('tabs').children;
+  if(mode==='all'){a.className='tab on';for(const t of ts)t.className='tab';}
+  else{a.className='tab';for(let i=0;i<ts.length;i++)ts[i].className='tab'+(i===cur?' on':'');}
+}
+
+function draw(){
+  boxes.forEach(b=>sc.remove(b));boxes=[];
+  grids.forEach(g=>sc.remove(g));grids=[];
+  bounds.forEach(b=>sc.remove(b));bounds=[];
+  if(mode==='all')drawAll();else drawOne();
+  step=boxes.length;
+  vis();
+  lookAtCenter();
+}
+
+function lookAtCenter(){
+  const content=boxes.filter(b=>b.visible&&b.userData&&b.userData.isBox);
+  if(!content.length)return;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,minZ=Infinity,maxZ=-Infinity;
+  for(const b of content){
+    const p=b.position;
+    const s=b.geometry.parameters;
+    const hw=s.width/2,hh=s.height/2,hd=s.depth/2;
+    if(p.x-hw<minX)minX=p.x-hw;if(p.x+hw>maxX)maxX=p.x+hw;
+    if(p.y-hh<minY)minY=p.y-hh;if(p.y+hh>maxY)maxY=p.y+hh;
+    if(p.z-hd<minZ)minZ=p.z-hd;if(p.z+hd>maxZ)maxZ=p.z+hd;
+  }
+  const cx=(minX+maxX)/2, cy=(minY+maxY)/2, cz=(minZ+maxZ)/2;
+  const sx=maxX-minX, sy=maxY-minY, sz=maxZ-minZ;
+  const md=Math.max(sx,sy,sz);
+  const dist=md*2;
+  ctrl.target.set(cx,cy,cz);
+  cam.position.set(cx+dist*0.6,cy+dist*0.7,cz+dist*0.6);
+  cam.near=dist*0.01;cam.far=dist*10;cam.updateProjectionMatrix();
+  ctrl.update();
+}
+
+function drawOne(){
+  const p=data[cur];if(!p)return;
+  const bL=p.base_l,bW=p.base_w,bH=p.base_h,mL=bL+OL,mW=bW+OW;
+  const tph=40;
+  // Pallet base
+  const g1=new THREE.BoxGeometry(bL,tph,bW);const m1=new THREE.MeshStandardMaterial({color:0x8b5a2b,roughness:0.9,metalness:0.1});
+  const mh=new THREE.Mesh(g1,m1);mh.receiveShadow=!0;mh.position.set(mL/2,-tph/2,mW/2);sc.add(mh);
+  // Legs
+  const lh=PH-tph,_l=120,_w=120;const lg=new THREE.BoxGeometry(_l,lh,_w);const lm=new THREE.MeshStandardMaterial({color:0x5a3a1b,roughness:0.9});
+  for(const lx of[_l/2+OL/2,bL/2+OL/2,bL-_l/2+OL/2])for(const lz of[_w/2+OW/2,bW/2+OW/2,bW-_w/2+OW/2]){const m=new THREE.Mesh(lg,lm);m.position.set(lx,-tph-lh/2,lz);m.receiveShadow=!0;sc.add(m);}
+  // Boundary — wraps entire pallet from base bottom to max height
+  const bndH=bH+OH+tph;
+  const tg=new THREE.BoxGeometry(mL,bndH,mW);const te=new THREE.EdgesGeometry(tg);
+  const tl=new THREE.LineSegments(te,new THREE.LineBasicMaterial({color:0xef4444,transparent:!0,opacity:0.35}));
+  tl.position.set(mL/2,(bndH)/2-tph,mW/2);sc.add(tl);bounds.push(tl);
+  // Boxes
+  p.packed_items.forEach((it,i)=>{
+    const[l,w,h]=it.dims,[x,y,z]=it.pos;
+    const bg=new THREE.BoxGeometry(l,h,w);const co=tc[it.name]||'#3b82f6';
+    const bm=new THREE.Mesh(bg,new THREE.MeshStandardMaterial({color:new THREE.Color(co),roughness:0.6,metalness:0.1,transparent:!0,opacity:0.85}));
+    bm.castShadow=!0;bm.receiveShadow=!0;bm.position.set(x+l/2,z+h/2,y+w/2);
+    bm.userData={name:it.name,dims:it.dims,pos:it.pos,weight:it.weight,i:i,co:co,isBox:true};
+    const eg=new THREE.EdgesGeometry(bg);const el2=new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:0xffffff,transparent:!0,opacity:0.35}));
+    bm.add(el2);sc.add(bm);boxes.push(bm);
+  });
+}
+
+function drawAll(){
+  let ox=0;
+  data.forEach((p)=>{
+    const bL=p.base_l,bW=p.base_w,bH=p.base_h,mL=bL+OL,mW=bW+OW;const tph=40;
+    const g1=new THREE.BoxGeometry(bL,tph,bW);const m1=new THREE.MeshStandardMaterial({color:0x8b5a2b,roughness:0.9,metalness:0.1});
+    const mh=new THREE.Mesh(g1,m1);mh.receiveShadow=!0;mh.position.set(ox+mL/2,-tph/2,mW/2);sc.add(mh);
+    const lh=PH-tph,_l=120,_w=120;const lg=new THREE.BoxGeometry(_l,lh,_w);const lm=new THREE.MeshStandardMaterial({color:0x5a3a1b,roughness:0.9});
+    for(const lx of[_l/2+OL/2,bL/2+OL/2,bL-_l/2+OL/2])for(const lz of[_w/2+OW/2,bW/2+OW/2,bW-_w/2+OW/2]){const m=new THREE.Mesh(lg,lm);m.position.set(ox+lx,-tph-lh/2,lz);m.receiveShadow=!0;sc.add(m);}
+    // Boundary
+    const bndH=bH+OH+tph;
+    const tg=new THREE.BoxGeometry(mL,bndH,mW);const te=new THREE.EdgesGeometry(tg);
+    const tl=new THREE.LineSegments(te,new THREE.LineBasicMaterial({color:0xef4444,transparent:!0,opacity:0.35}));
+    tl.position.set(ox+mL/2,(bndH)/2-tph,mW/2);sc.add(tl);bounds.push(tl);
+    p.packed_items.forEach((it)=>{
+      const[l,w,h]=it.dims,[x,y,z]=it.pos;const bg=new THREE.BoxGeometry(l,h,w);const co=tc[it.name]||'#3b82f6';
+      const bm=new THREE.Mesh(bg,new THREE.MeshStandardMaterial({color:new THREE.Color(co),roughness:0.6,metalness:0.1,transparent:!0,opacity:0.85}));
+      bm.castShadow=!0;bm.receiveShadow=!0;bm.position.set(ox+x+l/2,z+h/2,y+w/2);
+      bm.userData={name:it.name,dims:it.dims,pos:it.pos,weight:it.weight,i:boxes.length,co:co,isBox:true};
+      const eg=new THREE.EdgesGeometry(bg);const el2=new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:0xffffff,transparent:!0,opacity:0.35}));
+      bm.add(el2);sc.add(bm);boxes.push(bm);
+    });
+    ox+=bL+OL+200;
+  });
+}
+
+function vis(){boxes.forEach(b=>{if(b.userData&&b.userData.i!==undefined)b.visible=b.userData.i<step;});}
+
+function start(){
+  play=!0;mode='all';tabActive();draw();
+  document.getElementById('playBtn').textContent='暂停';document.getElementById('playBtn').style.color='#facc15';
+  step=0;vis();
+  const mx=boxes.filter(b=>b.userData&&b.userData.i!==undefined).length;
+  ival=setInterval(()=>{if(step<mx){step++;vis();}else pause();},300);
+}
+function pause(){
+  play=!1;document.getElementById('playBtn').textContent='演示';document.getElementById('playBtn').style.color='';
+  if(ival){clearInterval(ival);ival=null;}
+}
+
+function onMove(e){
+  mp.x=(e.clientX/innerWidth)*2-1;mp.y=-(e.clientY/innerHeight)*2+1;
+  rc.setFromCamera(mp,cam);
+  const hits=rc.intersectObjects(boxes.filter(b=>b.visible&&b.userData&&b.userData.isBox));
+  const tip=document.getElementById('tip');
+  if(hits.length){
+    const t=hits[0].object;
+    if(hov!==t){if(hov){hov.material.color.set(hov.userData.co);hov.material.opacity=0.85}hov=t;hov.material.color.set('#ffffff');hov.material.opacity=1;}
+    const d=t.userData;
+    tip.style.display='block';tip.style.left=(e.clientX+15)+'px';tip.style.top=(e.clientY+15)+'px';
+    tip.innerHTML='<div style="font-weight:bold;color:#3b82f6;">'+d.name+'</div><div style="color:'+(darkMode?'#9ca3af':'#6b7280')+';">序号 '+(d.i+1)+' | '+d.dims[0]+'x'+d.dims[1]+'x'+d.dims[2]+' mm | '+d.weight.toFixed(1)+' kg</div>';
+  }else{if(hov){hov.material.color.set(hov.userData.co);hov.material.opacity=0.85;hov=null;}tip.style.display='none';}
+}
+
+function looper(){requestAnimationFrame(looper);ctrl.update();ren.render(sc,cam);}
+window.onload=init;
+</script>
+</body>
+</html>

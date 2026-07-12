@@ -27,7 +27,6 @@ export type EntityType =
   | 'supplier'
   | 'product'
   | 'project'
-  | 'rfq'
   | 'quotation'
   | 'order'
   | 'purchase_order'
@@ -258,7 +257,6 @@ class ActivityLogService extends BaseCollectionService<ActivityLog> {
       supplier: '供应商',
       product: '产品',
       project: '项目',
-      rfq: '询价单',
       quotation: '报价单',
       order: '订单',
       purchase_order: '采购单',

@@ -26,8 +26,7 @@ import { CURRENCIES, COMMON_CURRENCIES } from "@/lib/constants/currencies"
 import { getRate } from "@/lib/services/exchange-rate"
 import type { Quotation, QuotationCreateInput, QuotationItemWithExpand } from "@/lib/pocketbase/services/quotations"
 import type { Product } from "@/lib/pocketbase/services/products"
-import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
-import { Package, RefreshCw } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 
 interface Project {
   id: string
@@ -87,61 +86,6 @@ export function QuotationForm({ initialData, onSubmit, onCancel, isLoading, proj
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [currentRate, setCurrentRate] = useState<number | null>(null)
   const [rateLoading, setRateLoading] = useState(false)
-  const [generatingPackaging, setGeneratingPackaging] = useState(false)
-
-  // 生成包装信息 (Requirements: 3.5)
-  const handleGeneratePackaging = async () => {
-    if (!items || items.length === 0) {
-      return
-    }
-    
-    setGeneratingPackaging(true)
-    try {
-      const pb = getPocketBase()
-      
-      // 获取所有产品的包装规格
-      const productIds = items.map(item => item.product)
-      const products = await pb.collection("products").getFullList<Product>({
-        filter: productIds.map(id => `id = "${id}"`).join(" || "),
-      })
-      
-      // 构建包装计算输入
-      const packagingItems: ProductPackaging[] = items.map(item => {
-        const product = products.find(p => p.id === item.product)
-        return {
-          product_id: item.product,
-          product_name: locale === 'zh' && product?.name_cn ? product.name_cn : (product?.name || item.expand?.product?.name || 'Unknown'),
-          quantity: item.quantity,
-          pcs_per_carton: product?.pcs_per_carton,
-          carton_dimensions: product?.carton_dimensions,
-          carton_gross_weight: product?.carton_gross_weight,
-          carton_net_weight: product?.carton_net_weight,
-        }
-      })
-      
-      // 计算包装信息
-      const summary = calculatePackaging(packagingItems)
-      
-      console.log('Packaging calculation result:', {
-        packagingItems,
-        summary,
-        totals: summary.totals
-      })
-      
-      // 更新表单 - 包括总重量和总体积
-      setFormData(prev => ({ 
-        ...prev, 
-      
-        total_weight: summary.totals.total_gross_weight,
-        total_volume: summary.totals.total_volume,
-      }))
-    } catch (err) {
-      console.error("Error generating packaging:", err)
-    } finally {
-      setGeneratingPackaging(false)
-    }
-  }
-
   // Load projects and customers
   useEffect(() => {
     const loadData = async () => {

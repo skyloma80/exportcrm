@@ -13,7 +13,6 @@
     "products": "产品管理",
     "productCosts": "产品成本管理",
     "projects": "项目管理",
-    "rfqs": "询价管理",
     "sourcingPlans": "采购成本表",
     "purchaseOrders": "采购订单",
     "quotations": "报价给客户",
@@ -30,8 +29,7 @@
     "systemSettings": "系统配置",
     "userSettings": "个人设置",
     "navigation": "导航",
-    "items": "项目",
-    "feedback": "用户反馈"
+    "items": "项目"
   },
   "sidebar": {
     "logout": "退出登录",
@@ -414,7 +412,6 @@
     "tabs": {
       "info": "基本信息",
       "products": "产品",
-      "rfqs": "询价单",
       "quotations": "报价给客户",
       "orders": "订单",
       "purchaseOrders": "采购单"
@@ -429,11 +426,6 @@
       "description": "项目中的产品",
       "empty": "暂无产品",
       "add": "添加产品"
-    },
-    "rfqs": {
-      "title": "询价单",
-      "description": "询价请求",
-      "empty": "暂无询价单"
     },
     "quotations": {
       "title": "报价单",
@@ -454,7 +446,6 @@
       "title": "项目时间线",
       "empty": "暂无事件",
       "types": {
-        "rfq": "询价单",
         "quotation": "报价单",
         "order": "订单",
         "purchase_order": "采购订单",
@@ -610,7 +601,6 @@
         "projectName": "项目名称",
         "nextSteps": "下一步您可以:",
         "viewProject": "查看项目详情",
-        "createRfq": "创建询价单",
         "backToList": "返回项目列表"
       },
       "errors": {
@@ -621,294 +611,7 @@
       }
     }
   },
-  "rfqs": {
-    "title": "询价管理",
-    "description": "管理供应商询价",
-    "listTitle": "询价单列表",
-    "newRfq": "新建询价",
-    "new": "新建询价",
-    "edit": "编辑询价",
-    "newDescription": "创建新的询价单",
-    "notFound": "询价单未找到",
-    "deleteConfirm": "确定要删除此询价单吗？",
-    "deleteError": "删除询价单失败",
-    "exportError": "导出失败",
-    "createSuccess": "询价单创建成功",
-    "createSuccessDesc": "询价单已创建",
-    "createError": "创建询价单失败",
-    "updateSuccess": "询价单更新成功",
-    "updateSuccessDesc": "询价单信息已更新",
-    "updateError": "更新询价单失败",
-    "saveDraft": "保存草稿",
-    "saveAndSend": "保存并发送",
-    "sendSuccess": "询价邮件发送成功",
-    "sendSuccessDesc": "询价邮件已发送给供应商",
-    "sendError": "发送邮件失败",
-    "sendErrorDesc": "发送询价邮件时出错，请稍后重试",
-    "columns": {
-      "code": "编码",
-      "project": "项目",
-      "customer": "客户",
-      "status": "状态",
-      "deadline": "截止日期",
-      "suppliers": "供应商数",
-      "items": "产品数",
-      "remarks": "备注"
-    },
-    "status": {
-      "draft": "草稿",
-      "sent": "已发送",
-      "received": "已收到报价",
-      "completed": "已完成",
-      "cancelled": "已取消"
-    },
-    "supplierStatus": {
-      "pending": "待发送",
-      "sent": "已发送",
-      "received": "已回复",
-      "selected": "已选择",
-      "rejected": "已拒绝"
-    },
-    "stats": {
-      "total": "询价总数",
-      "draft": "草稿",
-      "sent": "已发送",
-      "completed": "已完成"
-    },
-    "tabs": {
-      "info": "基本信息",
-      "items": "询价产品",
-      "suppliers": "供应商报价",
-      "quotations": "报价比较",
-      "attachments": "附件"
-    },
-    "info": {
-      "basic": "基本信息",
-      "project": "关联项目",
-      "deadline": "截止日期"
-    },
-    "settings": {
-      "title": "询价设置"
-    },
-    "items": {
-      "title": "询价产品",
-      "description": "需要询价的产品列表",
-      "empty": "暂无产品",
-      "add": "添加产品",
-      "product": "产品",
-      "quantity": "数量",
-      "targetPrice": "目标价",
-      "remarks": "备注"
-    },
-    "suppliers": {
-      "title": "供应商",
-      "description": "询价供应商列表",
-      "empty": "暂无供应商",
-      "add": "添加供应商",
-      "send": "发送询价",
-      "sendAll": "发送全部",
-      "remind": "催促回复"
-    },
-    "quotations": {
-      "title": "报价比较",
-      "description": "比较各供应商报价",
-      "empty": "暂无报价",
-      "add": "录入报价",
-      "import": "导入报价",
-      "compare": "生成比价表",
-      "lowest": "最低价",
-      "unitPrice": "单价",
-      "moq": "MOQ",
-      "leadTime": "交期(天)",
-      "validUntil": "有效期",
-      "importTitle": "导入供应商报价",
-      "importDescription": "上传 Excel 文件导入询价单 {{code}} 的供应商报价",
-      "templateTitle": "下载模板",
-      "templateDescription": "下载包含询价产品和供应商的 Excel 模板",
-      "downloadTemplate": "下载模板",
-      "selectFile": "选择文件",
-      "dropzone": "点击选择或拖放 Excel 文件",
-      "updateExisting": "更新已存在的报价（按供应商和产品匹配）",
-      "importing": "导入中...",
-      "importButton": "导入",
-      "importResult": "处理 {{total}} 行：{{success}} 成功，{{failed}} 失败",
-      "quotationsCreated": "导入 {{count}} 条产品报价",
-      "moldQuotationsCreated": "导入 {{count}} 条模具报价"
-    },
-    "attachments": {
-      "title": "附件",
-      "description": "询价相关文档",
-      "empty": "暂无附件",
-      "add": "添加附件"
-    },
-    "actions": {
-      "send": "发送询价",
-      "complete": "完成询价",
-      "generatePO": "生成采购订单",
-      "aiAnalyze": "AI分析报价"
-    },
-    "aiAnalysis": {
-      "title": "AI报价分析",
-      "description": "使用AI分析询价单 {{code}} 的供应商报价",
-      "intro": "AI将分析所有供应商报价，为您推荐最优采购方案，包括单一供应商或混合供应商策略。",
-      "startAnalysis": "开始分析",
-      "analyzing": "正在分析报价数据...",
-      "summary": "分析摘要",
-      "recommendedStrategy": "推荐策略",
-      "costAnalysis": "成本分析",
-      "singleSupplierTotal": "单一供应商总价",
-      "mixedSupplierTotal": "混合采购总价",
-      "potentialSavings": "潜在节省",
-      "savingsPercentage": "节省比例",
-      "itemRecommendations": "产品推荐",
-      "itemRecommendationsDesc": "每个产品的最优供应商推荐",
-      "bestSupplier": "推荐供应商",
-      "reason": "推荐理由",
-      "riskAssessment": "风险评估",
-      "additionalNotes": "补充说明",
-      "reanalyze": "重新分析",
-      "applyRecommendation": "应用推荐"
-    },
-    "generatePO": {
-      "title": "生成采购订单",
-      "description": "从询价单 {{code}} 生成采购订单草稿",
-      "planType": "采购方案",
-      "singleSupplier": "单一供应商",
-      "singleSupplierDesc": "所有产品从一家供应商采购，生成1个采购订单",
-      "mixedSupplier": "混合供应商",
-      "mixedSupplierDesc": "每个产品选择最优供应商，可能生成多个采购订单",
-      "selectSupplier": "选择供应商",
-      "selectSupplierPlaceholder": "请选择供应商",
-      "generate": "生成采购订单",
-      "generatedOrders": "已生成的采购订单",
-      "existingPOsWarning": "此询价单已生成过采购订单"
-    },
-    "costTable": {
-      "title": "产品成本表",
-      "description": "比较各供应商报价，查看成本汇总",
-      "empty": "暂无报价数据",
-      "totalItems": "产品数",
-      "totalSuppliers": "供应商数",
-      "lowestTotal": "最低总价",
-      "averageTotal": "平均总价",
-      "product": "产品",
-      "quantity": "数量",
-      "lowest": "最低价",
-      "subtotal": "小计",
-      "moldCosts": "模具费用",
-      "supplier": "供应商",
-      "moldType": "模具类型",
-      "cost": "费用",
-      "leadTime": "交期"
-    },
-    "placeholders": {
-      "project": "选择项目",
-      "deadline": "选择截止日期",
-      "remarks": "输入备注"
-    },
-    "email": {
-      "title": "发送询价邮件",
-      "description": "向供应商发送询价单 {{code}}",
-      "selectSuppliers": "选择供应商",
-      "selectAttachments": "选择附件",
-      "selectFromDisk": "从文件管理器选择",
-      "diskAttachments": "从文件管理器添加的附件",
-      "noSuppliersSelected": "请选择至少一个供应商",
-      "smtpWarning": "请确保您已在个人设置中配置SMTP邮箱，否则邮件将无法发送。",
-      "sending": "发送中...",
-      "send": "发送邮件",
-      "sendSuccess": "成功发送 {{sent}}/{{total}} 封邮件",
-      "sendFailed": "邮件发送失败",
-      "sendError": "发送邮件时出错",
-      "resultSuccess": "成功: {{count}} 封",
-      "resultFailed": "失败: {{count}} 封"
-    },
-    "convertToQuotation": {
-      "button": "转报价单",
-      "noProject": "无法转换",
-      "noProjectDesc": "询价单未关联项目",
-      "noPlan": "无法转换",
-      "noPlanDesc": "请先创建并确认采购成本表，以确定成本价",
-      "noPlanHint": "请先创建采购成本表",
-      "hint": "已预选项目",
-      "hintDesc": "请点击\"从采购成本表导入\"按钮导入产品和成本价"
-    },
-    "supplierQuotation": {
-      "title": "供应商报价录入",
-      "description": "录入供应商 {{supplier}} 对询价单 {{code}} 的报价",
-      "basicInfo": "基本信息",
-      "currency": "货币",
-      "leadTime": "交期（天）",
-      "validUntil": "有效期至",
-      "paymentTerms": "付款条款",
-      "shippingTerms": "运输条款",
-      "items": "产品报价",
-      "product": "产品",
-      "quantity": "数量",
-      "unitPrice": "单价",
-      "amount": "金额",
-      "moq": "最小起订量",
-      "remarks": "备注",
-      "save": "保存报价",
-      "saving": "保存中...",
-      "saveSuccess": "报价保存成功",
-      "saveSuccessDesc": "供应商报价已保存",
-      "saveError": "保存报价失败",
-      "loadError": "加载报价数据失败",
-      "notFound": "询价单或供应商未找到",
-      "backToRfq": "返回询价单",
-      "enterQuotation": "录入报价",
-      "editQuotation": "编辑报价",
-      "hasQuotation": "已报价",
-      "noQuotation": "待报价",
-      "quotedItems": "已报价产品",
-      "totalAmount": "报价总额",
-      "originalFiles": "原始报价文件",
-      "uploadFile": "上传文件",
-      "uploadedFiles": "已上传文件",
-      "noFiles": "暂无上传文件",
-      "uploading": "上传中...",
-      "uploadSuccess": "文件上传成功",
-      "uploadError": "文件上传失败",
-      "fileTooLarge": "文件大小超过100MB限制",
-      "missingContext": "缺少必要的上下文信息（客户、项目、询价单或供应商）",
-      "deleteConfirmTitle": "确认删除",
-      "deleteConfirm": "确定要删除文件 \"{{name}}\" 吗？此操作无法撤销。",
-      "deleteSuccess": "文件删除成功",
-      "deleteError": "文件删除失败"
-    },
-    "mergeToQuotation": {
-      "title": "合并转报价单",
-      "description": "将选中的询价单合并为一个客户报价单",
-      "selectedRfqs": "已选询价单",
-      "selectCustomer": "选择客户",
-      "selectProject": "选择项目",
-      "productSelection": "产品报价选择",
-      "productSelectionDesc": "以下产品有多个供应商报价，请选择要使用的报价",
-      "product": "产品",
-      "supplier": "供应商",
-      "unitPrice": "单价",
-      "leadTime": "交期",
-      "selectSupplier": "选择供应商",
-      "preview": "预览",
-      "previewItems": "将包含以下产品",
-      "merge": "合并转报价",
-      "merging": "合并中...",
-      "mergeSuccess": "合并成功",
-      "mergeSuccessDesc": "已创建报价单 {{code}}",
-      "mergeError": "合并失败",
-      "noRfqsSelected": "请选择至少一个询价单",
-      "differentProjects": "所选询价单必须属于同一项目",
-      "noQuotations": "所选询价单没有供应商报价",
-      "viewQuotation": "查看报价单",
-      "button": "合并转报价"
-    },
-    "multiSelect": {
-      "selected": "已选择 {{count}} 个询价单",
-      "clearSelection": "清除选择"
-    },
-    "selectProjectDescription": "请先从项目详情页创建询价单，以便系统自动关联项目信息。"
-  },
+
   "quotations": {
     "title": "报价给客户",
     "description": "管理客户报价单",
@@ -1243,7 +946,6 @@
       "project": "项目",
       "supplier": "供应商",
       "order": "销售订单",
-      "rfq": "询价单",
       "status": "状态",
       "currency": "货币",
       "totalAmount": "总金额",
@@ -1345,7 +1047,6 @@
       "project": "选择项目",
       "supplier": "选择供应商",
       "order": "选择销售订单（可选）",
-      "rfq": "选择询价单（可选）",
       "currency": "选择货币",
       "expectedDelivery": "选择预计交货日期"
     },
@@ -2428,7 +2129,6 @@
     "title": "系统设置",
     "description": "配置系统参数",
     "brandingLabel": "品牌配置",
-    "feedbackManagement": "用户反馈",
     "tabs": {
       "general": "常规设置",
       "trade": "贸易参数",
@@ -2825,8 +2525,6 @@
     "supplierGroupView": "按供应商分组预览",
     "supplierSelection": "供应商选择",
     "noQuotations": "暂无供应商报价",
-    "noQuotationsDesc": "请先在询价单中录入供应商报价",
-    "backToRFQ": "返回询价单",
     "saveDraft": "保存草稿",
     "confirm": "确认采购价",
     "confirmPlan": "确认采购价",
@@ -2901,54 +2599,7 @@
       "importButton": "从采购成本表导入"
     }
   },
-  "feedback": {
-    "pageTitle": "用户反馈",
-    "pageDescription": "提交功能建议、Bug报告或改进意见，帮助我们持续改进系统",
-    "submitTitle": "提交反馈",
-    "historyTitle": "我的反馈",
-    "type": "反馈类型",
-    "titleLabel": "标题",
-    "titlePlaceholder": "简要描述您的反馈",
-    "descriptionLabel": "详细描述",
-    "descriptionPlaceholder": "请详细描述您的问题或建议...",
-    "screenshots": "截图",
-    "submit": "提交反馈",
-    "submitSuccess": "反馈提交成功，感谢您的宝贵意见！",
-    "noFeedback": "暂无反馈记录",
-    "anonymous": "匿名用户",
-    "adminResponse": "管理员回复",
-    "images": "张图片",
-    "files": "个文件",
-    "uploading": "上传中...",
-    "dropOrClick": "拖拽或点击上传截图",
-    "fileRequirements": "支持 {{types}}，单文件最大 {{size}}MB，最多 {{max}} 张",
-    "types": {
-      "bug": "Bug 报告",
-      "feature": "功能建议",
-      "improvement": "改进意见",
-      "other": "其他"
-    },
-    "status": {
-      "new": "新建",
-      "inReview": "审核中",
-      "planned": "已计划",
-      "inProgress": "进行中",
-      "completed": "已完成",
-      "declined": "已拒绝"
-    },
-    "errors": {
-      "titleRequired": "请输入标题",
-      "titleTooLong": "标题不能超过200字符",
-      "descriptionRequired": "请输入详细描述",
-      "descriptionTooLong": "描述不能超过 {{max}} 字符",
-      "invalidFileType": "仅支持 PNG, JPG, GIF, WebP 格式的图片",
-      "fileTooLarge": "文件大小不能超过 {{size}}MB",
-      "tooManyFiles": "最多只能上传 {{max}} 张截图",
-      "uploadFailed": "上传失败，请重试",
-      "loadFailed": "加载反馈列表失败",
-      "submitFailed": "提交失败，请重试"
-    }
-  },
+
   "projectWizard": {
     "title": "项目启动向导",
     "description": "快速创建项目并初始化相关数据",
@@ -3087,7 +2738,6 @@
       "projectName": "项目名称",
       "nextSteps": "下一步您可以:",
       "viewProject": "查看项目详情",
-      "createRfq": "创建询价单",
       "backToList": "返回项目列表"
     },
     "errors": {

@@ -1,121 +1,83 @@
 ---
 name: crm-developer
-description: "Developer/DevOps agent for managing feedbacks, code fixes, and CI/CD deployment"
-version: 1.0.0
+description: 开发者工具 — 任务追踪、代码修复、CI/CD 部署
+version: 2.0.0
 author: Hermes Agent
-license: MIT
-tags: [CRM, Developer, DevOps, CI/CD, Git, OpenCode]
 ---
 
-# CRM Developer Agent
+# CRM 开发者工具
 
-The crm-developer agent manages the full lifecycle of user feedbacks (bugs, features, improvements):
-1. Monitor feedbacks collection for new/planned items
-2. Create git branches for each fix/feature
-3. Write task files and delegate to OpenCode for implementation
-4. Review changes, ask user for confirmation
-5. Git push → CI/CD deployment
+## 概述
 
-## Workflow
+管理开发任务的完整生命周期：接收任务 → 分析需求 → 建分支 → 实现修复 → 测试 → 代码审查 → 合并部署。
+
+## 工作流
 
 ```
-Feedbacks → Branch → Task File → OpenCode Fix → Review → User Confirm → Git Push → CI/CD
+任务 → 分析 → 分支 → 实现 → 测试 → 审查 → 合并 → CI/CD 部署
 ```
 
-## Step-by-Step
+### 1. 接收任务
 
-### 1. Check Feedbacks
+任务通过 `customer_tracking` 和 `customer_activities` 记录和追踪。开发任务包括：
 
-Load crm-feedbacks skill, query for actionable items:
+- **Bug 修复**：系统功能异常需要修复
+- **功能开发**：新增业务功能或模块
+- **优化改进**：性能优化、代码重构、UI 改进
+
+### 2. 分析需求
 
 ```python
-from crm_auth import pb_list
+from authenticate import list_records
 
-feedbacks = pb_list("feedbacks", "filter=(status='new'||status='planned'||status='in_review')&sort=-created")
+# 查看待处理的高优跟踪记录
+tasks = list_records("customer_tracking",
+    'filter=(status="Follow-up")&sort=-created')
+
+# 查看最近的客户活动了解需求背景
+activities = list_records("customer_activities",
+    'sort=-timestamp&limit=10')
 ```
 
-### 2. Create Branch
+### 3. 创建分支
 
 ```bash
-git checkout -b fix/feedback-{FEEDBACK_ID}-{short-title}
+git checkout -b fix/task-{id}-{short-title}
 ```
 
-### 3. Write Task File
-
-Create `.agents/tasks/{feedback_id}.md` with:
-- Feedback title, description, type
-- Screenshots references
-- Specific code changes needed
-- File paths to modify
-
-### 4. Delegate to OpenCode
-
-Use the opencode skill to run the fix:
+### 4. 实现并测试
 
 ```bash
-opencode run "Implement fixes based on .agents/tasks/{feedback_id}.md" -f .agents/tasks/{feedback_id}.md
+# 实现代码修改
+
+# 运行测试验证
+npm test
+# 或
+python -m pytest
+
+# 运行 lint 检查
+npm run lint
 ```
 
-Or delegate via Hermes:
-
-```bash
-delegate_task goal="..." context="..." toolsets=['terminal', 'file']
-```
-
-### 5. Verify & Report
-
-Verify changes compile/build successfully, then report to user for confirmation.
-
-### 6. User Confirmation
-
-Ask user: "Ready to push and deploy?"
-
-### 7. Push & Deploy
+### 5. 提交并创建 PR
 
 ```bash
 git add -A
-git commit -m "fix: {feedback_title}"
+git commit -m "fix: {task_description}"
 git push origin {branch_name}
-# CI/CD auto-deploys via GitHub Actions
 ```
 
-## Branch Naming Convention
+## 分支命名规范
 
-| Feedback Type | Branch Prefix |
-|---------------|---------------|
-| `bug` | `fix/feedback-{id}-{title}` |
-| `feature` | `feat/feedback-{id}-{title}` |
-| `improvement` | `chore/feedback-{id}-{title}` |
+| 任务类型 | 前缀 |
+|----------|------|
+| bug 修复 | `fix/task-{id}-{title}` |
+| 功能开发 | `feat/task-{id}-{title}` |
+| 优化改进 | `chore/task-{id}-{title}` |
 
-## Task File Template
+## 代码质量要求
 
-```markdown
-# Feedback #{id}: {title}
-- Type: {type}
-- Status: {status}
-- Reported by: {user}
-- Description: {description}
-
-## Changes Required
-{list of specific file changes}
-
-## Verification
-- [ ] Build passes (`yarn build`)
-- [ ] TypeScript compiles (`tsc --noEmit`)
-- [ ] Tests pass (`yarn test`)
-```
-
-## CI/CD Pipeline
-
-The project has GitHub Actions configured. After push:
-1. GitHub Actions runs build + test
-2. If successful, deploys via Docker
-3. Monitor at GitHub > Actions tab
-
-## Pitfalls
-
-- Always create a new branch from master/main
-- One branch per feedback item
-- Never push directly to master
-- Always verify builds before pushing
-- If OpenCode is not available, implement changes directly
+- 提交前运行测试套件确保全部通过
+- 遵循现有代码风格和命名约定
+- 新功能需包含对应的测试用例
+- 数据库迁移需向后兼容

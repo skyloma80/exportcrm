@@ -43,21 +43,6 @@ const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   cancelled: ['draft'], // Allow reactivation to draft
 };
 
-/**
- * BankInfo 接口
- * 用于向后兼容旧数据（对象格式）
- * 新数据使用纯文本字符串存储
- */
-export interface BankInfo {
-  bank_name?: string;
-  bank_address?: string;
-  account_name?: string;
-  account_number?: string;
-  swift_code?: string;
-  iban?: string;
-  intermediary_bank?: string;      // 中转行名称
-  intermediary_swift?: string;     // 中转行 SWIFT 代码
-}
 
 export interface Order extends RecordModel {
   code: string;
@@ -90,20 +75,7 @@ export interface Order extends RecordModel {
   updated_by?: string;
 }
 
-export interface OrderItem {
-  id?: string;
-  product?: string;
-  product_name?: string;
-  product_code?: string;
-  part_number?: string;
-  description_en?: string;
-  description_cn?: string;
-  quantity: number;
-  unit?: string;
-  unit_price: number;
-  amount: number;
-  cost_price?: number;
-}
+
 
 export interface OrderPayment extends RecordModel {
   order: string;
@@ -184,9 +156,7 @@ export interface OrderCreateInput {
   vendor_code?: string;
 }
 
-export interface OrderUpdateInput extends Partial<Omit<OrderCreateInput, 'project' | 'customer'>> {
-  status?: OrderStatus;
-}
+
 
 export interface OrderPaymentCreateInput {
   order: string;
@@ -217,12 +187,7 @@ class OrderService extends BaseCollectionService<Order> {
     return generateOrderCode();
   }
 
-  /**
-   * Get order by code
-   */
-  async getByCode(code: string): Promise<Order | null> {
-    return this.getFirstListItem(`code = "${code}"`);
-  }
+
 
   /**
    * Get order with full details
@@ -264,25 +229,9 @@ class OrderService extends BaseCollectionService<Order> {
     });
   }
 
-  /**
-   * Get orders by customer
-   */
-  async getByCustomer(customerId: string): Promise<Order[]> {
-    return this.getFullList({
-      filter: `customer = "${customerId}"`,
-      sort: '-id',
-    });
-  }
 
-  /**
-   * Get orders by status
-   */
-  async getByStatus(status: OrderStatus): Promise<Order[]> {
-    return this.getFullList({
-      filter: `status = "${status}"`,
-      sort: '-id',
-    });
-  }
+
+
 
   /**
    * Create order with auto-generated code

@@ -19,7 +19,7 @@ import { type BreadcrumbItem } from '@/lib/breadcrumb/context';
  * Document types for return URL calculation
  * 单据类型，用于计算返回 URL
  */
-export type DocumentType = 'rfq' | 'quotation' | 'order' | 'purchase-order' | 'shipment';
+export type DocumentType = 'quotation' | 'order' | 'purchase-order' | 'shipment';
 
 /**
  * Return mode for navigation
@@ -32,7 +32,6 @@ export type ReturnMode = 'detail' | 'workflow';
  * 单据类型到项目详情页标签页名称的映射
  */
 export const DOCUMENT_TYPE_TO_TAB: Record<DocumentType, string> = {
-  'rfq': 'rfqs',
   'quotation': 'quotations',
   'order': 'orders',
   'purchase-order': 'purchaseOrders',
@@ -98,7 +97,7 @@ export function calculateReturnUrl(
 
 /**
  * 生成带工作流返回参数的 URL
- * @param baseUrl - 基础 URL（如 /rfqs/new）
+ * @param baseUrl - 基础 URL（如 /quotations/new）
  * @param projectId - 项目 ID
  * @param returnMode - 返回模式
  */
@@ -168,8 +167,8 @@ export function generateProjectBreadcrumbs(
  * ```tsx
  * // 在表单组件中使用
  * const { projectId, project, customer, isWithinProject, loading, returnUrl, breadcrumbItems } = useProjectContext({
- *   documentType: 'rfq',
- *   currentPageLabel: '新建询价'
+ *   documentType: 'quotation',
+ *   currentPageLabel: '新建报价'
  * });
  * 
  * // 如果有项目上下文，预填充并禁用项目选择

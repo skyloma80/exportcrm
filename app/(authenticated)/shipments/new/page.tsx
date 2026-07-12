@@ -64,7 +64,7 @@ function NewShipmentPageInner() {
   useEffect(() => {
     if (order) {
       setBreadcrumb([
-        { label: order.code || t("orders.detail"), href: `/orders/${order.id}` },
+        { label: order.code || t("orders.detail"), href: `/so/${order.id}` },
         { label: t('shipments.newShipment') },
       ]);
     }
@@ -72,7 +72,7 @@ function NewShipmentPageInner() {
   }, [order, setBreadcrumb, t]);
 
   const handleCancel = () => {
-    router.push(`/orders/${orderId}/shipments`);
+    router.push(`/so/${orderId}/shipments`);
   };
 
   const handleMethodSelect = async (method: ShippingMethod, crossBorder: boolean) => {

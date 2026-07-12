@@ -116,7 +116,7 @@ export function ProjectSelect({
             </span>
           ) : (
             <span className="text-muted-foreground">
-              {placeholder || t("rfqs.placeholders.project")}
+              {placeholder || t("projects.placeholders.select") || "Select a project..."}
             </span>
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

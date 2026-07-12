@@ -136,7 +136,7 @@ function BreadcrumbNav() {
       'service-providers': t('nav.serviceProviders'),
       'products': t('nav.products'),
       'projects': t('nav.projects'),
-      'rfqs': t('nav.rfqs'),
+
       'purchase-orders': t('nav.purchaseOrders'),
       'po': t('nav.purchaseOrders'),
       'quotations': t('nav.quotations'),

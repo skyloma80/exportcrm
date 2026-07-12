@@ -63,7 +63,6 @@ async function inferStageFromRelations(projectId: string): Promise<ProjectStage>
     }
 
     // 检查是否有非草稿报价单（quotation 阶段）
-    // 草稿报价单不应该影响项目阶段
     const quotations = await pb.collection('quotations').getList(1, 1, {
       filter: `project = "${projectId}" && status != "draft"`,
     });
@@ -71,14 +70,6 @@ async function inferStageFromRelations(projectId: string): Promise<ProjectStage>
       return 'quotation';
     }
 
-    // 检查是否有非草稿询价单（inquiry 阶段）
-    // 草稿询价单不应该影响项目阶段
-    const rfqs = await pb.collection('rfqs').getList(1, 1, {
-      filter: `project = "${projectId}" && status != "draft"`,
-    });
-    if (rfqs.totalItems > 0) {
-      return 'inquiry';
-    }
   } catch (error) {
     console.error('Failed to infer stage from relations:', error);
   }

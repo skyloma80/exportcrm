@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
     const costs = await productCostService.getAllCurrent()
     return NextResponse.json(costs)
   } catch (error: any) {
-    const status = typeof error?.status === "number" ? error.status : 500
+    const rawStatus = typeof error?.status === "number" ? error.status : 500
+    const status = rawStatus >= 200 && rawStatus <= 599 ? rawStatus : 500
     return NextResponse.json(
       { error: error?.message || "Failed to fetch product costs", details: error?.data || null },
       { status }
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
     const cost = await productCostService.create(body)
     return NextResponse.json(cost)
   } catch (error: any) {
-    const status = typeof error?.status === "number" ? error.status : 500
+    const rawStatus = typeof error?.status === "number" ? error.status : 500
+    const status = rawStatus >= 200 && rawStatus <= 599 ? rawStatus : 500
     return NextResponse.json(
       { error: error?.message || "Failed to create product cost", details: error?.data || null },
       { status }
@@ -87,7 +89,8 @@ export async function PUT(request: NextRequest) {
     const result = await productCostService.updatePrice(id, data)
     return NextResponse.json(result)
   } catch (error: any) {
-    const status = typeof error?.status === "number" ? error.status : 500
+    const rawStatus = typeof error?.status === "number" ? error.status : 500
+    const status = rawStatus >= 200 && rawStatus <= 599 ? rawStatus : 500
     return NextResponse.json(
       { error: error?.message || "Failed to update product cost", details: error?.data || null },
       { status }
@@ -110,7 +113,8 @@ export async function DELETE(request: NextRequest) {
     await productCostService.delete(id)
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    const status = typeof error?.status === "number" ? error.status : 500
+    const rawStatus = typeof error?.status === "number" ? error.status : 500
+    const status = rawStatus >= 200 && rawStatus <= 599 ? rawStatus : 500
     return NextResponse.json(
       { error: error?.message || "Failed to delete product cost", details: error?.data || null },
       { status }

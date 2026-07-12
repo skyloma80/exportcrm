@@ -178,15 +178,6 @@ export default function DashboardPage() {
           loading={loading}
           error={kpiError}
         />
-        <KPICard
-          title={isZh ? '询价单' : 'RFQs'}
-          value={kpiStats?.rfqs.current || 0}
-          previousValue={kpiStats?.rfqs.previous}
-          icon={<FileText className="h-4 w-4" />}
-          loading={loading}
-          error={kpiError}
-        />
-
       </div>
 
       {/* Recent Projects Card + Revenue Trend Chart */}

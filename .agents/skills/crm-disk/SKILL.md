@@ -1,120 +1,76 @@
 ---
 name: crm-disk
-description: "File management - upload, download, list, and organize files in S3-compatible storage"
+description: 文件管理 — S3 存储的列表、上传、下载、批量同步、目录规范
 version: 1.0.0
-author: Hermes Agent
-license: MIT
-tags: [CRM, Files, Storage, S3, Disk]
-depends_on: [crm-auth]
+author: AlustarsCRM
 ---
 
-# CRM Disk / File Management Skill
+# 文件管理 (S3 Disk)
 
-Manage files in the CRM's S3-compatible storage system. Files are organized in a hierarchical folder structure and accessible via the disk UI or API.
+## 触发条件
 
-## API Endpoints
+当用户需要：
+- 查看/管理 S3 文件
+- 上传单个或多个文件
+- 同步本地文件夹到 S3
+- 下载或删除文件
+- 了解目录结构规范
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/disk/list` | GET | List files/folders in a path |
-| `/api/disk/upload` | POST | Upload a file |
-| `/api/disk/download` | GET | Download a file |
-| `/api/disk/delete` | DELETE | Delete a file/folder |
-| `/api/disk/folders` | GET | Get folder tree |
-| `/api/disk/ensure-folder` | POST | Create folder |
-| `/api/disk/file` | GET | Get file metadata |
-| `/api/disk/image` | GET | Get image file |
+## 目录规范
 
-## Common Operations
+公司根目录 `/Company/` 下按部门/用途组织：
 
-### List Files in Directory
+```
+/Company/
+├── Public/              ← 公开文件（报价单、PI 等通用文档）
+├── Customers/           ← 按客户组织
+│   └── {customer_code}/
+│       ├── Quotations/  ← 报价单
+│       ├── PIs/         ← 形式发票
+│       ├── Orders/      ← 客户订单
+│       └── Photos/      ← 产品图片
+├── Suppliers/           ← 按供应商组织
+│   └── {supplier_code}/
+│       ├── POs/         ← 采购订单
+│       ├── Invoices/    ← 供应商发票
+│       └── Photos/
+├── Projects/            ← 按项目组织
+│   └── {project_code}/
+│       ├── Notes/       ← 项目笔记（Markdown）
+│       └── Attachments/ ← 项目附件
+├── Internal/            ← 内部文件
+│   ├── Templates/       ← 模板文件
+│   └── Reports/         ← 报表
+└── Archive/             ← 归档
+```
+
+## API
+
 ```python
-import urllib.request, json
+from tools.disk_ops import (
+    disk_list,         # 列出目录
+    disk_upload,       # 上传文件
+    disk_download,     # 下载文件
+    disk_delete,       # 删除文件
+    disk_folders,      # 获取目录树
+    disk_ensure_folder,# 创建目录
+    disk_batch_upload, # 批量上传
+    disk_sync,         # 同步本地目录到 S3
+)
 
-url = f"{CRM_API_URL}/api/disk/list?path=/CompanyName/CustomerName/ProjectName"
-req = urllib.request.Request(url, headers=get_pb_headers())
-with urllib.request.urlopen(req) as r:
-    files = json.loads(r.read())
-    for f in files.get("data", []):
-        print(f"{'📁' if f['isFolder'] else '📄'} {f['name']} "
-              f"{'('+format_size(f.get('size',0))+')' if not f['isFolder'] else ''}")
+# 示例: 列出项目笔记
+notes = disk_list("/Company/Projects/PROJ001/Notes/")
+
+# 示例: 上传报价单
+disk_upload("quote.pdf", "/Company/Customers/C001/Quotations/quote.pdf")
+
+# 示例: 批量上传
+files = [
+    {"local_path": "doc1.pdf", "destination": "/Company/Public/doc1.pdf"},
+    {"local_path": "doc2.pdf", "destination": "/Company/Public/doc2.pdf"},
+]
+results = disk_batch_upload(files)
+
+# 示例: 同步本地目录
+result = disk_sync("./project_files", "/Company/Projects/PROJ001/Attachments/")
 ```
-
-### Upload File
-```python
-import urllib.request
-import json
-
-# Form upload
-url = f"{CRM_API_URL}/api/disk/upload?path=/Target/Folder/Path"
-# Using multipart form data with file
-# Or via the upload form UI
-```
-
-### Create Folder Structure
-```python
-url = f"{CRM_API_URL}/api/disk/ensure-folder"
-data = json.dumps({"path": "/Company/Customer/Project/Documents"}).encode()
-req = urllib.request.Request(url, data=data, headers=get_pb_headers(), method="POST")
-with urllib.request.urlopen(req) as r:
-    result = json.loads(r.read())
-```
-
-### Get Folder Tree
-```python
-url = f"{CRM_API_URL}/api/disk/folders"
-req = urllib.request.Request(url, headers=get_pb_headers())
-with urllib.request.urlopen(req) as r:
-    tree = json.loads(r.read())
-```
-
-### Download File
-```python
-url = f"{CRM_API_URL}/api/disk/download?path=/File/Path/document.pdf"
-req = urllib.request.Request(url, headers=get_pb_headers(headers_only=True))
-# Stream the response as binary file
-```
-
-## File Path Convention
-
-```
-/{company_name}/{customer_name}/{project_name}/{category}/{filename}
-```
-
-Example: `/Alustars/ABC Trading/Project 2024/Documents/spec.pdf`
-
-## Document Paths (Auto-generated)
-
-The CRM auto-generates document paths for orders:
-```
-/{company}/{customer}/{project}/{doc_type}/{filename}
-```
-
-| Doc Type | Folder |
-|----------|--------|
-| PI | `PI/` |
-| PO | `PO/` |
-| Quotations | `Quotations/` |
-| RFQ | `RFQ/` |
-| Shipments | `Shipments/` |
-| Photos | `Photos/` |
-
-## Quick Start
-
-```bash
-# List root folders
-curl -H "Authorization: Bearer $CRM_API_TOKEN" \
-  "${CRM_API_URL}/api/disk/list?path=/"
-
-# Download a file
-curl -H "Authorization: Bearer $CRM_API_TOKEN" \
-  -o "output.pdf" \
-  "${CRM_API_URL}/api/disk/download?path=/Company/Customer/Doc/spec.pdf"
-```
-
-## Usage in Hermes
-
-1. Load crm-auth + crm-disk
-2. List files/folders via API
-3. Download/upload files as needed
-4. Create folder structure for new projects

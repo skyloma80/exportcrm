@@ -65,12 +65,6 @@ export function generatePath(options: PathOptions): string {
               parts.push(sanitizePathSegment(productName));
             }
             break;
-          case FILE_SCOPES.RFQ:
-            parts.push(DIRECTORY_NAMES.rfqs);
-            if (refCode) {
-              parts.push(sanitizePathSegment(refCode));
-            }
-            break;
           case FILE_SCOPES.QUOTATION:
             parts.push(DIRECTORY_NAMES.quotations);
             break;
@@ -308,43 +302,6 @@ export function generateUniqueFilename(originalName: string): string {
   return ext ? `${timestamp}_${sanitized}.${ext}` : `${timestamp}_${sanitized}`;
 }
 
-/**
- * Generate storage path for supplier quotation files
- * 生成供应商报价文件的存储路径
- * 
- * Path pattern: Customers/{customerName}/{projectName}/rfqs/{rfqCode}/quotations/{supplierCode}/{fileName}
- * 
- * @param customerName - Customer name (客户名称)
- * @param projectName - Project name (项目名称)
- * @param rfqCode - RFQ code, e.g., RFQ-2026-00001 (询价单编号)
- * @param supplierCode - Supplier code, e.g., SUP-001 (供应商编号)
- * @param fileName - Optional filename (可选文件名)
- * @returns Generated storage path
- */
-export function generateSupplierQuotationPath(
-  customerName: string,
-  projectName: string,
-  rfqCode: string,
-  supplierCode: string,
-  fileName?: string
-): string {
-  const parts: string[] = [
-    ROOT_TYPES.CUSTOMERS,
-    sanitizePathSegment(customerName),
-    sanitizePathSegment(projectName),
-    DIRECTORY_NAMES.rfqs,
-    sanitizePathSegment(rfqCode),
-    DIRECTORY_NAMES.quotations,
-    sanitizePathSegment(supplierCode),
-  ];
-
-  if (fileName) {
-    parts.push(sanitizePathSegment(fileName));
-  }
-
-  return parts.join('/');
-}
-
 // Export the storage path service
 export const storagePath = {
   generate: generatePath,
@@ -355,7 +312,6 @@ export const storagePath = {
   sanitize: sanitizePathSegment,
   getFileExtension,
   generateUniqueFilename,
-  generateSupplierQuotationPath,
 };
 
 export default storagePath;

@@ -36,11 +36,6 @@ export function generateBrandedEmailHTML(data: EmailTemplateData): string {
   // Determine attachment hint based on attachmentNote value
   const getAttachmentHint = (note: string | undefined, isEn: boolean) => {
     if (!note) return '';
-    if (note === 'rfq_with_template') {
-      return isEn 
-        ? '📎 Please see the attached PDF for details and fill in the quotation template.'
-        : '📎 请查看附件中的PDF文档了解详情，并填写报价模板后回复此邮件。';
-    }
     if (note === 'excel_template') {
       return isEn 
         ? '📎 Please fill in the attached quotation template and reply to this email.'
@@ -268,40 +263,6 @@ export function generateQuotationEmailContent(data: {
 }
 
 /**
- * Generate RFQ email content (Chinese)
- */
-export function generateRFQEmailContent(data: {
-  rfqCode: string;
-  issueDate: string;
-  deadline: string;
-  itemCount: number;
-  projectDescription?: string;
-}): string {
-  // 项目描述部分（如果有）- 将换行符转换为 <br> 标签以确保邮件客户端正确显示
-  const descriptionHtml = data.projectDescription
-    ? `
-<p style="margin: 0 0 10px 0;"><strong>项目描述:</strong></p>
-<div style="margin: 10px 0; padding: 10px 12px; background-color: #f9fafb; border-left: 3px solid #d1d5db;">${data.projectDescription.replace(/\n/g, '<br>')}</div>
-`
-    : '';
-
-  return `
-<p style="margin: 0 0 10px 0;">我们诚邀您为以下项目提供报价：</p>
-
-<p style="margin: 0 0 10px 0;"><strong>询价详情:</strong></p>
-<ul style="margin: 10px 0; padding-left: 20px;">
-  <li style="margin: 4px 0;">询价单号: ${data.rfqCode}</li>
-  <li style="margin: 4px 0;">发布日期: ${data.issueDate}</li>
-  <li style="margin: 4px 0;">回复截止: ${data.deadline}</li>
-</ul>
-
-<p style="margin: 0 0 10px 0;">请在截止日期前提供您的最优报价，如有疑问请随时联系我们。</p>
-${descriptionHtml}
-<p style="margin: 0 0 10px 0;">本次询价共 <strong>${data.itemCount}</strong> 个产品，详情请查看附件中的报价模板。</p>
-`;
-}
-
-/**
  * Generate Invoice/PI email content (English)
  */
 export function generateInvoiceEmailContent(data: {
@@ -328,7 +289,6 @@ export function generateInvoiceEmailContent(data: {
 export default {
   generateBrandedEmailHTML,
   generateQuotationEmailContent,
-  generateRFQEmailContent,
   generateInvoiceEmailContent,
   DEFAULT_EMAIL_LOGO_URL,
 };

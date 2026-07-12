@@ -51,30 +51,6 @@ class DashboardService {
       console.error('Failed to load orders for KPI:', e?.message || e?.status, e);
     }
 
-    // Fetch all RFQs and filter client-side
-    let currentRfqs: any[] = [];
-    let previousRfqs: any[] = [];
-    try {
-      const allRfqs = await this.pb.collection('rfqs').getFullList({
-        batch: 200,
-      });
-      const now = new Date();
-      currentRfqs = allRfqs.filter((r: any) => {
-        const created = new Date(r.created);
-        return created >= currentStart && created <= now;
-      });
-      previousRfqs = allRfqs.filter((r: any) => {
-        const created = new Date(r.created);
-        return created >= previousStart && created < currentStart;
-      });
-    } catch (e) {
-      console.error('Failed to load RFQs for KPI:', e);
-    }
-
-
-
-
-
     return {
        revenue: {
         current: currentOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
@@ -84,11 +60,6 @@ class DashboardService {
         current: currentOrders.length,
         previous: previousOrders.length,
       },
-      rfqs: {
-        current: currentRfqs.length,
-        previous: previousRfqs.length,
-      }
-
     };
   }
 

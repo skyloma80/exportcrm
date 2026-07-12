@@ -26,7 +26,6 @@ tests = [
     ("suppliers", "供应商", "name"),
     ("products", "产品", "name"),
     ("projects", "项目", "name"),
-    ("feedbacks", "反馈", "title"),
     ("tasks", "任务", "title"),
     ("rfqs", "询价", "code"),
     ("quotations", "报价", "code"),

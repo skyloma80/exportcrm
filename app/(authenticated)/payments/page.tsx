@@ -279,7 +279,7 @@ export default function PaymentsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => router.push(`/orders/${row.original.order}`)}
+            onClick={() => router.push(`/so/${row.original.order}`)}
             title={locale === 'zh' ? '查看订单' : 'View Order'}
           >
             <Eye className="h-4 w-4" />
