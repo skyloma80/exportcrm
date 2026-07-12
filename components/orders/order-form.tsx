@@ -35,8 +35,7 @@ import { getRate } from "@/lib/services/exchange-rate"
 import type { FlatSO, SOCreateInput, SOItem } from "@/lib/pocketbase/services/so"
 import type { Product } from "@/lib/pocketbase/services/products"
 import { productService } from "@/lib/pocketbase/services/products"
-import { calculatePackaging, type ProductPackaging } from "@/lib/services/packaging-calculator"
-import { RefreshCw, GripVertical } from "lucide-react"
+ import { RefreshCw, GripVertical } from "lucide-react"
 import {
   DndContext,
   closestCenter,
@@ -315,27 +314,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string | undefined>(undefined)
 
   // 生成包装信息到备注字段
-  const handleGeneratePackaging = async () => {
-    if (localItems.length === 0) return
 
-    setGeneratingPackaging(true)
-    try {
-      // 构建包装计算输入
-      const packagingItems: ProductPackaging[] = localItems.map(item => ({
-        product_id: item.id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        // 如果有更多规格信息可以从库中读取，这里简化处理
-      }))
-
-      const summary = calculatePackaging(packagingItems)
-      setFormData(prev => ({ ...prev, remarks: summary.text }))
-    } catch (err) {
-      console.error("Error generating packaging:", err)
-    } finally {
-      setGeneratingPackaging(false)
-    }
-  }
 
   // Load exchange rate when currency changes
   useEffect(() => {
@@ -859,20 +838,7 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
             <div className="space-y-2">
               <div className="flex items-center justify-between h-9">
                 <Label>{locale === 'zh' ? '备注（包装信息等）' : 'Remarks (Packaging, etc.)'}</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGeneratePackaging}
-                  disabled={generatingPackaging || localItems.length === 0}
-                >
-                  {generatingPackaging ? (
-                    <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
-                  ) : (
-                    <Package className="mr-2 h-3 w-3" />
-                  )}
-                  {locale === 'zh' ? '生成包装信息' : 'Generate Packaging'}
-                </Button>
+
               </div>
               <Textarea
                 value={formData.remarks}

@@ -52,3 +52,5 @@ crm.tar
 !excel-template/*.xlsx
 test-*.xlsx
 manual-merge.xlsx
+
+nul

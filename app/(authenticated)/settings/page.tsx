@@ -6,12 +6,63 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Settings, Loader2, Upload, CheckCircle, AlertCircle, MessageSquare, Ruler, CreditCard } from 'lucide-react';
+import { Settings, Loader2, Upload, CheckCircle, AlertCircle, Ruler, CreditCard, FileJson, Download } from 'lucide-react';
 import Link from 'next/link';
 import { BrandingConfigCard } from '@/components/settings/branding-config-card';
-import { FeedbackManagement } from '@/components/settings/feedback-management';
-import { MasterDataCard } from '@/components/settings/master-data-card';
-import { FileSpreadsheet } from 'lucide-react';
+
+function ApiDocsTab() {
+  const { locale } = useI18n();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handleDownload = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/openapi/download');
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Download failed');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `openapi_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: locale === 'zh' ? '下载成功' : 'Downloaded' });
+    } catch (err: any) {
+      toast({ title: locale === 'zh' ? '下载失败' : 'Download failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border bg-card p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium">
+            {locale === 'zh' ? 'OpenAPI 接口文档' : 'OpenAPI Documentation'}
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {locale === 'zh'
+              ? '生成并下载完整的 REST API 接口文档（OpenAPI 3.1 格式），可用于导入 Postman、Swagger Editor 等工具'
+              : 'Generate and download the complete REST API specification (OpenAPI 3.1) for use with Postman, Swagger Editor, etc.'}
+          </p>
+        </div>
+        <Button onClick={handleDownload} disabled={loading}>
+          {loading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" />
+          )}
+          {locale === 'zh' ? '生成并下载' : 'Generate & Download'}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { t, locale } = useI18n();
@@ -135,18 +186,11 @@ export default function SettingsPage() {
             <CreditCard className="mr-2 h-4 w-4" />
             {locale === 'zh' ? '汇款模板' : 'Remittance'}
           </TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="master-data">
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              {t('settings.masterData.title')}
-            </TabsTrigger>
-          )}
-          {isAdmin && (
-            <TabsTrigger value="feedback">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              {t('settings.feedbackManagement')}
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="api">
+            <FileJson className="mr-2 h-4 w-4" />
+            {locale === 'zh' ? 'API 文档' : 'API Docs'}
+          </TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="branding">
@@ -172,17 +216,10 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
-        {isAdmin && (
-          <TabsContent value="master-data">
-            <MasterDataCard />
-          </TabsContent>
-        )}
+        <TabsContent value="api">
+          <ApiDocsTab />
+        </TabsContent>
 
-        {isAdmin && (
-          <TabsContent value="feedback">
-            <FeedbackManagement />
-          </TabsContent>
-        )}
       </Tabs>
     </div>
   );
