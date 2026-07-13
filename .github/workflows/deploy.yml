@@ -4,7 +4,6 @@ on:
     branches: [ master ]
 
 env:
-  DOCKER_IMAGE: ${{ secrets.DOCKER_USER }}/crm:latest
   GHCR_IMAGE: ghcr.io/${{ github.repository }}:latest
   IMAGE_TAR: ./crm-image.tar.gz
 
@@ -27,12 +26,7 @@ jobs:
         run: |
           echo "$ENV_PRODUCTION" > .env.production
 
-      # 2. 登录 Docker Hub & GitHub Container Registry
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      # 2. 登录 GitHub Container Registry
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -50,13 +44,11 @@ jobs:
           load: true
           tags: crm:latest
 
-      # 4. 导出镜像为 tar，推送到两个 registry
-      - name: Save image & push to registries
+      # 4. 导出镜像为 tar，推送到 GHCR
+      - name: Save image & push to GHCR
         run: |
           docker save crm:latest | gzip > ${{ env.IMAGE_TAR }}
-          docker tag crm:latest ${{ env.DOCKER_IMAGE }}
           docker tag crm:latest ${{ env.GHCR_IMAGE }}
-          docker push ${{ env.DOCKER_IMAGE }}
           docker push ${{ env.GHCR_IMAGE }}
 
       # 5. 拷贝配置文件至服务器
