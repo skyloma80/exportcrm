@@ -193,6 +193,7 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
     supplier_name: initialData?.supplier_name || "",
     currency: initialData?.currency || "CNY",
     expected_delivery_date: formatDateForInput(initialData?.expected_delivery_date),
+    vat_rate: initialData?.vat_rate ?? 13,
     remarks: initialData?.remarks || "",
     status: initialData?.status || "draft",
   })
@@ -283,7 +284,9 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
       toast({ title: "供应商必填", variant: "destructive" })
       return
     }
-    const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0)
+    const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0)
+    const vatAmount = subtotal * ((Number(formData.vat_rate) || 0) / 100)
+    const totalAmount = subtotal + vatAmount
     const payload: POCreateInput = {
       code: formData.code || undefined,
       supplier_id: formData.supplier_id || undefined,
@@ -293,6 +296,9 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
         ? new Date(formData.expected_delivery_date).toISOString()
         : undefined,
       remarks: formData.remarks,
+      vat_rate: Number(formData.vat_rate) || 0,
+      subtotal,
+      vat_amount: vatAmount,
       total_amount: totalAmount,
       status: formData.status as any,
       items,
@@ -320,7 +326,7 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
         </CardHeader>
         <CardContent className="space-y-4">
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>供应商 <span className="text-destructive">*</span></Label>
               <SupplierSelect
@@ -341,15 +347,15 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
                 onChange={(e) => setFormData(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
               />
             </div>
-
-
             <div className="space-y-2">
-              <Label>订单号</Label>
+              <Label>增值税率 (%)</Label>
               <Input
-                value={formData.code || "保存时自动生成"}
-                readOnly
-                disabled
-                className="font-mono"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.vat_rate}
+                onChange={(e) => setFormData(prev => ({ ...prev, vat_rate: parseFloat(e.target.value) || 0 }))}
               />
             </div>
             <div className="space-y-2">
@@ -363,8 +369,18 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>订单号</Label>
+              <Input
+                value={formData.code || "保存时自动生成"}
+                readOnly
+                disabled
+                className="font-mono"
+              />
+            </div>
           </div>
 
 
@@ -399,13 +415,13 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead className="w-[50px] text-center">No.</TableHead>
-                    <TableHead className="w-[140px]">零件号</TableHead>
-                    <TableHead className="min-w-[180px]">英文描述</TableHead>
-                    <TableHead className="min-w-[160px]">中文描述</TableHead>
-                    <TableHead className="w-[90px]">数量</TableHead>
-                    <TableHead className="w-[100px]">单位</TableHead>
-                    <TableHead className="w-[130px]">单价</TableHead>
-                    <TableHead className="text-right w-[120px]">小计</TableHead>
+                    <TableHead className="w-[120px]">零件号</TableHead>
+                    <TableHead className="min-w-[120px]">英文描述</TableHead>
+                    <TableHead className="min-w-[120px]">中文描述</TableHead>
+                    <TableHead className="w-[110px]">数量</TableHead>
+                    <TableHead className="w-[110px]">单位</TableHead>
+                    <TableHead className="w-[140px]">单价</TableHead>
+                    <TableHead className="text-right w-[130px]">小计</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -438,17 +454,31 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
             </DndContext>
           </div>
 
-          {items.length > 0 && (
-            <div className="flex justify-end mt-4 pt-4 border-t">
-              <div className="text-right">
-                <span className="text-muted-foreground mr-4">总金额：</span>
-                <span className="text-lg font-bold">
-                  {CURRENCIES[formData.currency]?.symbol || formData.currency}
-                  {items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0).toFixed(2)}
-                </span>
+          {items.length > 0 && (() => {
+            const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0), 0)
+            const vatRate = Number(formData.vat_rate) || 0
+            const vatAmount = subtotal * (vatRate / 100)
+            const total = subtotal + vatAmount
+            const cs = CURRENCIES[formData.currency]?.symbol || formData.currency
+            return (
+              <div className="flex justify-end mt-4 pt-4 border-t">
+                <div className="w-[280px] space-y-2 text-right">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">不含税金额：</span>
+                    <span>{cs}{subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">增值税（{vatRate}%）：</span>
+                    <span>{cs}{vatAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-muted-foreground">含税总额：</span>
+                    <span className="text-lg font-bold text-primary">{cs}{total.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </CardContent>
       </Card>
 

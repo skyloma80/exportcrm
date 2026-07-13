@@ -25,6 +25,9 @@ export interface POCreateInput {
   currency: string;
   expected_delivery_date?: string;
   remarks?: string;
+  vat_rate?: number;
+  subtotal?: number;
+  vat_amount?: number;
   total_amount?: number;
   status: POStatus;
   items: POItem[];

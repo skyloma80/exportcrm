@@ -222,11 +222,36 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
               <div className="space-y-1.5">
                 <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Banknote className="h-3.5 w-3.5" />
-                  总金额
+                  增值税率
                 </div>
-                <div className="font-bold text-lg text-primary">
-                  {CURRENCIES[po.currency]?.symbol || po.currency}{po.total_amount?.toFixed(2) || '0.00'}
-                </div>
+                <div className="font-semibold">{(po.vat_rate ?? 13)}%</div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <div className="w-[280px] space-y-2 text-right">
+                {(() => {
+                  const cs = CURRENCIES[po.currency]?.symbol || po.currency
+                  const subtotal = po.subtotal ?? po.items?.reduce((s: number, i: any) => s + (Number(i.amount) || 0), 0) ?? 0
+                  const vatAmount = po.vat_amount ?? subtotal * ((po.vat_rate ?? 13) / 100)
+                  const total = po.total_amount ?? subtotal + vatAmount
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">不含税金额：</span>
+                        <span>{cs}{subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">增值税（{po.vat_rate ?? 13}%）：</span>
+                        <span>{cs}{vatAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <span className="text-muted-foreground">含税总额：</span>
+                        <span className="text-xl font-bold text-primary">{cs}{total.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             </div>
           </CardContent>

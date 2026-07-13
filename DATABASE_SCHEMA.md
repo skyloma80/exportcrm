@@ -418,7 +418,10 @@
 | `currency` | text | 是 | — | 货币 |
 | `expected_delivery_date` | date | 否 | — | 预计交货日期 |
 | `remarks` | text | 否 | — | 备注 |
-| `total_amount` | number | 否 | min:0 | 总金额 |
+| `total_amount` | number | 否 | min:0 | 含税总金额（subtotal + vat_amount） |
+| `vat_rate` | number | 否 | min:0, max:100 | 增值税率（%），默认 13 |
+| `subtotal` | number | 否 | min:0 | 不含税小计（Σ amount） |
+| `vat_amount` | number | 否 | min:0 | 增值税额（subtotal × vat_rate / 100） |
 | `status` | select | 是 | `draft`, `sent`, `confirmed`, `in_production`, `shipped`, `delivered`, `completed`, `cancelled` | 状态 |
 | `items` | json | 否 | — | 行项目 JSON 数组，每项字段：`id`(string?) 标识, `part_number`(string?) 型号, `product_name`(string?) 产品名, `product_code`(string?) 产品编码, `description_en`(string?) 英文描述, `description_cn`(string?) 中文描述, `unit`(string?) 单位, `quantity`(number) 数量, `unit_price`(number) 单价, `amount`(number) 金额 |
 
