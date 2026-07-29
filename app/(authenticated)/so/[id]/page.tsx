@@ -147,6 +147,16 @@ export default function OrderDetailPage({ params }: PageProps) {
     }).format(amount)
   }
 
+  const formatUnitPrice = (amount: number, currency?: string) => {
+    return new Intl.NumberFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+      style: 'currency',
+      currency: currency || order?.currency || 'USD',
+      currencyDisplay: 'narrowSymbol',
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    }).format(amount || 0)
+  }
+
   const formatDate = (dateValue: string | Date | null | undefined): string => {
     if (!dateValue) return '-'
     try {
@@ -358,11 +368,12 @@ export default function OrderDetailPage({ params }: PageProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60px] pl-6 text-center">{t("orders.columns.seq")}</TableHead>
-                    <TableHead className="w-[150px]">{t("orders.columns.partNo")}</TableHead>
-                    <TableHead>{t("orders.columns.description")}</TableHead>
+                    <TableHead className="w-[50px] pl-6 text-center">{t("orders.columns.seq")}</TableHead>
+                    <TableHead className="w-[140px]">{t("orders.columns.partNo")}</TableHead>
+                    <TableHead className="w-[200px]">{t("orders.columns.description")}</TableHead>
                     <TableHead className="text-right w-[100px]">{t("orders.columns.quantity")}</TableHead>
-                    <TableHead className="text-right w-[120px]">{t("orders.columns.unitPrice")}</TableHead>
+                    <TableHead className="w-[100px]">{t("orders.columns.unit")}</TableHead>
+                    <TableHead className="text-right w-[130px]">{t("orders.columns.unitPrice")}</TableHead>
                     <TableHead className="text-right pr-6 w-[120px]">{t("orders.columns.subtotal")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -371,12 +382,12 @@ export default function OrderDetailPage({ params }: PageProps) {
                     <TableRow key={idx}>
                       <TableCell className="pl-6 text-center text-muted-foreground font-medium">{idx + 1}</TableCell>
                       <TableCell className="font-mono text-xs">{item.part_number}</TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-normal break-words">
                         {item.description_en}
-
                       </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">{item.quantity} {item.unit}</TableCell>
-                      <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.unit_price)}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">{item.quantity}</TableCell>
+                      <TableCell className="whitespace-nowrap">{item.unit || 'PCS'}</TableCell>
+                      <TableCell className="text-right whitespace-nowrap">{formatUnitPrice(item.unit_price)}</TableCell>
                       <TableCell className="text-right pr-6 font-bold whitespace-nowrap">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
                   ))}

@@ -415,13 +415,13 @@ export function POForm({ initialData, onSubmit, isLoading, isEdit }: POFormProps
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead className="w-[50px] text-center">No.</TableHead>
-                    <TableHead className="w-[120px]">零件号</TableHead>
-                    <TableHead className="min-w-[120px]">英文描述</TableHead>
-                    <TableHead className="min-w-[120px]">中文描述</TableHead>
-                    <TableHead className="w-[110px]">数量</TableHead>
-                    <TableHead className="w-[110px]">单位</TableHead>
-                    <TableHead className="w-[140px]">单价</TableHead>
-                    <TableHead className="text-right w-[130px]">小计</TableHead>
+                    <TableHead className="w-[140px]">零件号</TableHead>
+                    <TableHead className="w-[180px]">英文描述</TableHead>
+                    <TableHead className="w-[180px]">中文描述</TableHead>
+                    <TableHead className="w-[100px]">数量</TableHead>
+                    <TableHead className="w-[100px]">单位</TableHead>
+                    <TableHead className="w-[130px]">单价</TableHead>
+                    <TableHead className="text-right w-[120px]">小计</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>

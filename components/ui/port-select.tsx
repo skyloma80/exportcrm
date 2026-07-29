@@ -91,8 +91,11 @@ export function PortSelect({
         const data = await portsOfLoadingService.getActive()
         setPorts(data && data.length > 0 ? data : DEFAULT_DESTINATION_PORTS)
       }
-    } catch (error) {
-      console.error("Error loading ports:", error)
+    } catch (error: any) {
+      // 404 = collection doesn't exist, silently fall back to defaults
+      if (error?.status !== 404) {
+        console.error("Error loading ports:", error)
+      }
       setPorts(type === 'destination' ? DEFAULT_DESTINATION_PORTS : DEFAULT_DESTINATION_PORTS)
     } finally {
       setLoading(false)

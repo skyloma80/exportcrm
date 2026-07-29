@@ -154,6 +154,10 @@ export default function QuotationDetailPage({ params }: PageProps) {
     return formatAmount(amount, currency || quotation?.currency || 'USD');
   }
 
+  const formatUnitPriceDisplay = (amount: number, currency?: string) => {
+    return formatUnitPrice(amount, currency || quotation?.currency || 'USD');
+  }
+
   const formatCostCurrency = (amount: number) => {
     return formatCostPrice(amount);
   }
@@ -500,11 +504,11 @@ export default function QuotationDetailPage({ params }: PageProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px] pl-6">Part No</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead className="w-[140px] pl-6">Part No</TableHead>
+                    <TableHead className="w-[200px]">Description</TableHead>
                     <TableHead className="text-right w-[100px]">Qty</TableHead>
-                    <TableHead className="text-right w-[100px]">Unit</TableHead>
-                    <TableHead className="text-right w-[120px]">Unit Price</TableHead>
+                    <TableHead className="w-[100px]">Unit</TableHead>
+                    <TableHead className="text-right w-[130px]">Unit Price</TableHead>
                     <TableHead className="text-right pr-6 w-[120px]">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -518,7 +522,7 @@ export default function QuotationDetailPage({ params }: PageProps) {
                       </TableCell>
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">{item.unit || 'PCS'}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                      <TableCell className="text-right">{formatUnitPriceDisplay(item.unit_price)}</TableCell>
                       <TableCell className="text-right pr-6 font-bold">{formatCurrency(item.amount)}</TableCell>
                     </TableRow>
                   ))}

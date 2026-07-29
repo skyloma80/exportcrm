@@ -566,13 +566,13 @@ export function OrderForm({ initialData, onSubmit, isLoading, isEdit }: OrderFor
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
-                    <TableHead className="w-[60px] text-center">{t("orders.columns.seq")}</TableHead>
-                    <TableHead className="w-[150px]">{t("orders.columns.partNo")}</TableHead>
-                    <TableHead className="min-w-[200px]">{t("orders.columns.description")}</TableHead>
+                    <TableHead className="w-[50px] text-center">{t("orders.columns.seq")}</TableHead>
+                    <TableHead className="w-[140px]">{t("orders.columns.partNo")}</TableHead>
+                    <TableHead className="w-[200px]">{t("orders.columns.description")}</TableHead>
                     <TableHead className="w-[100px]">{t("orders.columns.quantity")}</TableHead>
                     <TableHead className="w-[100px]">{t("orders.columns.unit")}</TableHead>
-                    <TableHead className="w-[150px]">{t("orders.columns.unitPrice")}</TableHead>
-                    <TableHead className="text-right w-[150px]">{t("orders.columns.subtotal")}</TableHead>
+                    <TableHead className="w-[130px]">{t("orders.columns.unitPrice")}</TableHead>
+                    <TableHead className="text-right w-[120px]">{t("orders.columns.subtotal")}</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>

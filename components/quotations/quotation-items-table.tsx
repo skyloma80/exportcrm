@@ -371,14 +371,14 @@ export function QuotationItemsTable({
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[120px] pl-6">Part No.</TableHead>
-                  <TableHead className="w-[180px]">
+                  <TableHead className="w-[140px] pl-6">Part No.</TableHead>
+                  <TableHead className="w-[200px]">
                     {t('quotations.items.descriptionColumn') || 'Description'}
                   </TableHead>
-                  <TableHead className="w-[180px]">
+                  <TableHead className="w-[160px]">
                     {t('quotations.items.packaging') || 'Packaging'}
                   </TableHead>
-                  <TableHead className="w-[90px] text-center">
+                  <TableHead className="w-[100px] text-center">
                     {t('quotations.items.quantity') || 'Qty'}
                   </TableHead>
                   {showInternal && (
@@ -391,10 +391,10 @@ export function QuotationItemsTable({
                       </TableHead>
                     </>
                   )}
-                  <TableHead className="w-[120px] text-center">
+                  <TableHead className="w-[130px] text-center">
                     {t('quotations.items.unitPrice') || 'Price'} ({currency})
                   </TableHead>
-                  <TableHead className="w-[110px] text-right">
+                  <TableHead className="w-[120px] text-right">
                     {t('quotations.items.amount') || 'Amount'}
                   </TableHead>
                   {!disabled && <TableHead className="w-10 pr-6"></TableHead>}
@@ -477,12 +477,12 @@ export function QuotationItemsTable({
                       <Input
                         type="number"
                         min={0}
-                        step={0.01}
+                        step="any"
                         value={item.unitPrice || ''}
                         onChange={(e) => handleUnitPriceChange(item.id, parseFloat(e.target.value) || 0)}
                         disabled={disabled}
                         className="w-full text-center h-9"
-                        placeholder="0.00"
+                        placeholder="0.0000"
                       />
                     </TableCell>
                     <TableCell className="text-right font-medium pr-6 whitespace-nowrap">

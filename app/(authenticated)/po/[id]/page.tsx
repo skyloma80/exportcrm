@@ -266,13 +266,13 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px]">零件号</TableHead>
-                    <TableHead className="w-[150px]">英文描述</TableHead>
-                    <TableHead className="w-[150px]">中文描述</TableHead>
-                    <TableHead className="w-[80px]">数量</TableHead>
-                    <TableHead className="w-[80px]">单位</TableHead>
-                    <TableHead className="w-[100px]">单价</TableHead>
-                    <TableHead className="w-[100px]">总额</TableHead>
+                    <TableHead className="w-[140px]">零件号</TableHead>
+                    <TableHead className="w-[180px]">英文描述</TableHead>
+                    <TableHead className="w-[180px]">中文描述</TableHead>
+                    <TableHead className="w-[100px]">数量</TableHead>
+                    <TableHead className="w-[100px]">单位</TableHead>
+                    <TableHead className="w-[130px]">单价</TableHead>
+                    <TableHead className="w-[120px]">总额</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -280,11 +280,11 @@ export default function PODetailsPage({ params }: { params: Promise<{ id: string
                     po.items.map((item: any, idx: number) => (
                       <TableRow key={idx}>
                         <TableCell>{item.part_number || item.product_code}</TableCell>
-                        <TableCell className="whitespace-pre-wrap">{item.description_en}</TableCell>
-                        <TableCell className="whitespace-pre-wrap">{item.description_cn}</TableCell>
+                        <TableCell className="whitespace-normal break-words">{item.description_en}</TableCell>
+                        <TableCell className="whitespace-normal break-words">{item.description_cn}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>{UNITS[item.unit]?.name_cn || item.unit}</TableCell>
-                        <TableCell>{CURRENCIES[po.currency]?.symbol || po.currency}{Number(item.unit_price).toFixed(2)}</TableCell>
+                        <TableCell>{CURRENCIES[po.currency]?.symbol || po.currency}{Number(item.unit_price || 0).toFixed(4)}</TableCell>
                         <TableCell className="font-mono font-medium">{CURRENCIES[po.currency]?.symbol || po.currency}{item.amount?.toFixed(2)}</TableCell>
                       </TableRow>
                     ))
