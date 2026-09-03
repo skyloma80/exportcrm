@@ -110,20 +110,20 @@ export const DEFAULT_BRANDING_CONFIG: BrandingConfig = {
   logo_base64: '',                // Will be uploaded by user
   stamp_base64: '',               // Will be uploaded by user
   signature_base64: '',           // Will be uploaded by user
-  logo_path: '/logo.png',         // Legacy fallback
-  stamp_path: '/stamp-carlos-feliu.svg', // Legacy fallback
+  logo_path: '/logo-alustars-naranja.png',         // Legacy fallback
+  stamp_path: '/stamp-alustars.png', // Legacy fallback
   primary_office: {
-    name: 'Chongqing Alustars International Trading Co., Ltd',
+    name: 'Chongqing Alustars International Co.,Ltd.',
     name_cn: '重庆星铝国际贸易有限公司',
-    address: 'Crystal Constellation 26-8, Liangjiang New Area, Chongqing, China',
-    address_cn: '重庆市两江新区水晶星座26-8',
-    phone: '(+86) 23-12345678',
-    email: 'info@alustars.com',
+    address: 'No.194,Jiarui Avenue,Beibei District, 400707 Chongqing, China',
+    address_cn: '重庆市北碚区蔡家岗镇嘉瑞大道194号14-1',
+    phone: '+86 15923354664',
+    email: 'z.zela@alustars.com',
   },
   secondary_office: {
-    name: 'ALUSTARS INTERNATIONAL CO., LTD',
-    name_cn: '重庆星铝国际贸易有限公司',
-    address: 'Valencia 264 Principal, 08007 Barcelona (Spain)',
+    name: 'ALUSTARS INTERNATIONAL CO., LTD.',
+    name_cn: '',
+    address: 'Valencia 264 Principal, 08007 Barcelona, Spain',
     address_cn: '西班牙巴塞罗那 Valencia 264 Principal, 08007',
     phone: '(+34) 607630594',
     email: 'c.feliu@alustars.com',
@@ -132,6 +132,6 @@ export const DEFAULT_BRANDING_CONFIG: BrandingConfig = {
     name: 'Carlos Feliu',
     name_cn: 'Carlos Feliu',
     title: 'VP of Business Development',
-    title_cn: '业务发展副总裁',
+    title_cn: '副总裁',
   },
 };

@@ -3,27 +3,27 @@
     "id": "brand_default",
     "company_name": "ALUSTARS INTERNATIONAL CO., LTD",
     "company_name_cn": "重庆星铝国际贸易有限公司",
-    "website_url": "",
-    "vat": "",
+    "website_url": "www.alustars.com",
+    "vat": "91500109MADTT20C93",
     "logo_base64": "",
-    "logo_url": "",
+    "logo_url": "https://cowork-storage-public-cdn.lx.netease.com/lxbg/2025/07/18/54b05de1c8c249bc9fd0d8aae593593f.png",
     "stamp_base64": "",
     "signature_base64": "",
-    "logo_path": "",
-    "stamp_path": "",
+    "logo_path": "/logo-alustars-naranja.png",
+    "stamp_path": "/stamp-alustars.png",
     "primary_office": {
-      "name": "Chongqing Alustars International Trade Co., Ltd",
+      "name": "Chongqing Alustars International Co.,Ltd.",
       "name_cn": "重庆星铝国际贸易有限公司",
-      "address": "Floor 20, Building 2, Longtou Huafu, Longta Street, Yubei District, Chongqing, 401120",
-      "address_cn": "重庆市渝北区龙塔街道龙头华府2栋20层",
-      "phone": "(+86) 23-67890123",
-      "email": "info@alustars.com"
+      "address": "No.194,Jiarui Avenue,Beibei District, 400707 Chongqing, China",
+      "address_cn": "重庆市北碚区蔡家岗镇嘉瑞大道194号14-1",
+      "phone": "+86 15923354664",
+      "email": "z.zela@alustars.com"
     },
     "secondary_office": {
-      "name": "ALUSTARS INTERNATIONAL CO., LTD",
-      "name_cn": "阿鲁斯达国际有限公司",
-      "address": "Valencia 264 Principal, 08007 Barcelona (Spain)",
-      "address_cn": "西班牙巴塞罗那瓦伦西亚街264号",
+      "name": "ALUSTARS INTERNATIONAL CO., LTD.",
+      "name_cn": "",
+      "address": "Valencia 264 Principal, 08007 Barcelona, Spain",
+      "address_cn": "西班牙巴塞罗那 Valencia 264 Principal, 08007",
       "phone": "(+34) 607630594",
       "email": "c.feliu@alustars.com"
     },
@@ -31,7 +31,7 @@
       "name": "Carlos Feliu",
       "name_cn": "Carlos Feliu",
       "title": "VP of Business Development",
-      "title_cn": "业务发展副总裁"
+      "title_cn": "副总裁"
     }
   }
 ]
