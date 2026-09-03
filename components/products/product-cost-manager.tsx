@@ -198,9 +198,11 @@ export function ProductCostManager({ productId, productCode }: ProductCostManage
     setFormCurrency(cost.currency)
     setFormMoq(cost.moq || 1)
     setFormLeadTime(cost.lead_time_days || 0)
-    setFormTiers(cost.tiers && cost.tiers.length > 0 ? cost.tiers : [{ minQty: 1, maxQty: null, unitPrice: 0 }])
+    // Filter out empty tiers (unitPrice <= 0) to avoid showing garbage rows
+    const validTiers = (cost.tiers || []).filter((t) => t && t.unitPrice > 0)
+    setFormTiers(validTiers.length > 0 ? validTiers : [{ minQty: 1, maxQty: null, unitPrice: 0 }])
     setFormPreferred(cost.is_preferred || false)
-    setShowTiers(cost.tiers ? cost.tiers.length > 1 : false)
+    setShowTiers(validTiers.length > 1)
     setFormRemarks(cost.remarks || "")
   }
 
@@ -270,7 +272,13 @@ export function ProductCostManager({ productId, productCode }: ProductCostManage
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">{t("products.costs.title")}</h3>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <Dialog
+          open={addOpen}
+          onOpenChange={(open) => {
+            if (open) resetForm()
+            setAddOpen(open)
+          }}
+        >
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
@@ -392,7 +400,10 @@ export function ProductCostManager({ productId, productCode }: ProductCostManage
       <Dialog
         open={!!editTarget}
         onOpenChange={(open) => {
-          if (!open) setEditTarget(null)
+          if (!open) {
+            setEditTarget(null)
+            resetForm()
+          }
         }}
       >
         <DialogContent className="max-w-lg">
