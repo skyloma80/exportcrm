@@ -36,10 +36,12 @@ export async function updateSession(request: NextRequest) {
       if (isAuthenticated && pb.authStore.token) {
         try {
           await pb.collection("users").authRefresh();
-          // 更新 cookie
+          // 更新 cookie（secure 必须与实际协议一致，HTTP 下 Secure cookie 会被浏览器丢弃）
+          const proto = request.headers.get("x-forwarded-proto") || request.nextUrl.protocol.replace(":", "");
+          const isHttps = proto === "https";
           const newCookie = pb.authStore.exportToCookie({
             httpOnly: false,
-            secure: process.env.NODE_ENV === "production",
+            secure: isHttps,
             sameSite: "Lax",
           });
           response.headers.set("Set-Cookie", newCookie);

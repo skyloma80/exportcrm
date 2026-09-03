@@ -5,7 +5,6 @@ import { useI18n } from "@/lib/i18n/use-i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -471,7 +470,6 @@ export function ProductCostManager({ productId, productCode }: ProductCostManage
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("products.costs.validFrom")}</TableHead>
-                  <TableHead>{t("products.costs.validUntil")}</TableHead>
                   <TableHead>{t("products.costs.unitPrice")}</TableHead>
                   <TableHead className="text-right">{t("products.costs.moq")}</TableHead>
                   <TableHead className="text-center">{t("products.costs.preferred")}</TableHead>
@@ -481,13 +479,6 @@ export function ProductCostManager({ productId, productCode }: ProductCostManage
                 {historyData.map((h) => (
                   <TableRow key={h.id}>
                     <TableCell>{new Date(h.valid_from).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      {h.valid_until ? new Date(h.valid_until).toLocaleDateString() : (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          {t("products.costs.active")}
-                        </Badge>
-                      )}
-                    </TableCell>
                     <TableCell className="max-w-xs truncate">{formatTiers(h.tiers, h.currency)}</TableCell>
                     <TableCell className="text-right">{h.moq || "-"}</TableCell>
                     <TableCell className="text-center">
